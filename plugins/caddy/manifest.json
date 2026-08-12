@@ -1,0 +1,7 @@
+{
+  "name": "caddy",
+  "title": "Caddy 环境",
+  "attr": "环境",
+  "version": "1.0.0",
+  "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙"
+}

@@ -1,4 +1,4 @@
-/* AUPS 插件：appupdate —— 应用管理 / 反代配置
+/* AUPS 插件：appupdate —— 应用管理 / CI 用户 / SSH
  * 由「插件中心」按需加载并注册到 window.AUPS_PLUGINS。
  * 依赖核心全局：api / esc / fmt / view / headers / alert / confirm。
  */
@@ -12,7 +12,6 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   function navHtml() {
     return `<div class="secnav">
       <button class="${section === 'apps' ? 'on' : ''}" onclick="${P}go('apps')">应用管理</button>
-      <button class="${section === 'rproxy' ? 'on' : ''}" onclick="${P}go('rproxy')">反代配置</button>
       <button class="${section === 'users' ? 'on' : ''}" onclick="${P}go('users')">CI 用户</button>
       <button class="${section === 'ssh' ? 'on' : ''}" onclick="${P}go('ssh')">SSH 公钥</button>
     </div>`;
@@ -49,7 +48,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
         <td>${esc(x.name)}</td>
         <td>${fmt(x.size_bytes)}</td>
         <td>${x.quota_mb ? x.quota_mb + ' MB' : '<span class="mut">不限</span>'}</td>
-        <td>${x.quota_mb ? `<div class="row"><div style="flex:1;height:8px;background:#0b1220;border-radius:4px;min-width:60px"><div style="height:100%;width:${pct}%;background:${x.over ? 'var(--bad)' : 'var(--ok)'};border-radius:4px"></div></div><span class="mut">${pct}%</span></div>` : '<span class="mut">未设限制</span>'}</td>
+        <td>${x.quota_mb ? `<div class="row"><div style="flex:1;height:8px;background:var(--input);border-radius:4px;min-width:60px"><div style="height:100%;width:${pct}%;background:${x.over ? 'var(--bad)' : 'var(--ok)'};border-radius:4px"></div></div><span class="mut">${pct}%</span></div>` : '<span class="mut">未设限制</span>'}</td>
         <td>${x.over ? '<span class="bad">超出配额</span>' : '<span class="ok">正常</span>'}</td>
         <td><div class="row">
           <input type="text" placeholder="MB，0=不限" style="min-width:70px">
@@ -172,68 +171,9 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     await appsTab();
   }
 
-  /* ---------- 反代配置 ---------- */
-  async function rproxyTab() {
-    const [st, pt] = await Promise.all([
-      api('GET', '/api/caddyconf/status'),
-      api('GET', '/api/ports')
-    ]);
-    const caddy = pt.caddy || {};
-    const listening = (pt.listening || []).map(x => `${x.local}  (${x.process})`).join('\n');
-    view.innerHTML = navHtml() + `
-    <div class="card"><h2>反代后端 · ${esc(st.backend)}</h2>
-      <div class="row">
-        <span>配置: <span class="mut">${esc(st.caddyfile || '-')}</span></span>
-        ${st.name === 'caddy' ? `<span class="mut">Caddy ${esc(st.version || '未知')} · reload: ${esc(st.reload_method || '-')}</span>` : ''}
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button class="ghost" onclick="${P}caddyPreview()">预览片段</button>
-        <button onclick="${P}caddyApply()">应用并 reload</button>
-      </div>
-      <div class="mut" style="margin-top:10px">下载路由 + WAF 规则由 aups 写入 Caddyfile（AUPS APPS / AUPS WAF 标记区）。WAF 规则在「安全管理 → WAF 防护」维护。</div>
-    </div>
-    <div class="card"><h2>Caddy HTTPS 端口</h2>
-      <div class="row">
-        <span>当前: <b>${esc(caddy.https_port || '未配置')}</b></span>
-        <input id="portVal" type="text" placeholder="新端口，如 2096">
-        <button onclick="${P}setCaddyPort()">修改并 reload</button>
-      </div>
-      <div class="mut" style="margin-top:6px">面板自身端口在「面板设置 → 面板端口」查看。</div></div>
-    <div class="card"><h2>监听端口</h2><pre>${listening || '无'}</pre></div>
-    <div class="card"><h2>防火墙</h2>
-      <div class="row" style="margin-bottom:8px">
-        <input id="fwport" type="text" placeholder="端口，如 8100">
-        <button onclick="${P}fw('open')">放行</button>
-        <button class="ghost" onclick="${P}fw('close')">关闭</button>
-      </div>
-      <pre>${pt.firewall.status}</pre></div>
-    <div id="ccPreviewBox"></div>`;
-  }
-  async function setCaddyPort() {
-    const p = parseInt(document.getElementById('portVal').value);
-    if (isNaN(p)) { alert('请输入端口'); return; }
-    await api('POST', '/api/ports/caddy', { port: p });
-    await rproxyTab();
-  }
-  async function fw(action) {
-    const p = parseInt(document.getElementById('fwport').value);
-    if (isNaN(p)) { alert('请输入端口'); return; }
-    await api('POST', action === 'open' ? '/api/ports/open' : '/api/ports/close', { port: p });
-    await rproxyTab();
-  }
-  async function caddyPreview() {
-    const box = document.getElementById('ccPreviewBox');
-    const d = await api('GET', '/api/caddyconf/preview');
-    box.innerHTML = `<div class="card"><h2>预览（尚未写入）</h2>
-      <h2 class="mut">下载路由</h2><pre>${esc(d.apps)}</pre>
-      <h2 class="mut">WAF</h2><pre>${esc(d.waf)}</pre></div>`;
-  }
-  async function caddyApply() { await api('POST', '/api/caddyconf/apply', { reload: true }); alert('已写入 Caddyfile 并 reload'); await rproxyTab(); }
-
   function go(s) {
     section = s || 'apps';
-    if (section === 'rproxy') rproxyTab();
-    else if (section === 'users') usersTab();
+    if (section === 'users') usersTab();
     else if (section === 'ssh') sshTab(null);
     else appsTab();
   }
@@ -307,16 +247,14 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   return {
     title: '应用更新',
     sections: [
-      {id: 'apps', title: '应用管理'}, {id: 'rproxy', title: '反代配置'},
-      {id: 'users', title: 'CI 用户'}, {id: 'ssh', title: 'SSH 公钥'}
+      {id: 'apps', title: '应用管理'}, {id: 'users', title: 'CI 用户'}, {id: 'ssh', title: 'SSH 公钥'}
     ],
     go: go,
     open: function (s) { go(s || 'apps'); },
-    appsTab: appsTab, rproxyTab: rproxyTab, appVersions: appVersions, delAppApk: delAppApk,
+    appsTab: appsTab, appVersions: appVersions, delAppApk: delAppApk,
     addApp: addApp, delApp: delApp, syncCaddy: syncCaddy, setTotalQuota: setTotalQuota,
     appQuotaBtn: appQuotaBtn, toggleLock: toggleLock, enforceQuota: enforceQuota,
-    storageReg: storageReg, delApk: delApk, setCaddyPort: setCaddyPort, fw: fw,
-    caddyPreview: caddyPreview, caddyApply: caddyApply,
+    storageReg: storageReg, delApk: delApk,
     usersTab: usersTab, createUser: createUser, grantDir: grantDir, delUser: delUser,
     openSSH: openSSH, sshTab: sshTab, addKey: addKey, delKey: delKey
   };

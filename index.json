@@ -6,10 +6,16 @@
     {
       "name": "appupdate",
       "title": "应用更新管理",
-      "icon": "📦",
       "attr": "功能",
       "version": "1.0.0",
-      "description": "APK 更新：应用注册/版本、存储与配额、下载路由、WAF 防护、下载统计、CI 上传用户与 SSH 公钥"
+      "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥"
+    },
+    {
+      "name": "caddy",
+      "title": "Caddy 环境",
+      "attr": "环境",
+      "version": "1.0.0",
+      "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙"
     }
   ]
 }
