@@ -42,25 +42,12 @@ window.AUPS_PLUGINS['caddy'] = (function () {
       </div>
       <div class="mut" style="margin-top:6px">面板自身端口在「面板设置 → 面板端口」查看。</div></div>
     <div class="card"><h2>监听端口</h2><pre>${listening || '无'}</pre></div>
-    <div class="card"><h2>防火墙</h2>
-      <div class="row" style="margin-bottom:8px">
-        <input id="fwport" type="text" placeholder="端口，如 8100">
-        <button onclick="${P}fw('open')">放行</button>
-        <button class="ghost" onclick="${P}fw('close')">关闭</button>
-      </div>
-      <pre>${pt.firewall.status}</pre></div>
     <div id="ccPreviewBox"></div>`;
   }
   async function setCaddyPort() {
     const p = parseInt(document.getElementById('portVal').value);
     if (isNaN(p)) { alert('请输入端口'); return; }
     await api('POST', '/api/ports/caddy', { port: p });
-    await rproxyTab();
-  }
-  async function fw(action) {
-    const p = parseInt(document.getElementById('fwport').value);
-    if (isNaN(p)) { alert('请输入端口'); return; }
-    await api('POST', action === 'open' ? '/api/ports/open' : '/api/ports/close', { port: p });
     await rproxyTab();
   }
   async function caddyPreview() {
@@ -203,7 +190,7 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     go: go,
     open: function (s) { go(s || 'rproxy'); },
     rproxyTab: rproxyTab, wafTab: wafTab,
-    setCaddyPort: setCaddyPort, fw: fw, caddyPreview: caddyPreview, caddyApply: caddyApply,
+    setCaddyPort: setCaddyPort, caddyPreview: caddyPreview, caddyApply: caddyApply,
     wafToggle: wafToggle, wafAddRule: wafAddRule, wafToggleRule: wafToggleRule,
     wafDelRule: wafDelRule, wafIp: wafIp, rlSave: rlSave, rlOff: rlOff,
     subAdd: subAdd, subRecommended: subRecommended, subSync: subSync, subRemove: subRemove

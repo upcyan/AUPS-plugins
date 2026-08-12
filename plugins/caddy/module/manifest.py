@@ -27,8 +27,6 @@ MANIFEST = {
         "/api/stats/accesslog",
         "/api/ports",
         "/api/ports/caddy",
-        "/api/ports/open",
-        "/api/ports/close",
         "/api/apps/caddy",
     ],
     "frontend_tabs": ["caddy-rproxy", "security-waf"],
