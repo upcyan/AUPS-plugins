@@ -10,6 +10,7 @@ MANIFEST = {
     "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
     "type": "external",
     "attr": "功能",
+    "depends": [{"capability": "proxy"}],
     "cli_groups": ["app", "storage", "user", "ssh"],
     "api_module": "aups.modules.appupdate.api",
     "api_paths": [
