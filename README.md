@@ -1,16 +1,18 @@
 # AUPS 插件仓库
 
-AUPS 综合性服务器面板的插件源。
+AUPS 综合性服务器面板的官方插件源。
 
 ## 插件
 
 | 插件 | 属性 | 说明 |
 |---|---|---|
-| appupdate | 功能 | APK 更新：应用注册/版本、存储与配额、下载统计、CI 用户与 SSH 公钥 |
-| caddy | 环境 | Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙 |
-| nginx | 环境 | Nginx 反代：站点配置、证书（通过 certbot/acme 申请） |
-| certbot | 依赖 | Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录 |
-| acme | 依赖 | acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录 |
+| appupdate | 功能 | 应用更新管理 |
+| caddy | 环境 | Caddy 反代与 WAF |
+| nginx | 环境 | Nginx 反代 |
+| certbot | 依赖 | Let's Encrypt 证书签发（certbot） |
+| acme | 依赖 | acme.sh 证书签发 |
+
+各插件的详细说明见其自身目录下的 `README.md`（如 `plugins/appupdate/README.md`）。
 
 ## 结构
 
@@ -20,6 +22,7 @@ plugins/<name>/
     manifest.json               # 插件元数据（name/title/attr/version/...）
     module/                     # Python 包 → 安装到 aups/modules/<name>/
     frontend.js                 # 前端脚本 → aups/web/static/plugins/<name>.js
+    README.md                   # 插件自身说明
 ```
 
 ## 安装 / 更新 / 卸载
@@ -36,4 +39,5 @@ aups plugins market uninstall appupdate      # 卸载
 
 1. 在 `plugins/` 下建 `<name>/` 目录；
 2. 放入 `manifest.json`、`module/`（含 `manifest.py`）、`frontend.js`；
-3. 在 `index.json` 的 `plugins` 列表补一条记录。
+3. 在 `index.json` 的 `plugins` 列表补一条记录；
+4. 可为本插件编写 `README.md` 说明用途与使用方式。
