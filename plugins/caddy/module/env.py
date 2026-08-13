@@ -10,12 +10,14 @@ import shutil
 from ... import config
 from ... import pkg
 from ...errors import AppError
-from ...util import run
+from ...util import has_cmd, run
 
 # caddy 配置路径（原在核心 config，随插件解耦）
 CADDYFILE = os.environ.get("AUP_CADDYFILE", "/etc/caddy/Caddyfile")
 CADDY_LOG_FILE = os.environ.get("AUP_CADDY_LOG", "/var/log/caddy/access.log")
 WAF_FILE = os.path.join(config.CONF_DIR, "waf.json")
+
+_UNIT_FILES = ("/etc/systemd/system/caddy.service", "/lib/systemd/system/caddy.service")
 
 
 def caddy_binary():
@@ -51,7 +53,11 @@ def status():
 
 
 def install():
-    """部署 caddy：优先复制系统 caddy 到面板目录，否则用包管理器安装。"""
+    """部署 caddy：复制系统 caddy 到面板目录、迁移配置，并让运行中的 caddy 使用面板二进制+配置。
+
+    systemd 仅作为进程管理器（与面板自身 aups-web.service 一样），
+    真正决定二进制/配置位置的是本函数写入的 systemd 单元路径。
+    """
     sys_bin = shutil.which("caddy")
     if not sys_bin:
         pkg.install(["caddy"])
@@ -66,4 +72,31 @@ def install():
     dst_caddyfile = os.path.join(config.plugin_dir("caddy", "config"), "Caddyfile")
     if os.path.isfile(CADDYFILE) and not os.path.isfile(dst_caddyfile):
         shutil.copy2(CADDYFILE, dst_caddyfile)
+    # 切换 systemd 单元，让运行中的 caddy 加载面板二进制+配置
+    _switch_unit(runtime_bin, caddy_config_file())
     return {"ok": True, "source": "runtime", "message": "caddy 已部署到面板目录", **status()}
+
+
+def _switch_unit(runtime_bin, panel_caddyfile):
+    """把 caddy systemd 单元的 ExecStart/ExecReload 指向面板二进制+配置，并重启。
+
+    这样运行中的 caddy 才真正加载面板目录的配置，reload（systemctl reload caddy）
+    也随之作用于面板配置，避免「面板改面板配置、进程却读系统配置」的分裂。
+    """
+    unit = next((u for u in _UNIT_FILES if os.path.isfile(u)), None)
+    if not unit:
+        return
+    try:
+        with open(unit) as f:
+            content = f.read()
+    except OSError:
+        return
+    sys_bin = shutil.which("caddy") or "/usr/bin/caddy"
+    new = content.replace(sys_bin, runtime_bin).replace("/etc/caddy/Caddyfile", panel_caddyfile)
+    if new == content:
+        return
+    with open(unit, "w") as f:
+        f.write(new)
+    if has_cmd("systemctl"):
+        run(["systemctl", "daemon-reload"])
+        run(["systemctl", "restart", "caddy"])
