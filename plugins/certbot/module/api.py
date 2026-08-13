@@ -8,6 +8,7 @@ import os
 import shutil
 
 from ... import config
+from ... import pkg
 from ...errors import AppError
 from ...util import has_cmd, run
 
@@ -23,19 +24,15 @@ def status():
 
 
 def install():
-    """安装 certbot：优先复用系统，否则 apt 安装。"""
+    """安装 certbot：优先复用系统，否则用包管理器安装（跨发行版，含发行版别名）。"""
     if has_cmd("certbot"):
         return {"ok": True, "source": "system", "message": "已检测到系统 certbot，直接使用",
                 **status()}
     config.ensure_panel_dirs("certbot")
-    if not has_cmd("apt-get"):
-        raise AppError("未找到包管理器 apt-get，请手动安装 certbot（apt-get install -y certbot）")
-    r1 = run(["apt-get", "install", "-y", "certbot"])
-    if r1.returncode != 0 or not has_cmd("certbot"):
-        run(["apt-get", "install", "-y", "python3-certbot"], check=True)
+    pkg.install(["certbot", "python3-certbot"])
     if not has_cmd("certbot"):
         raise AppError("certbot 安装后仍未检测到，请检查安装日志")
-    return {"ok": True, "source": "pkg", "message": "已通过 apt-get 安装 certbot", **status()}
+    return {"ok": True, "source": "pkg", "message": "已通过包管理器安装 certbot", **status()}
 
 
 def _renew_cron_line():

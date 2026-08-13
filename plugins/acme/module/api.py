@@ -7,6 +7,7 @@ acme.sh 脚本统一部署到 PANEL_HOME/runtime/acme（--installhome），
 import os
 
 from ... import config
+from ... import pkg
 from ...errors import AppError
 from ...util import has_cmd, run
 
@@ -37,7 +38,15 @@ def install():
     runtime = config.plugin_dir("acme", "runtime")
     data = config.plugin_dir("acme", "data")
     if not has_cmd("git"):
-        raise AppError("未找到 git，请先安装 git（apt-get install -y git）")
+        pkg.install(["git"])
+        if not has_cmd("git"):
+            raise AppError("未找到 git 且安装失败，请手动安装 git")
+    # standalone 验证需要 socat / nc / netcat 之一
+    if not (has_cmd("socat") or has_cmd("nc") or has_cmd("netcat")):
+        try:
+            pkg.install(["socat"])
+        except AppError:
+            pass  # 缺失时 issue 阶段会报错提示
     if not os.path.isdir(os.path.join(runtime, ".git")):
         run(["git", "clone", "--depth", "1",
              "https://github.com/acmesh-official/acme.sh.git", runtime], check=True)
