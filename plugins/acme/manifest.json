@@ -1,0 +1,7 @@
+{
+  "name": "acme",
+  "title": "acme.sh",
+  "attr": "依赖",
+  "version": "0.1.0",
+  "description": "acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录"
+}

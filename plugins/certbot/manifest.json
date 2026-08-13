@@ -1,0 +1,7 @@
+{
+  "name": "certbot",
+  "title": "Certbot",
+  "attr": "依赖",
+  "version": "0.1.0",
+  "description": "Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录"
+}

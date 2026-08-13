@@ -8,6 +8,9 @@ AUPS 综合性服务器面板的插件源。
 |---|---|---|
 | appupdate | 功能 | APK 更新：应用注册/版本、存储与配额、下载统计、CI 用户与 SSH 公钥 |
 | caddy | 环境 | Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙 |
+| nginx | 环境 | Nginx 反代：站点配置、证书（通过 certbot/acme 申请） |
+| certbot | 依赖 | Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录 |
+| acme | 依赖 | acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录 |
 
 ## 结构
 
