@@ -84,3 +84,15 @@ def renew():
     run(["certbot", "renew", "--config-dir", data, "--work-dir", data,
          "--logs-dir", data], check=True)
     return {"ok": True, "message": "续期完成", "data_dir": data}
+
+
+def remove():
+    """卸载：删除续期 cron 与面板数据目录（证书/配置/日志）。"""
+    for cron in ("/etc/cron.d/aups-certbot-renew",):
+        try:
+            os.remove(cron)
+        except OSError:
+            pass
+    for kind in ("runtime", "config", "data"):
+        shutil.rmtree(config.plugin_dir("certbot", kind), ignore_errors=True)
+    return {"name": "certbot", "removed": True}

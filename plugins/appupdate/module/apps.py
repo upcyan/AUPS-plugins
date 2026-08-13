@@ -461,3 +461,13 @@ def update_caddy_routes(reload=True):
 def _caddy_preview():
     """只打印将写入 Caddyfile 的路由片段，不做修改。"""
     return _gen_routes()
+
+
+def remove():
+    """卸载：移除配额清理定时任务（保留应用/用户数据，便于重装后继续使用）。"""
+    cron = "/etc/cron.d/aups-enforce-quota"
+    try:
+        os.remove(cron)
+    except OSError:
+        pass
+    return {"name": "appupdate", "removed": True}

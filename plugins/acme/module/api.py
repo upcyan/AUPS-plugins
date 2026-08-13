@@ -101,3 +101,16 @@ def renew():
     data = config.plugin_dir("acme", "data")
     run([bin_path, "--renew-all", "--home", data], check=True)
     return {"ok": True, "message": "续期完成", "data_dir": data}
+
+
+def remove():
+    """卸载：删除续期 cron 与面板 runtime/data 目录（脚本/证书/配置）。"""
+    for cron in ("/etc/cron.d/aups-acme-renew",):
+        try:
+            os.remove(cron)
+        except OSError:
+            pass
+    for kind in ("runtime", "config", "data"):
+        import shutil
+        shutil.rmtree(config.plugin_dir("acme", kind), ignore_errors=True)
+    return {"name": "acme", "removed": True}

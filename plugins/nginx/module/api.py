@@ -94,12 +94,51 @@ def status():
             "runtime_dir": d["runtime"], "config_dir": d["config"], "data_dir": d["data"]}
 
 
+def _migrate_system_config():
+    """把系统 /etc/nginx 配置迁移到面板配置目录，改写 pid/日志/include 路径，保留站点/root 内容。"""
+    sys_conf = "/etc/nginx"
+    if not os.path.isfile(os.path.join(sys_conf, "nginx.conf")):
+        return False
+    cfg_dir = config.plugin_dir("nginx", "config")
+    data = config.plugin_dir("nginx", "data")
+    for name in os.listdir(sys_conf):
+        src = os.path.join(sys_conf, name)
+        dst = os.path.join(cfg_dir, name)
+        if os.path.isdir(src):
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+        else:
+            shutil.copy2(src, dst)
+    # 改写关键路径（include/pid/log 指向面板目录，root 内容保持原样）
+    for root, _dirs, files in os.walk(cfg_dir):
+        for fn in files:
+            fp = os.path.join(root, fn)
+            try:
+                with open(fp) as f:
+                    text = f.read()
+            except (OSError, UnicodeDecodeError):
+                continue
+            new = (text.replace("/etc/nginx", cfg_dir)
+                       .replace("/run/nginx.pid", os.path.join(data, "nginx.pid"))
+                       .replace("/var/run/nginx.pid", os.path.join(data, "nginx.pid"))
+                       .replace("/var/log/nginx", os.path.join(data, "log")))
+            if new != text:
+                with open(fp, "w") as f:
+                    f.write(new)
+    os.makedirs(os.path.join(data, "html"), exist_ok=True)
+    return True
+
+
 def install():
-    """部署 nginx 到面板目录：复制二进制 + mime.types、生成面板配置并启动，停用系统 nginx。"""
+    """部署 nginx 到面板目录，并妥善处理系统已安装的 nginx。
+
+    - 系统已装 nginx：复用其二进制、迁移其配置到面板目录、停用系统服务（释放 80/443）。
+    - 未装：用包管理器安装后部署二进制 + 生成默认面板配置（监听 127.0.0.1:8080）。
+    """
     config.ensure_panel_dirs("nginx")
     bin_path = _bin()
+    sys_bin = shutil.which("nginx")
+    had_system = bool(sys_bin)
     if not (os.path.isfile(bin_path) and os.access(bin_path, os.X_OK)):
-        sys_bin = shutil.which("nginx")
         if not sys_bin:
             pkg.install(["nginx"])
             sys_bin = shutil.which("nginx")
@@ -110,11 +149,17 @@ def install():
         mime_src = "/etc/nginx/mime.types"
         if os.path.isfile(mime_src):
             shutil.copy2(mime_src, _mime())
-    _write_config()
+    if had_system and _migrate_system_config():
+        msg = "检测到系统 nginx，已复用其二进制、迁移配置到面板目录并停用系统服务"
+        source = "system"
+    else:
+        _write_config()
+        msg = "nginx 已部署到面板目录（默认配置，监听 127.0.0.1:8080）"
+        source = "runtime"
     _stop_system()
     _stop()
     _start()
-    return {"ok": True, "source": "runtime", "message": "nginx 已部署到面板目录", **status()}
+    return {"ok": True, "source": source, "message": msg, **status()}
 
 
 def remove():

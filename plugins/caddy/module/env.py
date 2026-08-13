@@ -95,8 +95,40 @@ def _switch_unit(runtime_bin, panel_caddyfile):
     new = content.replace(sys_bin, runtime_bin).replace("/etc/caddy/Caddyfile", panel_caddyfile)
     if new == content:
         return
+    # 备份原单元，供 remove() 还原
+    try:
+        with open(unit + ".aups-bak", "w") as f:
+            f.write(content)
+    except OSError:
+        pass
     with open(unit, "w") as f:
         f.write(new)
     if has_cmd("systemctl"):
         run(["systemctl", "daemon-reload"])
         run(["systemctl", "restart", "caddy"])
+
+
+def remove():
+    """卸载：停止面板 caddy、删除面板目录，并还原 systemd 单元为系统 caddy。"""
+    # 停止面板 caddy（若在运行）
+    bin_path = caddy_binary()
+    if bin_path:
+        run([bin_path, "stop"], check=False)
+    # 还原 systemd 单元（若曾切换）
+    unit = next((u for u in _UNIT_FILES if os.path.isfile(u + ".aups-bak")), None)
+    if unit:
+        try:
+            with open(unit + ".aups-bak") as f:
+                orig = f.read()
+            with open(unit, "w") as f:
+                f.write(orig)
+            os.remove(unit + ".aups-bak")
+            if has_cmd("systemctl"):
+                run(["systemctl", "daemon-reload"])
+                run(["systemctl", "restart", "caddy"], check=False)
+        except OSError:
+            pass
+    # 删除面板目录
+    for kind in ("runtime", "config", "data"):
+        shutil.rmtree(config.plugin_dir("caddy", kind), ignore_errors=True)
+    return {"name": "caddy", "removed": True}
