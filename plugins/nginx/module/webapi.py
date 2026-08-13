@@ -16,3 +16,8 @@ def nginx_status(auth=Depends(require_auth)):
 @router.post("/nginx/install")
 def nginx_install(auth=Depends(require_auth)):
     return core.install()
+
+
+@router.post("/nginx/remove")
+def nginx_remove(auth=Depends(require_auth)):
+    return core.remove()
