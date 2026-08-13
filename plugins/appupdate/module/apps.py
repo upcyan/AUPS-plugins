@@ -419,12 +419,15 @@ def _add_indent(line, indent):
 
 def update_caddy_routes(reload=True):
     """把应用路由片断写回 Caddyfile（marker 定位替换），可选 reload。返回 {caddyfile, written}。"""
+    from ..caddy import env as caddy_env
+    from ... import rproxy
+    caddyfile = caddy_env.caddy_config_file()
     routes = _gen_routes()
     try:
-        with open(config.CADDYFILE, encoding="utf-8") as f:
+        with open(caddyfile, encoding="utf-8") as f:
             lines = f.read().splitlines()
     except OSError:
-        raise AppError(f"Caddyfile 不存在：{config.CADDYFILE}")
+        raise AppError(f"Caddyfile 不存在：{caddyfile}")
 
     blocks = _site_blocks("\n".join(lines))
     target = None
@@ -448,12 +451,11 @@ def update_caddy_routes(reload=True):
            + new_body.splitlines()
            + [closer]
            + lines[target["end"] + 1:])
-    with open(config.CADDYFILE, "w", encoding="utf-8") as f:
+    with open(caddyfile, "w", encoding="utf-8") as f:
         f.write("\n".join(out))
     if reload:
-        from . import ports
-        ports.reload_caddy(warn_only=True)
-    return {"caddyfile": config.CADDYFILE, "written": True}
+        rproxy.reload()
+    return {"caddyfile": caddyfile, "written": True}
 
 
 def _caddy_preview():

@@ -8,10 +8,11 @@ WAF 规则通过 :mod:`aups.waf` 的中性结构渲染为 Caddy matcher + respon
 """
 
 import os
+import re
 
-from .... import config
-from .... import ports
+from .. import env
 from .. import waf
+from .... import ports
 from ....errors import AppError
 from ....util import has_cmd, run
 
@@ -34,24 +35,85 @@ _OLD_WAF_END = "# <<< AUP WAF >>>"
 
 def status():
     ver = None
-    if has_cmd("caddy"):
-        r = run(["caddy", "version"])
-        if r.returncode == 0 and r.stdout.strip():
-            ver = r.stdout.strip().split()[0]
+    bin_path = env.caddy_binary()
+    if bin_path:
+        r = run([bin_path, "version"])
+        if r.returncode == 0 and (r.stdout or r.stderr).strip():
+            ver = (r.stdout or r.stderr).strip().split()[0]
+    caddyfile = env.caddy_config_file()
     return {
         "name": NAME,
-        "caddyfile": config.CADDYFILE,
-        "exists": os.path.isfile(config.CADDYFILE),
+        "caddyfile": caddyfile,
+        "exists": os.path.isfile(caddyfile),
+        "binary": bin_path,
         "version": ver,
         "reload_method": ("systemctl" if has_cmd("systemctl")
-                          else ("caddy" if has_cmd("caddy") else None)),
+                          else ("caddy" if bin_path else None)),
         "waf_enabled": bool(waf.get_config().get("enabled")),
     }
 
 
 def reload():
-    ports.reload_caddy(warn_only=True)
+    _reload(warn_only=True)
     return {"reloaded": True}
+
+
+_PORT_RE = re.compile(r"^\s*(https_port|http_port)\s+(\d+)\s*$", re.MULTILINE)
+
+
+def ports():
+    """读取 Caddyfile 中的 https_port/http_port（原核心 read_caddy_ports）。"""
+    out = {"https_port": None, "http_port": None}
+    try:
+        with open(env.caddy_config_file()) as f:
+            text = f.read()
+    except OSError:
+        return out
+    for m in _PORT_RE.finditer(text):
+        out[m.group(1)] = int(m.group(2))
+    return out
+
+
+def set_port(port):
+    """修改 Caddy https_port 并 reload + 放行防火墙（原核心 set_caddy_port）。"""
+    if not (1024 <= port <= 65535) or port == 22:
+        raise AppError("端口需在 1024-65535 且不能是 22（SSH）")
+    caddyfile = env.caddy_config_file()
+    try:
+        with open(caddyfile) as f:
+            text = f.read()
+    except OSError:
+        raise AppError(f"Caddyfile 不存在：{caddyfile}")
+    if not re.search(r"^\s*https_port\s+\d+\s*$", text, re.MULTILINE):
+        raise AppError("Caddyfile 中未找到 https_port，请先配置全局块")
+    new = re.sub(r"^\s*https_port\s+\d+\s*$", f"https_port {port}", text, count=1, flags=re.MULTILINE)
+    with open(caddyfile, "w") as f:
+        f.write(new)
+    _reload(warn_only=True)
+    try:
+        ports.firewall_open(port)
+    except AppError:
+        pass  # 防火墙提示不阻断
+    return {"https_port": port}
+
+
+def _reload(warn_only=False):
+    """reload caddy（原核心 reload_caddy）。"""
+    if has_cmd("systemctl"):
+        res = run(["systemctl", "reload", "caddy"])
+        if res.returncode == 0:
+            return
+        if warn_only:
+            return
+        raise AppError("caddy reload 失败，请检查服务")
+    bin_path = env.caddy_binary()
+    if bin_path:
+        res = run([bin_path, "reload", "--config", env.caddy_config_file()])
+        if res.returncode != 0 and not warn_only:
+            raise AppError("caddy reload 失败")
+        return
+    if not warn_only:
+        raise AppError("未找到 caddy 命令，无法 reload")
 
 
 # ---------- access 日志 ----------
@@ -85,7 +147,7 @@ def _log_snippet():
     return "\n".join([
         _LOG_MARK_BEGIN,
         "log {",
-        f"    output file {config.CADDY_LOG_FILE}",
+        f"    output file {env.CADDY_LOG_FILE}",
         "    format json",
         "    include http.log.access",
         "}",
@@ -97,21 +159,21 @@ def access_log_status():
     """access 日志配置状态（供 Web 总览展示）。"""
     text = ""
     try:
-        text = open(config.CADDYFILE, encoding="utf-8").read()
+        text = open(env.caddy_config_file(), encoding="utf-8").read()
     except OSError:
         pass
     return {
         "enabled": _LOG_MARK_BEGIN in text or "http.log.access" in text,
-        "log_file": config.CADDY_LOG_FILE,
-        "file_exists": os.path.isfile(config.CADDY_LOG_FILE),
+        "log_file": env.CADDY_LOG_FILE,
+        "file_exists": os.path.isfile(env.CADDY_LOG_FILE),
     }
 
 
 def enable_access_log():
     """在 Caddyfile 全局块写入 JSON access log 配置并 reload。"""
-    if not os.path.isfile(config.CADDYFILE):
-        raise AppError(f"Caddyfile 不存在：{config.CADDYFILE}")
-    with open(config.CADDYFILE, encoding="utf-8") as f:
+    if not os.path.isfile(env.caddy_config_file()):
+        raise AppError(f"Caddyfile 不存在：{env.caddy_config_file()}")
+    with open(env.caddy_config_file(), encoding="utf-8") as f:
         lines = f.read().splitlines()
     if _LOG_MARK_BEGIN in "\n".join(lines):
         return {"enabled": True, "already": True}
@@ -122,9 +184,9 @@ def enable_access_log():
         out = lines[:end] + snippet + lines[end:]
     else:
         out = ["{"] + snippet + ["}"] + lines
-    with open(config.CADDYFILE, "w", encoding="utf-8") as f:
+    with open(env.caddy_config_file(), "w", encoding="utf-8") as f:
         f.write("\n".join(out))
-    ports.reload_caddy(warn_only=True)
+    _reload(warn_only=True)
     return {"enabled": True, "already": False}
 
 
@@ -256,9 +318,9 @@ def _extract_section(body, begin, end):
 def _site():
     """找到托管站点块。"""
     try:
-        text = open(config.CADDYFILE, encoding="utf-8").read()
+        text = open(env.caddy_config_file(), encoding="utf-8").read()
     except OSError:
-        raise AppError(f"Caddyfile 不存在：{config.CADDYFILE}")
+        raise AppError(f"Caddyfile 不存在：{env.caddy_config_file()}")
     apps = _apps()
     if apps is None:
         raise AppError("appupdate 模块未启用，无法维护下载路由托管片段")
@@ -282,7 +344,7 @@ def show():
     body = target["body"]
     apps = _apps()
     return {
-        "caddyfile": config.CADDYFILE,
+        "caddyfile": env.caddy_config_file(),
         "total_lines": len(text.splitlines()),
         "managed": {
             "apps": _extract_section(body, apps._CADDY_MARK_BEGIN, apps._CADDY_MARK_END),
@@ -315,9 +377,9 @@ def apply(reload=True):
            + body.splitlines()
            + [closer]
            + lines[target["end"] + 1:])
-    with open(config.CADDYFILE, "w", encoding="utf-8") as f:
+    with open(env.caddy_config_file(), "w", encoding="utf-8") as f:
         f.write("\n".join(out))
     if reload:
-        ports.reload_caddy(warn_only=True)
-    return {"backend": NAME, "caddyfile": config.CADDYFILE,
+        _reload(warn_only=True)
+    return {"backend": NAME, "caddyfile": env.caddy_config_file(),
             "written": True, "reloaded": reload}

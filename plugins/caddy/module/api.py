@@ -7,10 +7,23 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from ...web.websec import require_auth
-from . import rproxy as RP
+from ... import rproxy as RP
+from ... import ports as PORTS
 from . import waf as WAFM
+from . import env as ENV
 
 router = APIRouter()
+
+
+# ---------- Caddy 环境部署（status / install）----------
+@router.get("/caddy/status")
+def caddy_env_status(auth=Depends(require_auth)):
+    return ENV.status()
+
+
+@router.post("/caddy/install")
+def caddy_env_install(auth=Depends(require_auth)):
+    return ENV.install()
 
 
 # ---------- 反代配置（Caddy / WAF）----------
@@ -119,6 +132,5 @@ def stats_accesslog_enable(auth=Depends(require_auth)):
 # ---------- Caddy 端口 ----------
 @router.post("/ports/caddy")
 def ports_caddy(body: dict = None, auth=Depends(require_auth)):
-    from ...core import ports as P
     port = int((body or {}).get("port", 0))
-    return P.set_caddy_port(port)
+    return PORTS.set_proxy_port(port)

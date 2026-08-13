@@ -19,7 +19,7 @@ import re
 import time
 import urllib.request
 
-from ... import config
+from . import env
 from ...errors import AppError
 
 KINDS = ("path_regex", "user_agent", "header", "method", "query")
@@ -29,7 +29,7 @@ _WINDOW_RE = re.compile(r"^\d+(ms|s|m|h|d)?$")
 # ---------- 读写 ----------
 
 def _load():
-    path = config.WAF_FILE
+    path = env.WAF_FILE
     if os.path.isfile(path):
         try:
             return json.load(open(path))
@@ -42,9 +42,9 @@ def _load():
 
 def _save(data):
     os.makedirs(config.CONF_DIR, exist_ok=True)
-    with open(config.WAF_FILE, "w") as f:
+    with open(env.WAF_FILE, "w") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
-    os.chmod(config.WAF_FILE, 0o600)
+    os.chmod(env.WAF_FILE, 0o600)
 
 
 # ---------- 校验 ----------
@@ -245,7 +245,7 @@ def _fetch_rules(url):
 
 
 RECOMMENDED_RULES_URL = ("https://raw.githubusercontent.com/upcyan/"
-                         "app_update_server/main/waf-rules.json")
+                         "AUPS/main/waf-rules.json")
 RECOMMENDED_RULES_NAME = "OWASP CRS 精选（Lucky CorazaWAF 同源）"
 
 

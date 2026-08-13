@@ -9,19 +9,26 @@ import os
 import time
 
 from ... import config
+from ... import rproxy
 from ...errors import AppError
 from ...util import print_json
-from . import rproxy
+from . import env
 from . import waf
 
 # 只读命令（免 root）；其余命令要求 root
 READ_ONLY = {
     "caddyconf": {"status", "show", "preview"},
+    "caddy": {"status"},
 }
 
 
 def build(sub):
-    """注册命令组：caddyconf。"""
+    """注册命令组：caddyconf（反代/WAF）、caddy（环境状态/安装）。"""
+    ce = sub.add_parser("caddy", help="Caddy 环境部署（状态/安装）")
+    ces = ce.add_subparsers(dest="action", required=True)
+    ces.add_parser("status", help="查看 caddy 状态与部署目录").add_argument("--json", action="store_true")
+    ces.add_parser("install", help="部署 caddy 二进制到面板目录")
+
     cc = sub.add_parser("caddyconf", help="反代配置管理（Caddy，含 WAF 防护）")
     ccs = cc.add_subparsers(dest="action", required=True)
     ccs.add_parser("status", help="反代后端与 WAF 状态").add_argument("--json", action="store_true")
@@ -81,8 +88,27 @@ def build(sub):
 
 def run(a):
     """按 a.pcmd（命令组）派发。"""
-    if a.pcmd == "caddyconf":
+    if a.pcmd == "caddy":
+        _caddy(a)
+    elif a.pcmd == "caddyconf":
         _caddyconf(a)
+
+
+def _caddy(a):
+    if a.action == "status":
+        s = env.status()
+        if a.json:
+            print_json(s)
+            return
+        print(f"caddy: {'已安装' if s['installed'] else '未检测到'}  {s['version'] or ''}")
+        print(f"  部署: {'面板目录' if s['deployed'] else '系统安装'}")
+        print(f"  二进制: {s['binary'] or '-'}")
+        print(f"  配置: {s['config_file']}")
+        print(f"  runtime: {s['runtime_dir']}")
+        print(f"  config : {s['config_dir']}")
+        print(f"  data   : {s['data_dir']}")
+    elif a.action == "install":
+        print_json(env.install())
 
 
 def _caddyconf(a):
