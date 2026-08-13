@@ -25,7 +25,10 @@
       "title": "Nginx 环境",
       "attr": "环境",
       "version": "0.1.0",
-      "description": "Nginx 反代：站点配置、证书（通过 certbot/acme 申请）"
+      "description": "Nginx 反代：站点配置、证书（通过 certbot/acme 申请）",
+      "install_params": [
+        { "key": "port", "label": "监听端口", "type": "number", "default": 8080, "description": "面板 nginx 监听端口（示例参数）" }
+      ]
     },
     {
       "name": "certbot",

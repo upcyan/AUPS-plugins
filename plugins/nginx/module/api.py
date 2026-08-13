@@ -30,9 +30,13 @@ def _pid():
 
 
 def _write_config():
-    """生成面板 nginx 配置：监听 127.0.0.1:8080，不占 80/443，pid/日志落在数据目录。"""
+    """生成面板 nginx 配置：监听 127.0.0.1:<port>（安装参数 port，默认 8080），不占 80/443。"""
     data = config.plugin_dir("nginx", "data")
     runtime = config.plugin_dir("nginx", "runtime")
+    try:
+        port = int(config.get_plugin_params("nginx").get("port") or 8080)
+    except (TypeError, ValueError):
+        port = 8080
     mime_line = f"    include {runtime}/mime.types;\n" if os.path.isfile(_mime()) else ""
     conf = (
         "worker_processes 1;\n"
@@ -46,7 +50,7 @@ def _write_config():
         "    sendfile on;\n"
         "    keepalive_timeout 65;\n"
         "    server {\n"
-        "        listen 127.0.0.1:8080;\n"
+        f"        listen 127.0.0.1:{port};\n"
         "        server_name _;\n"
         f"        root {data}/html;\n"
         "        index index.html;\n"
