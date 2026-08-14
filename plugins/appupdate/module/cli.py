@@ -12,6 +12,7 @@ from ... import config
 from ...errors import AppError
 from ...util import print_json
 from . import apps
+from . import downloads
 from . import sshkeys
 from . import storage
 from . import users
@@ -22,6 +23,7 @@ READ_ONLY = {
     "storage": {"usage", "apks"},
     "user": {"list"},
     "ssh": {"list"},
+    "downloads": {"stats"},
 }
 
 
@@ -89,6 +91,15 @@ def build(sub):
     sa = shs.add_parser("add"); sa.add_argument("user"); sa.add_argument("key")
     sr = shs.add_parser("remove"); sr.add_argument("user"); sr.add_argument("index", type=int)
 
+    # ---- downloads（下载统计，原核心 `stats downloads`）----
+    dl = sub.add_parser("downloads", help="下载统计（access 日志，按应用）")
+    dls = dl.add_subparsers(dest="action", required=True)
+    dls.add_parser("stats", help="按应用统计下载次数/独立IP").add_argument("--json", action="store_true")
+
+    # ---- cron（配额清理定时任务，原核心 `stats cron`）----
+    cr = sub.add_parser("cron", help="配额清理定时任务")
+    cr.add_argument("--remove", action="store_true", help="移除定时任务")
+
 
 def run(a):
     """按 a.pcmd（命令组）派发到具体处理器。"""
@@ -100,6 +111,10 @@ def run(a):
         _user(a)
     elif a.pcmd == "ssh":
         _ssh(a)
+    elif a.pcmd == "downloads":
+        _downloads(a)
+    elif a.pcmd == "cron":
+        _cron(a)
 
 
 def _user(a):
@@ -229,3 +244,32 @@ def _ssh(a):
         print_json(sshkeys.add_key(a.user, a.key))
     elif a.action == "remove":
         print_json(sshkeys.remove_key(a.user, a.index))
+
+
+def _downloads(a):
+    d = downloads.downloads()
+    if a.json:
+        print_json(d)
+        return
+    print(f"access 日志: {d['source']}")
+    print(f"独立IP来源: {'CF-Connecting-IP' if d['used_cf_header'] else 'remote_ip(受Cloudflare影响)'}")
+    for app in d["apps"]:
+        print(f"  {app['name']:<20} 下载 {app['total']:<6} 独立IP {app['unique_ips']}")
+    if not d["apps"]:
+        print("(暂无下载记录)")
+
+
+def _cron(a):
+    path = "/etc/cron.d/aups-enforce-quota"
+    if a.remove:
+        try:
+            os.remove(path)
+            print("已移除定时配额清理")
+        except OSError:
+            print("(未安装)")
+        return
+    cron = "0 * * * * root /usr/local/bin/aups plugins appupdate app enforce >/dev/null 2>&1\n"
+    with open(path, "w") as f:
+        f.write(cron)
+    os.chmod(path, 0o600)
+    print(f"已安装每小时配额清理: {path}")
