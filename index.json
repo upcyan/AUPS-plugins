@@ -10,14 +10,16 @@
       "version": "1.0.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
-        { "capability": "proxy" }
+        {
+          "capability": "proxy"
+        }
       ]
     },
     {
       "name": "caddy",
       "title": "Caddy 环境",
       "attr": "环境",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙"
     },
     {
@@ -27,7 +29,13 @@
       "version": "0.1.0",
       "description": "Nginx 反代：站点配置、证书（通过 certbot/acme 申请）",
       "install_params": [
-        { "key": "port", "label": "监听端口", "type": "number", "default": 8080, "description": "面板 nginx 监听端口（示例参数）" }
+        {
+          "key": "port",
+          "label": "监听端口",
+          "type": "number",
+          "default": 8080,
+          "description": "面板 nginx 监听端口（示例参数）"
+        }
       ]
     },
     {

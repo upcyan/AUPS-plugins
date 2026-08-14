@@ -1,7 +1,8 @@
 """caddy 插件 Web API 路由（由核心自动挂载，前缀 /api）。
 
-包含 Caddy 反代配置、WAF 防护、access 日志、Caddy 端口设置。
-鉴权用核心 websec.require_auth。
+包含 Caddy 反代配置、WAF 模板代理（规则存核心 aups.core.waf）、access 日志、
+Caddy 端口设置。WAF 规则模板已提升到核心（安全页「WAF 模板」），此处保留
+旧 /api/caddyconf/waf 接口以向后兼容，实际读写核心规则库。
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from ...web.websec import require_auth
 from ... import rproxy as RP
 from ... import ports as PORTS
-from . import waf as WAFM
+from ....core import waf as WAFM
 from . import env as ENV
 
 router = APIRouter()

@@ -3,22 +3,26 @@
 负责把「应用下载路由」与「WAF 规则」两段托管片段注入 Caddyfile 的下载站点块
 （以 AUP APPS / AUP WAF 标记定位），并 reload Caddy。
 
-WAF 规则通过 :mod:`aups.waf` 的中性结构渲染为 Caddy matcher + respond 403，
-并支持原生 rate_limit 指令（需 Caddy 2.9+ 内置该指令）。
+WAF 规则来自核心 :mod:`aups.core.waf` 的中性结构，本模块（Caddy 规则转换器）
+渲染为 Caddy matcher + respond 403，并支持原生 rate_limit 指令。
+
+下载路由：数据由 appupdate 提供（公共数据：list_apps/list_versions），
+本模块负责渲染成 Caddy 语法并维护站点块（Caddyfile 解析是本反代领域职责，
+不依赖 appupdate 内部实现）。与 appupdate 解耦。
 """
 
 import os
 import re
 
 from .. import env
-from .. import waf
+from ....core import waf
 from .... import ports
 from ....errors import AppError
 from ....util import has_cmd, run
 
 
 def _apps():
-    """懒加载 appupdate 应用数据（下载路由生成）。appupdate 停用/缺失时返回 None。"""
+    """懒加载 appupdate 公共数据模块（仅读应用列表数据，不依赖其内部实现）。"""
     try:
         from ....modules.appupdate import apps as _a
         return _a
@@ -275,11 +279,86 @@ def _waf_snippet():
 
 # ---------- 注入 ----------
 
+# Caddyfile 中 AUPS 托管标记（下载路由区）
+_APPS_MARK_BEGIN = "# >>> AUPS APPS (managed, do not remove) <<<"
+_OLD_APPS_BEGIN = "# >>> AUP APPS (managed, do not remove) <<<"
+_APPS_MARK_END = "# <<< AUPS APPS >>>"
+_OLD_APPS_END = "# <<< AUP APPS >>>"
+
+_IGNORE_TOP = (".", "import", "log", "email", "https_port", "http_port", "acme_dns")
+
+
+def _site_blocks(text):
+    """把 Caddyfile 文本拆成顶层站点块。返回 [{host, start, end, body}]，忽略全局块。
+
+    body 是站点块括号内的原始行（含缩进）。Caddyfile 结构解析属反代领域，内部实现。
+    """
+    blocks = []
+    lines = text.splitlines()
+    i, n = 0, len(lines)
+    while i < n:
+        stripped = lines[i].strip()
+        if "{" in stripped and not stripped.startswith(("#", "//")):
+            host = stripped.split("{")[0].strip()
+            skip = (not host) or host.startswith(_IGNORE_TOP)
+            if not skip:
+                depth = 0
+                interior = []
+                j = i
+                while j < n:
+                    depth += lines[j].count("{") - lines[j].count("}")
+                    if j > i:
+                        interior.append(lines[j])
+                    if depth == 0:
+                        break
+                    j += 1
+                blocks.append({
+                    "host": host,
+                    "body": "\n".join(interior[:-1]),
+                    "start": i,
+                    "end": j,
+                })
+                i = j + 1
+                continue
+        i += 1
+    return blocks
+
+
+def _gen_download_routes():
+    """从 appupdate 公共数据（list_apps/list_versions）生成 Caddy 下载路由片段。
+
+    数据来源与 appupdate 解耦：只读其公开函数，路由语法渲染为本反代职责。
+    appupdate 未启用或停用时返回空片段。
+    """
+    apps = _apps()
+    if apps is None:
+        return ""
+    parts = [_APPS_MARK_BEGIN]
+    for app in apps.list_apps():
+        host = app["name"]
+        vers = apps.list_versions(host)
+        if not vers:
+            continue
+        parts.append(f"    # -- {host} --")
+        for v in vers:
+            url = f"/{host}/{v['version']}"
+            dl = f"/{host}/{v['rel']}"
+            parts.append(f"    @dl_{host}_{v['version']} path {url} /{host}/v{v['version']}")
+            parts.append(f"    redir @dl_{host}_{v['version']} {dl}")
+        latest = vers[0]
+        parts.append(f"    @dl_latest_{host} path /{host}/latest")
+        parts.append(f"    redir @dl_latest_{host} /{host}/{latest['rel']}")
+    parts.append(_APPS_MARK_END)
+    return "\n".join(parts)
+
+
 def _replace_section(body, begin, end, snippet, insert_top=False):
     """在站点块 body 内替换或插入指定标记区。begin/end 兼容新旧 (AUP/AUPS) 标记。"""
     lines = body.splitlines()
-    old_begins = (_OLD_WAF_BEGIN,) if begin == _WAF_BEGIN else (_OLD_MARK_BEGIN,)
-    old_ends = (_OLD_WAF_END,) if end == _WAF_END else (_OLD_MARK_END,)
+    if begin == _WAF_BEGIN:
+        old_begins, old_ends = (_OLD_WAF_BEGIN,), (_OLD_WAF_END,)
+    else:
+        old_begins, old_ends = (_OLD_APPS_BEGIN,), (_OLD_APPS_END,)
     begin_idx = indent = None
     for i, ln in enumerate(lines):
         if begin in ln or any(ob in ln for ob in old_begins):
@@ -302,8 +381,10 @@ def _replace_section(body, begin, end, snippet, insert_top=False):
 
 def _extract_section(body, begin, end):
     """取标记区原文（含标记行）。begin/end 兼容新旧 (AUP/AUPS) 标记。"""
-    old_begins = (_OLD_WAF_BEGIN,) if begin == _WAF_BEGIN else (_OLD_MARK_BEGIN,)
-    old_ends = (_OLD_WAF_END,) if end == _WAF_END else (_OLD_MARK_END,)
+    if begin == _WAF_BEGIN:
+        old_begins, old_ends = (_OLD_WAF_BEGIN,), (_OLD_WAF_END,)
+    else:
+        old_begins, old_ends = (_OLD_APPS_BEGIN,), (_OLD_APPS_END,)
     out, on = [], False
     for ln in body.splitlines():
         if begin in ln or any(ob in ln for ob in old_begins):
@@ -316,47 +397,42 @@ def _extract_section(body, begin, end):
 
 
 def _site():
-    """找到托管站点块。"""
+    """找到托管站点块（含下载路由或 WAF 标记区）。"""
     try:
         text = open(env.caddy_config_file(), encoding="utf-8").read()
     except OSError:
         raise AppError(f"Caddyfile 不存在：{env.caddy_config_file()}")
-    apps = _apps()
-    if apps is None:
-        raise AppError("appupdate 模块未启用，无法维护下载路由托管片段")
-    blocks = apps._site_blocks(text)
+    blocks = _site_blocks(text)
     target = None
     for blk in blocks:
-        if (apps._CADDY_MARK_BEGIN in blk["body"] or apps._OLD_MARK_BEGIN in blk["body"]
+        if (_APPS_MARK_BEGIN in blk["body"] or _OLD_APPS_BEGIN in blk["body"]
                 or _WAF_BEGIN in blk["body"] or _OLD_WAF_BEGIN in blk["body"]):
             target = blk
             break
     if target is None:
         raise AppError(
             "Caddyfile 中未找到 AUPS 托管标记区。请在下载站点块内加一行：\n"
-            f"  {apps._CADDY_MARK_BEGIN}\n"
-            "（aups 会自动把下载路由与 WAF 规则写入该站点块）")
+            f"  {_APPS_MARK_BEGIN}\n"
+            "（面板会自动把下载路由与 WAF 规则写入该站点块）")
     return text, target
 
 
 def show():
     text, target = _site()
     body = target["body"]
-    apps = _apps()
     return {
         "caddyfile": env.caddy_config_file(),
         "total_lines": len(text.splitlines()),
         "managed": {
-            "apps": _extract_section(body, apps._CADDY_MARK_BEGIN, apps._CADDY_MARK_END),
+            "apps": _extract_section(body, _APPS_MARK_BEGIN, _APPS_MARK_END),
             "waf": _extract_section(body, _WAF_BEGIN, _WAF_END),
         },
     }
 
 
 def preview():
-    apps = _apps()
     return {
-        "apps": apps._gen_routes() if apps else "(appupdate 未启用)",
+        "apps": _gen_download_routes(),
         "waf": _waf_snippet(),
     }
 
@@ -365,9 +441,8 @@ def apply(reload=True):
     text, target = _site()
     lines = text.splitlines()
     body = target["body"]
-    apps = _apps()
-    body = _replace_section(body, apps._CADDY_MARK_BEGIN, apps._CADDY_MARK_END,
-                            apps._gen_routes())
+    body = _replace_section(body, _APPS_MARK_BEGIN, _APPS_MARK_END,
+                            _gen_download_routes())
     # WAF 段置于站点块顶部，确保先于 redir/file_server 生效
     body = _replace_section(body, _WAF_BEGIN, _WAF_END, _waf_snippet(), insert_top=True)
     opener = lines[target["start"]]

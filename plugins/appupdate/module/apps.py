@@ -318,149 +318,38 @@ def _enforce_total_quota(removed):
             removed.setdefault(r["app"], []).append(r["file"])
 
 
-# -------------------- Caddy 路由生成 --------------------
-
-_CADDY_MARK_BEGIN = "# >>> AUPS APPS (managed, do not remove) <<<"
-_OLD_MARK_BEGIN = "# >>> AUP APPS (managed, do not remove) <<<"
-_CADDY_MARK_END = "# <<< AUPS APPS >>>"
-_OLD_MARK_END = "# <<< AUP APPS >>>"
-
-_IGNORE_TOP = (".", "import", "log", "email", "https_port", "http_port", "acme_dns")
-
-
-def _site_blocks(text):
-    """把 Caddyfile 文本拆成顶层站点块。返回 [{host, start, end, body}]，忽略全局块。
-
-    body 是站点块括号内的原始行（含缩进）。
-    """
-    blocks = []
-    lines = text.splitlines()
-    i, n = 0, len(lines)
-    while i < n:
-        stripped = lines[i].strip()
-        if "{" in stripped and not stripped.startswith(("#", "//")):
-            host = stripped.split("{")[0].strip()
-            skip = (not host) or host.startswith(_IGNORE_TOP)
-            if not skip:
-                depth = 0
-                interior = []
-                j = i
-                while j < n:
-                    depth += lines[j].count("{") - lines[j].count("}")
-                    if j > i:
-                        interior.append(lines[j])
-                    if depth == 0:
-                        break
-                    j += 1
-                blocks.append({
-                    "host": host,
-                    "body": "\n".join(interior[:-1]),  # 去尾部闭合行 }
-                    "start": i,
-                    "end": j,
-                })
-                i = j + 1
-                continue
-        i += 1
-    return blocks
-
-
-def _gen_routes():
-    """根据已注册应用生成 Caddy 路由片段（marker 包裹）。"""
-    parts = [_CADDY_MARK_BEGIN]
-    apps = list_apps()
-    for app in apps:
-        host = app["name"]
-        vers = list_versions(host)
-        if not vers:
-            continue
-        parts.append(f"    # -- {host} --")
-        for v in vers:
-            url = f"/{host}/{v['version']}"
-            dl = f"/{host}/{v['rel']}"
-            parts.append(f"    @dl_{host}_{v['version']} path {url} /{host}/v{v['version']}")
-            parts.append(f"    redir @dl_{host}_{v['version']} {dl}")
-        latest = vers[0]
-        parts.append(f"    @dl_latest_{host} path /{host}/latest")
-        parts.append(f"    redir @dl_latest_{host} /{host}/{latest['rel']}")
-    parts.append(_CADDY_MARK_END)
-    return "\n".join(parts)
-
-
-def _replace_marker(body, routes):
-    """在站点块 body 中替换或插入 marker 区。"""
-    lines = body.splitlines()
-    begin_idx = indent = None
-    for i, ln in enumerate(lines):
-        if _CADDY_MARK_BEGIN in ln or _OLD_MARK_BEGIN in ln:
-            begin_idx = i
-            indent = ln[: len(ln) - len(ln.lstrip())]
-            break
-    if begin_idx is not None:
-        end_idx = next((i for i in range(begin_idx, len(lines))
-                        if (_CADDY_MARK_END in lines[i] or _OLD_MARK_END in lines[i])), None)
-        insert_at = begin_idx
-        drop_count = (end_idx - begin_idx + 1) if end_idx is not None else (len(lines) - begin_idx)
-    else:
-        insert_at = len(lines)
-        drop_count = 0
-        indent = "    "
-    new_lines = [_add_indent(ln, indent) for ln in routes.splitlines()]
-    lines[insert_at:insert_at + drop_count] = new_lines
-    return "\n".join(lines)
-
-
-def _add_indent(line, indent):
-    if not line:
-        return line
-    if line.lstrip().startswith(("#", "@", "redir")):
-        return indent + line.strip()
-    return line
+# -------------------- 反代路由更新（经 rproxy 公共 API，与具体反代解耦） --------------------
+#
+# 下载路由的 Caddyfile 写入职责属于反代领域（caddy 插件提供 download_route 能力）。
+# appupdate 只提供公共数据（list_apps / list_versions），并通过 rproxy.apply()
+# 触发反代重渲染 + reload，不直接依赖 caddy 内部实现。更换反代无需改动本模块。
 
 
 def update_caddy_routes(reload=True):
-    """把应用路由片断写回 Caddyfile（marker 定位替换），可选 reload。返回 {caddyfile, written}。"""
-    from ..caddy import env as caddy_env
+    """触发当前反代重写下载路由并 reload。
+
+    反代后端（caddy/nginx...）通过 rproxy 统一调度；若当前反代不支持
+    download_route 能力则提示。返回 {backend, written, reloaded}。
+    """
     from ... import rproxy
-    caddyfile = caddy_env.caddy_config_file()
-    routes = _gen_routes()
-    try:
-        with open(caddyfile, encoding="utf-8") as f:
-            lines = f.read().splitlines()
-    except OSError:
-        raise AppError(f"Caddyfile 不存在：{caddyfile}")
-
-    blocks = _site_blocks("\n".join(lines))
-    target = None
-    for block in blocks:
-        if _CADDY_MARK_BEGIN in block["body"] or _OLD_MARK_BEGIN in block["body"]:
-            target = block
-            break
-    if target is None:
-        raise AppError(
-            "Caddyfile 中未找到 AUPS APPS 标记区。请在下载站点块内加入一行：\n"
-            f"  {_CADDY_MARK_BEGIN}\n"
-            "（会自动在该行之后写入路由，站点块结尾无需手动加结束标记）")
-
-    old_body = target["body"]
-    new_body = _replace_marker(old_body, routes)
-    # start 为站点块起始行（含 host {），end 为闭合行（}），仅替换二者之间的内部行
-    opener = lines[target["start"]]
-    closer = lines[target["end"]]
-    out = (lines[: target["start"]]
-           + [opener]
-           + new_body.splitlines()
-           + [closer]
-           + lines[target["end"] + 1:])
-    with open(caddyfile, "w", encoding="utf-8") as f:
-        f.write("\n".join(out))
-    if reload:
-        rproxy.reload()
-    return {"caddyfile": caddyfile, "written": True}
+    backend = rproxy.backend_name()
+    if not backend:
+        raise AppError("未检测到可用的反代后端（请安装 caddy/nginx 等）")
+    if not rproxy.has_capability("download_route", backend):
+        raise AppError(f"反代 {backend} 不支持 download_route 能力，无法更新下载路由")
+    result = rproxy._call(backend, "apply", reload=reload)
+    return {"backend": backend, "written": True, "reloaded": reload, **result}
 
 
 def _caddy_preview():
-    """只打印将写入 Caddyfile 的路由片段，不做修改。"""
-    return _gen_routes()
+    """预览反代将写入的下载路由片段（经反代 preview 能力）。"""
+    from ... import rproxy
+    backend = rproxy.backend_name()
+    if not backend:
+        return "(未检测到反代后端)"
+    if not rproxy.has_capability("preview", backend):
+        return f"(反代 {backend} 不支持 preview)"
+    return rproxy._call(backend, "preview").get("apps", "")
 
 
 def remove():
