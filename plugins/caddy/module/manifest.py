@@ -48,7 +48,5 @@ MANIFEST = {
     "plugins": [
         {"id": "rproxy", "title": "反代配置",
          "description": "Caddy 后端状态、托管片段（下载路由/WAF 转换）、端口与防火墙"},
-        {"id": "env", "title": "环境部署",
-         "description": "Caddy 状态与安装（部署二进制到面板目录）"},
     ],
 }

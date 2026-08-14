@@ -10,10 +10,10 @@ import time
 
 from ... import config
 from ... import rproxy
+from ...core import waf
 from ...errors import AppError
 from ...util import print_json
 from . import env
-from . import waf
 
 # 只读命令（免 root）；其余命令要求 root
 READ_ONLY = {

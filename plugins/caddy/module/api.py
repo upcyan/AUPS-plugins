@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from ...web.websec import require_auth
 from ... import rproxy as RP
 from ... import ports as PORTS
-from ....core import waf as WAFM
+from ...core import waf as WAFM
 from . import env as ENV
 
 router = APIRouter()
