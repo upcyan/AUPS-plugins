@@ -51,6 +51,13 @@
       "attr": "依赖",
       "version": "0.1.0",
       "description": "acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录"
+    },
+    {
+      "name": "cyansecengine",
+      "title": "安全加固",
+      "attr": "功能",
+      "version": "0.1.0",
+      "description": "轻量主机安全加固：rkhunter 入侵检测、LMD 恶意软件扫描、YARA 规则订阅、Webshell 排查"
     }
   ]
 }
