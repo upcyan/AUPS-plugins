@@ -17,8 +17,8 @@ window.AUPS_PLUGINS['cyansecengine'] = (function () {
       <div class="mut" style="margin-bottom:12px">v3.0.0 起为占位壳：安全加固能力已并入面板核心与依赖插件，功能入口已迁移。</div>
       <table style="min-width:360px">
         <tr><th>能力</th><th>新位置</th></tr>
-        <tr><td>主机安全（rkhunter / LMD）</td><td>面板 → 安全管理 → 主机安全</td></tr>
-        <tr><td>实时防护（fanotify + WAF 联动）</td><td>面板 → 安全管理 → 实时防护</td></tr>
+        <tr><td>主机安全（rkhunter / LMD）</td><td>面板 → 安全管理 → 安全加固 → 安全引擎（配合 rkhunter / lmd 依赖插件）</td></tr>
+        <tr><td>实时防护（fanotify + WAF 联动）</td><td>面板 → 安全管理 → 安全加固 → 实时防护</td></tr>
         <tr><td>YARA 引擎与规则订阅</td><td>插件 → YARA 引擎</td></tr>
       </table>
       <div class="mut" style="margin-top:12px">数据未迁移（按设计直接新建）：新规则目录位于 /opt/aups/data/yara/，扫描报告位于 data/hostsec/ 与 data/yara/reports/。</div>

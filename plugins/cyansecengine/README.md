@@ -2,14 +2,14 @@
 
 属性：功能
 
-青·擎（原安全加固）。v3.0.0 起为保留占位壳：主机安全（rkhunter/LMD）、实时防护（fanotify）与 YARA 引擎已并入面板核心与 yara 依赖插件。
+青·擎（原安全加固）。v3.0.0 起为保留占位壳：主机安全（rkhunter/LMD）为 rkhunter / lmd 依赖插件、实时防护（fanotify）与 YARA 引擎已并入面板核心与 yara 依赖插件。
 
 ## 能力迁移
 
 | 能力 | 新位置 |
 |---|---|
-| 主机安全（rkhunter / LMD 扫描、隔离区） | 面板 → 安全管理 → 主机安全 |
-| 实时防护（fanotify + YARA + WAF 联动） | 面板 → 安全管理 → 实时防护 |
+| 主机安全（rkhunter / LMD 扫描、隔离区） | 面板 → 安全管理 → 安全加固 → 安全引擎（配合 rkhunter / lmd 依赖插件） |
+| 实时防护（fanotify + YARA + WAF 联动） | 面板 → 安全管理 → 安全加固 → 实时防护 |
 | YARA 引擎与规则订阅 | 插件中心 → YARA 引擎 |
 | CLI `aups sec ...` | `aups hostsec ...` / `aups rtguard ...` |
 
