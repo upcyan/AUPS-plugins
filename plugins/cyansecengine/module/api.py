@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from ...web.websec import require_auth
 from . import scanner as SC
 from . import subscribe as SUB
+from . import rtguard as RT
 
 router = APIRouter()
 
@@ -78,3 +79,22 @@ def cyansec_subscribe(body: dict = None, auth=Depends(require_auth)):
 def cyansec_subscribe_sync(body: dict = None, auth=Depends(require_auth)):
     b = body or {}
     return SUB.sync(b.get("url"), due_only=bool(b.get("due_only", False)))
+
+
+# ---------- 实时防护（Phase 3） ----------
+
+@router.get("/cyansec/rt")
+def cyansec_rt_status(auth=Depends(require_auth)):
+    return RT.rt_status()
+
+
+@router.post("/cyansec/rt")
+def cyansec_rt_set(body: dict = None, auth=Depends(require_auth)):
+    b = body or {}
+    return RT.set_rt(bool(b.get("enabled", False)), b.get("paths"),
+                     b.get("quarantine"), b.get("waf_block"), b.get("interval"))
+
+
+@router.get("/cyansec/rt/events")
+def cyansec_rt_events(auth=Depends(require_auth)):
+    return {"events": RT.rt_events()}

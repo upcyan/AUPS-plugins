@@ -13,6 +13,7 @@ window.AUPS_PLUGINS['cyansecengine'] = (function () {
   function navHtml() {
     return `<div class="secnav">
       <button class="${section === 'overview' ? 'on' : ''}" onclick="${P}go('overview')">安全概览</button>
+      <button class="${section === 'rt' ? 'on' : ''}" onclick="${P}go('rt')">实时防护</button>
       <button class="${section === 'scan' ? 'on' : ''}" onclick="${P}go('scan')">扫描</button>
       <button class="${section === 'quarantine' ? 'on' : ''}" onclick="${P}go('quarantine')">隔离区</button>
       <button class="${section === 'rules' ? 'on' : ''}" onclick="${P}go('rules')">规则订阅</button>
@@ -22,6 +23,7 @@ window.AUPS_PLUGINS['cyansecengine'] = (function () {
   function go(s) {
     section = s || 'overview';
     if (section === 'overview') overviewTab();
+    else if (section === 'rt') rtTab();
     else if (section === 'scan') scanTab();
     else if (section === 'quarantine') quarantineTab();
     else if (section === 'rules') rulesTab();
@@ -96,6 +98,70 @@ window.AUPS_PLUGINS['cyansecengine'] = (function () {
       document.body.appendChild(modal);
     }).catch(e => alert('读取报告失败：' + ((e && e.message) || e)));
   }
+
+  /* ---------- 实时防护（fanotify + WAF 联动） ---------- */
+  async function rtTab() {
+    const [st, ev] = await Promise.all([
+      api('GET', '/api/cyansec/rt').catch(() => ({})),
+      api('GET', '/api/cyansec/rt/events').catch(() => ({events: []}))
+    ]);
+    const on = st.running;
+    const enabled = st.enabled;
+    const statusBadge = on ? '<span class="ok">运行中</span>'
+      : (enabled ? '<span class="bad">未运行</span>' : '<span class="mut">已停止</span>');
+    const paths = (st.paths || []).join('，') || '<span class="mut">未设置</span>';
+    const evRows = (ev.events || []).map(e => {
+      const ts = new Date((e.ts || 0) * 1000).toLocaleString();
+      const act = [];
+      if (e.quarantined) act.push('<span class="bad">已隔离</span>');
+      if (e.waf_blocked) act.push('<span class="ok">WAF 已拦截</span>');
+      return `<tr><td>${esc(ts)}</td><td>${esc(e.file)}</td>
+        <td>${(e.rules||[]).map(r=>`<span class="bad">${esc(r)}</span>`).join(' ')}</td>
+        <td>${act.join(' ') || '<span class="mut">-</span>'}</td></tr>`;
+    }).join('') || '<tr><td colspan="4" class="mut">暂无告警记录</td></tr>';
+    view.innerHTML = navHtml() + `
+    <div class="card"><h2>实时防护 ${statusBadge}</h2>
+      <div class="mut" style="margin-bottom:8px">
+        fanotify 内核监听文件写入/创建，命中 YARA 规则立即告警，并联动核心 WAF 添加路径拦截（主动防御）。
+        无常驻额外依赖，内存占用极低。<span class="mut">需 root 权限。</span>
+      </div>
+      <div class="mut">监听路径: <b>${paths}</b></div>
+      <div class="row" style="flex-wrap:wrap;margin-top:8px">
+        ${!on ? `<button onclick="${P}rtOn()">开启实时防护</button>` : `<button class="ghost" onclick="${P}rtOff()">停止实时防护</button>`}
+        <button class="ghost" onclick="${P}rtRefresh()">刷新</button>
+      </div>
+      <div class="mut" style="margin-top:6px;font-size:12px">
+        <label class="pc-chk"><input type="checkbox" id="rtQuar" ${st.quarantine ? 'checked' : ''}> 命中自动隔离</label>
+        <label class="pc-chk"><input type="checkbox" id="rtWaf" ${st.waf_block ? 'checked' : ''}> 联动 WAF 拦截</label>
+      </div>
+      <div id="rtPathsBox" style="margin-top:8px">
+        <div class="mut">监听目录（每行一个，默认面板数据目录）：</div>
+        <textarea id="rtPaths" rows="3" style="width:100%;font-family:monospace">${(st.paths||[]).join('\n')}</textarea>
+      </div>
+      <div class="row" style="margin-top:8px"><button class="ghost" onclick="${P}rtSave()">保存设置</button></div>
+    </div>
+    <div class="card"><h2>告警记录</h2>
+      <table><tr><th>时间</th><th>文件</th><th>命中规则</th><th>处置</th></tr>${evRows}</table></div>`;
+  }
+  async function rtOn() {
+    if (!confirm('开启实时防护？需 root 权限，fanotify 不可用时自动回退为轮询扫描。')) return;
+    await rtSave();
+    await api('POST', '/api/cyansec/rt', {enabled: true});
+    alert('已开启实时防护');
+    await rtTab();
+  }
+  async function rtOff() {
+    await api('POST', '/api/cyansec/rt', {enabled: false});
+    alert('已停止实时防护');
+    await rtTab();
+  }
+  async function rtSave() {
+    const paths = (document.getElementById('rtPaths').value || '').split('\n').map(s=>s.trim()).filter(Boolean);
+    const quarantine = document.getElementById('rtQuar').checked;
+    const waf_block = document.getElementById('rtWaf').checked;
+    await api('POST', '/api/cyansec/rt', {enabled: false, paths: paths, quarantine: quarantine, waf_block: waf_block});
+  }
+  async function rtRefresh() { await rtTab(); }
 
   /* ---------- 扫描 ---------- */
   async function scanTab() {
@@ -229,14 +295,16 @@ window.AUPS_PLUGINS['cyansecengine'] = (function () {
     title: '安全加固',
     sections: [
       {id: 'overview', title: '安全概览'},
+      {id: 'rt', title: '实时防护'},
       {id: 'scan', title: '扫描'},
       {id: 'quarantine', title: '隔离区'},
       {id: 'rules', title: '规则订阅'},
     ],
     go: go,
     open: function (s) { go(s || 'overview'); },
-    overviewTab: overviewTab, scanTab: scanTab, quarantineTab: quarantineTab, rulesTab: rulesTab,
+    overviewTab: overviewTab, rtTab: rtTab, scanTab: scanTab, quarantineTab: quarantineTab, rulesTab: rulesTab,
     installTool: installTool, runScan: runScan, openReport: openReport,
+    rtOn: rtOn, rtOff: rtOff, rtSave: rtSave, rtRefresh: rtRefresh,
     scanWith: scanWith, scanCustom: scanCustom, restoreQ: restoreQ,
     addSub: addSub, removeSub: removeSub, syncSub: syncSub, syncAllSub: syncAllSub,
   };

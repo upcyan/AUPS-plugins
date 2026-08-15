@@ -10,16 +10,17 @@ from ...errors import AppError
 from ...util import print_json
 from . import scanner
 from . import subscribe
+from . import rtguard
 
 # 只读命令（免 root）；其余命令要求 root
 READ_ONLY = {
-    "sec": {"status", "reports", "quarantine", "subscribe"},
+    "sec": {"status", "reports", "quarantine", "subscribe", "rt"},
 }
 
 
 def build(sub):
     """注册命令组：sec（安全加固）。"""
-    s = sub.add_parser("sec", help="安全加固（rkhunter / LMD / YARA / 规则订阅）")
+    s = sub.add_parser("sec", help="安全加固（rkhunter / LMD / YARA / 实时防护 / 规则订阅）")
     ss = s.add_subparsers(dest="action", required=True)
 
     ss.add_parser("status", help="各引擎安装状态").add_argument("--json", action="store_true")
@@ -39,6 +40,17 @@ def build(sub):
     ss.add_parser("quarantine", help="隔离区文件列表").add_argument("--json", action="store_true")
     qr = ss.add_parser("restore", help="恢复隔离文件")
     qr.add_argument("name")
+
+    # ---- 实时防护 ----
+    rt = ss.add_parser("rt", help="实时防护状态")
+    rt.add_argument("--json", action="store_true")
+    rton = ss.add_parser("rt-on", help="开启实时防护")
+    rton.add_argument("paths", nargs="+", help="要监听的目录")
+    rton.add_argument("--no-quarantine", action="store_true")
+    rton.add_argument("--no-waf", action="store_true")
+    rton.add_argument("--interval", type=int, default=5, help="轮询间隔秒（fanotify 不可用时）")
+    ss.add_parser("rt-off", help="关闭实时防护")
+    ss.add_parser("rt-events", help="实时防护告警记录").add_argument("--json", action="store_true")
 
     ss.add_parser("subscribe", help="订阅列表").add_argument("--json", action="store_true")
     sadd = ss.add_parser("sub-add", help="添加订阅")
@@ -92,6 +104,23 @@ def _sec(a):
         print_json(subscribe.remove_sub(a.url))
     elif a.action == "sub-sync":
         print_json(subscribe.sync(a.url or None, due_only=a.due))
+    elif a.action == "rt":
+        d = rtguard.rt_status()
+        if a.json:
+            print_json(d)
+            return
+        print(f"实时防护: {'运行中' if d['running'] else '已停止'}  (pid {d['pid'] or '-'})")
+        print(f"监听路径: {', '.join(d['paths']) or '(无)'}")
+        print(f"隔离: {'开' if d['quarantine'] else '关'}  WAF 联动: {'开' if d['waf_block'] else '关'}  轮询间隔: {d['interval']}s")
+    elif a.action == "rt-on":
+        print_json(rtguard.set_rt(True, a.paths,
+                                  quarantine=not a.no_quarantine,
+                                  waf_block=not a.no_waf, interval=a.interval))
+    elif a.action == "rt-off":
+        print_json(rtguard.set_rt(False))
+    elif a.action == "rt-events":
+        events = rtguard.rt_events()
+        print_json(events if a.json else _human_rt_events(events))
 
 
 def _human_reports(reports):
@@ -116,4 +145,20 @@ def _human_subs(subs):
                 if s.get("last_sync") else "未同步")
         lines.append(f"■ {s.get('name', s['url'])}  [{state}]  规则 {s.get('rule_count', 0)}  上次 {last}")
         lines.append(f"    {s['url']}")
+    return "\n".join(lines)
+
+
+def _human_rt_events(events):
+    if not events:
+        return "(暂无实时防护告警)"
+    lines = []
+    for e in events:
+        ts = __import__("time").strftime("%F %T", __import__("time").localtime(e.get("ts", 0)))
+        action = []
+        if e.get("quarantined"):
+            action.append("已隔离")
+        if e.get("waf_blocked"):
+            action.append("WAF 已拦截")
+        lines.append(f"[{ts}] {e.get('file')} 命中 {', '.join(e.get('rules', []))}"
+                     + (f"  ({', '.join(action)})" if action else ""))
     return "\n".join(lines)
