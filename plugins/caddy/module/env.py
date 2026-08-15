@@ -109,7 +109,11 @@ def _switch_unit(runtime_bin, panel_caddyfile):
 
 
 def remove():
-    """卸载：停止面板 caddy、删除面板目录，并还原 systemd 单元为系统 caddy。"""
+    """卸载：停止面板 caddy、删除面板部署的二进制，并还原 systemd 单元为系统 caddy。
+
+    只清理部署的软件（二进制/systemd），不删除 config/data 目录——数据保留与否
+    由市场卸载时的 keep_data 决定（keep_data=False 时市场侧会删除 config/data）。
+    """
     # 停止面板 caddy（若在运行）
     bin_path = caddy_binary()
     if bin_path:
@@ -128,7 +132,6 @@ def remove():
                 run(["systemctl", "restart", "caddy"], check=False)
         except OSError:
             pass
-    # 删除面板目录
-    for kind in ("runtime", "config", "data"):
-        shutil.rmtree(config.plugin_dir("caddy", kind), ignore_errors=True)
+    # 仅删除面板部署的二进制（runtime 目录），保留 config/data
+    shutil.rmtree(config.plugin_dir("caddy", "runtime"), ignore_errors=True)
     return {"name": "caddy", "removed": True}

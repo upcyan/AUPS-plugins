@@ -104,13 +104,10 @@ def renew():
 
 
 def remove():
-    """卸载：删除续期 cron 与面板 runtime/data 目录（脚本/证书/配置）。"""
+    """卸载：删除续期 cron（保留 config/data 证书/配置，由市场 keep_data 决定）。"""
     for cron in ("/etc/cron.d/aups-acme-renew",):
         try:
             os.remove(cron)
         except OSError:
             pass
-    for kind in ("runtime", "config", "data"):
-        import shutil
-        shutil.rmtree(config.plugin_dir("acme", kind), ignore_errors=True)
     return {"name": "acme", "removed": True}

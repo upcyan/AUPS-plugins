@@ -167,8 +167,7 @@ def install():
 
 
 def remove():
-    """卸载：停止并删除面板目录下的 nginx。"""
+    """卸载：停止面板部署的 nginx，删除运行时二进制（保留 config/data，由市场 keep_data 决定）。"""
     _stop()
-    for kind in ("runtime", "config", "data"):
-        shutil.rmtree(config.plugin_dir("nginx", kind), ignore_errors=True)
+    shutil.rmtree(config.plugin_dir("nginx", "runtime"), ignore_errors=True)
     return {"name": "nginx", "removed": True}

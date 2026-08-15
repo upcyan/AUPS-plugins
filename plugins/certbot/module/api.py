@@ -87,12 +87,10 @@ def renew():
 
 
 def remove():
-    """卸载：删除续期 cron 与面板数据目录（证书/配置/日志）。"""
+    """卸载：删除续期 cron（保留 config/data 证书/配置，由市场 keep_data 决定）。"""
     for cron in ("/etc/cron.d/aups-certbot-renew",):
         try:
             os.remove(cron)
         except OSError:
             pass
-    for kind in ("runtime", "config", "data"):
-        shutil.rmtree(config.plugin_dir("certbot", kind), ignore_errors=True)
     return {"name": "certbot", "removed": True}
