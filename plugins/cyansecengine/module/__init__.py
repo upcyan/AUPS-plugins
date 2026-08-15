@@ -1,8 +1,7 @@
-"""cyansecengine 模块：轻量主机安全加固（可选）。
+"""cyansecengine（青·擎）模块：占位壳。
 
-包含：扫描器（scanner：rkhunter / LMD / YARA）、在线规则订阅（subscribe）。
-与核心 WAF 模板（aups.core.waf）互补：WAF 管流量层，本插件管主机层
-（rootkit / 恶意文件 / Webshell）。
+v3.0.0 起不再提供逻辑模块 —— 主机安全 / 实时防护 / YARA 引擎的
+实现已并入核心（aups.core.hostsec / aups.core.rtguard / aups.core.yara）。
 """
 
 from .manifest import MANIFEST

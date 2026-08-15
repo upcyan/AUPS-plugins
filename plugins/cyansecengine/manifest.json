@@ -1,7 +1,7 @@
 {
   "name": "cyansecengine",
-  "title": "安全加固",
+  "title": "青·擎",
   "attr": "功能",
-  "version": "0.2.0",
-  "description": "轻量主机安全加固：rkhunter 入侵检测、LMD 恶意软件扫描、YARA 规则订阅、fanotify 实时防护与 WAF 主动防御联动"
+  "version": "3.0.0",
+  "description": "青·擎（原安全加固）。主机安全（rkhunter/LMD）、实时防护与 YARA 引擎已并入面板核心与 yara 依赖插件，本插件为保留占位壳"
 }
