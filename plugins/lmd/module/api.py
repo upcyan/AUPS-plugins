@@ -1,6 +1,6 @@
 """lmd 插件 Web API 路由（由核心自动挂载，前缀 /api）。
 
-逻辑委托核心 aups.core.hostsec（LMD 安装/卸载/扫描/报告/隔离区）。
+安装/卸载/扫描由本插件 scanner 实现；报告/隔离区数据层委托核心 aups.core.hostsec。
 """
 
 from fastapi import APIRouter, Depends, HTTPException

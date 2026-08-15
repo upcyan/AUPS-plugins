@@ -1,47 +1,92 @@
-"""rkhunter 引擎委托模块。
+"""rkhunter 引擎（插件负责二进制部署与扫描解析）。
 
-全部逻辑委托核心 aups.core.hostsec（安装/卸载/扫描/报告与数据目录
-均为核心持有），保证迁移上下文（强制重装）与插件粒度解耦。
+架构分层：
+- 本插件实现：二进制部署（install/reinstall/uninstall）、扫描执行与结果解析；
+- 共享数据层（报告读写）委托核心 aups.core.hostsec（save_report/reports/report）。
 """
 
+import shutil
+
 from ...core import hostsec
+from ...core import pkg
+from ...core.util import run
+from ...errors import AppError
 
 TOOL = "rkhunter"
 
 
 def status():
-    return hostsec.status().get("rkhunter", {})
+    """rkhunter 二进制状态（版本探测由核心 bin_version 辅助）。"""
+    rk = shutil.which("rkhunter")
+    return {"installed": bool(rk), "binary": rk or "",
+            "version": hostsec.bin_version(rk, ["--version"])}
 
 
 def install():
-    """核心按需安装 rkhunter（无旧二进制时）。"""
-    return hostsec.install("rkhunter")
+    """部署 rkhunter：系统包管理器安装。"""
+    pkg.install(["rkhunter"])
+    return {"ok": True, "tool": TOOL, **status()}
 
 
 def reinstall():
     """强制重装为插件受管：先卸载旧二进制再重装。"""
-    return hostsec.reinstall("rkhunter")
+    st = status()
+    if st["installed"]:
+        uninstall()
+    return install()
 
 
 def uninstall():
     """卸载 rkhunter 二进制（插件卸载钩子用）。"""
-    return hostsec.uninstall("rkhunter")
+    try:
+        pkg.uninstall(["rkhunter"])
+    except AppError as e:
+        raise AppError(f"rkhunter 卸载失败：{e}")
+    return {"ok": True, "tool": TOOL, "uninstalled": True, **status()}
 
 
-def scan(paths=None):
-    return hostsec.scan("rkhunter", paths, quarantine=False)
+def scan(paths=None, quarantine=True):
+    """运行 rkhunter --check，解析警告行。需 root。"""
+    rk = shutil.which("rkhunter")
+    if not rk:
+        raise AppError("未安装 rkhunter，请先安装（安装后可执行 aups hostsec install rkhunter）")
+    # --sk 跳过明文密码提示，--rwo 仅报告警告；报告文本输出到 stdout
+    r = run([rk, "--check", "--sk", "--rwo", "--nocolors"], check=False)
+    text = (r.stdout or "") + "\n" + (r.stderr or "")
+    suspected = rootkits = 0
+    lines = []
+    for ln in text.splitlines():
+        if "Rootkit Hunter" in ln or not ln.strip():
+            continue
+        if ln.strip().startswith("Warning:"):
+            lines.append(ln.strip())
+            if "rootkit" in ln.lower():
+                rootkits += 1
+            else:
+                suspected += 1
+    result = {
+        "tool": TOOL,
+        "returncode": r.returncode,
+        "suspected": suspected, "rootkits": rootkits,
+        "warnings": lines[:100],
+        "raw": text[-4000:],
+    }
+    rid = hostsec.save_report(TOOL, result)
+    return {"report_id": rid, **result}
 
 
 def reports():
+    """读取共享数据层的扫描报告列表。"""
     return hostsec.reports()
 
 
 def report(rid):
+    """读取共享数据层的单份报告。"""
     return hostsec.report(rid)
 
 
 def post_install():
-    """market 安装/更新后执行：强制统一通过插件重装（卸载旧二进制再装）。"""
+    """market 安装/更新后执行：强制统一通过本插件重装（卸载旧二进制再装）。"""
     return reinstall()
 
 

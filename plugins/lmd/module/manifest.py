@@ -1,6 +1,7 @@
-"""lmd 模块清单（v1.0.0）：LMD (maldet) 恶意软件扫描引擎依赖插件。
+"""lmd 模块清单（v1.1.0）：LMD (maldet) 恶意软件扫描引擎依赖插件。
 
-- 引擎安装/卸载/扫描/报告/隔离区逻辑由核心持有（aups.core.hostsec），本插件委托核心；
+- 二进制部署（下载/解压/安装/重装/卸载）与扫描解析由本插件实现（scanner.py）；
+- 报告/隔离区数据层委托核心 aups.core.hostsec；
 - 提供能力 provides.lmd，供核心「安全引擎」按需调用；
 - 安装（market install / 更新）时执行 post_install()：若已存在旧二进制，
   先卸载再重装为插件受管（强制统一通过插件重装）。
@@ -11,8 +12,8 @@
 MANIFEST = {
     "name": "lmd",
     "title": "LMD",
-    "version": "1.0.0",
-    "description": "LMD (maldet) 恶意软件扫描引擎（依赖插件）：由核心安全引擎按需调用，扫描/报告/隔离区，安装时若已存在旧二进制将先卸载再重装为插件受管",
+    "version": "1.1.0",
+    "description": "LMD (maldet) 恶意软件扫描引擎（依赖插件）：二进制部署与扫描由插件实现，报告/隔离区由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
     "type": "external",
     "attr": "依赖",
     "deploy": {"host": True},
