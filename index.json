@@ -27,7 +27,9 @@
         "module/sshkeys.py": "063a53cd0cb2a363b509464374fec8c38130485aa8833c0c13dc4c07b52d8811",
         "module/storage.py": "fcb509465c516cbccc501ef7079e97f322a428be5932cdc1accbffa873d5a64b",
         "module/users.py": "d4e0567b40066134b189c0631e13af7045ef631a567649f54e70a4fd8a9cb0bf"
-      }
+      },
+      "cards": true,
+      "provides": []
     },
     {
       "name": "caddy",
@@ -45,7 +47,11 @@
         "module/env.py": "cc4b2b67b3f5d1d9f789dd4d482068986e7a2c94a15d0a176d11a92818c65965",
         "module/manifest.py": "14da3c6e0047ee2581c167d3ee6dd4231ae54bd8746ded929a4ed12bb623170a",
         "module/rproxy/caddy.py": "12e2cc898c13b08262f3340476579c60a32c966fa1a4d54675b4f054e892cd8e"
-      }
+      },
+      "cards": false,
+      "provides": [
+        "proxy"
+      ]
     },
     {
       "name": "nginx",
@@ -71,7 +77,9 @@
         "module/cli.py": "b2e9ff790601b4dafbd8d417af4c84447561c728510d45d4800055feafa1b833",
         "module/manifest.py": "20d9aa99cec5b17e49d40cf40ea6da7c9124b353a72076b72b7382b9c8f9b20b",
         "module/webapi.py": "e6216d9d6152f55934fd1eaa0a6f775a8f777cd4fe77feca7e272990a370a836"
-      }
+      },
+      "cards": false,
+      "provides": []
     },
     {
       "name": "certbot",
@@ -88,7 +96,11 @@
         "module/cli.py": "62846774000d5da07972c368c71131459d1f668ceea9fda989f2b91325c65154",
         "module/manifest.py": "e42745f82b357565266cffd5f2296390bb4d215760308089d848abc9658fcfb6",
         "module/webapi.py": "e29ab804e3bd821c0ee720e035fdf5457b2eedd095daa4e3062239f04384f021"
-      }
+      },
+      "cards": false,
+      "provides": [
+        "ssl"
+      ]
     },
     {
       "name": "acme",
@@ -105,7 +117,11 @@
         "module/cli.py": "42051e8abe6a5c16460406823a57ea88895745f6a5a075d222cf55f054f7e6c0",
         "module/manifest.py": "469eb1e478183652f5835abc6e06ff363bc5368a2802ce5f0c1034adc87ee6b3",
         "module/webapi.py": "f945d75ed4ac4886fbd336d72ac027d13d662de5399b284ef2d43536ca80df89"
-      }
+      },
+      "cards": false,
+      "provides": [
+        "ssl"
+      ]
     },
     {
       "name": "cyansecengine",
@@ -119,7 +135,9 @@
         "manifest.json": "531c01b4ddd408d3e15a2feb11aaf823a71cd6b68760f28ab122d2d84ac13bdf",
         "module/__init__.py": "f75bf1088550268d6a281a1929dad5382ae1040a334e99681efb4256900524c1",
         "module/manifest.py": "2577d41edb2d7b0a1c122f973a119b4089c25c084ede7196acefcd58a82ac070"
-      }
+      },
+      "cards": false,
+      "provides": []
     },
     {
       "name": "yara",
@@ -135,7 +153,11 @@
         "module/api.py": "cf32f83ba7c7f1d9b461195f34994fffb09d9b42308b757fee615c3225748163",
         "module/manifest.py": "aeca8436f3a7ae7da2379b5803c516e56f267edc0c92afbeed2817fc47846147",
         "module/scanner.py": "d76e7bb6f4879cfa02436da0598ee6d252d86791a3cb47318a616fd2ec1361fd"
-      }
+      },
+      "cards": false,
+      "provides": [
+        "ids"
+      ]
     },
     {
       "name": "rkhunter",
@@ -151,7 +173,11 @@
         "module/api.py": "a771e92b444e1d8e343889a1e69a1b126af43dcf78ccc41ef2ba281df579a6cc",
         "module/manifest.py": "a9547e26d851ba24e9c0476003458f83b7d783539f89bc607b5a26412b1d1a48",
         "module/scanner.py": "2d4ab9684caec3f86fd6b8191f620ee8a3906f08dee70cb07481f228b26ed4c3"
-      }
+      },
+      "cards": false,
+      "provides": [
+        "ids"
+      ]
     },
     {
       "name": "lmd",
@@ -167,7 +193,11 @@
         "module/api.py": "5ab31f60301f6728a204039dae6c36f8964a29e59243500dd2d4ecee3c1c016f",
         "module/manifest.py": "b71ee80f64fb5e8d39879eb0cc99f2b0d451c50f320c610dfe2bdc7a5f065c95",
         "module/scanner.py": "bbb31a163254e7e0dff6b22c4cb6834c54087b0f5b6c02bd260419b68db8507f"
-      }
+      },
+      "cards": false,
+      "provides": [
+        "antivirus"
+      ]
     },
     {
       "name": "baseline",
@@ -183,7 +213,11 @@
         "module/api.py": "464fae9144ea942d10955c86c36c3c89799a7b4c5cffcbc5e132d48e70b2caee",
         "module/manifest.py": "daa09e5e615b31b300f610f4255a682776c3e1a7a4fda8692ecc2c8446f542dd",
         "module/scanner.py": "43d645fc6b73c04abb2b856f33912c909e4051db2bb51f91adc6698e259c0f88"
-      }
+      },
+      "cards": false,
+      "provides": [
+        "ids"
+      ]
     },
     {
       "name": "vuln",
@@ -199,7 +233,11 @@
         "module/api.py": "87d3f2e749ae861249faa353bd99d74da2b224aede762e1a7e14441c2bce2adf",
         "module/manifest.py": "c3e30d7ca08165626f43bee10a7de0dcd708883ba996f91cb1bc21d99dad1fdb",
         "module/scanner.py": "7bd7887d77fda701f114550da60ed2a582ab913afb9e0e0b9338e0750764c51e"
-      }
+      },
+      "cards": false,
+      "provides": [
+        "vuln"
+      ]
     }
   ]
 }
