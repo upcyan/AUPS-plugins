@@ -1,7 +1,7 @@
 {
   "name": "nginx",
-  "title": "Nginx 环境",
-  "attr": "环境",
+  "title": "Nginx 依赖",
+  "attr": "依赖",
   "version": "0.1.0",
   "description": "Nginx 反代：站点配置、证书（通过 certbot/acme 申请）"
 }

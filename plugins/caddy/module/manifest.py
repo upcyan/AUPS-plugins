@@ -1,4 +1,4 @@
-"""caddy 插件清单（v1.0.1）：Caddy 环境插件（属性：环境）。
+"""caddy 插件清单（v1.0.1）：Caddy 依赖插件（属性：依赖）。
 
 负责 Caddy 反代全部能力：反代抽象（托管片段）、WAF 模板渲染（规则来自核心
 aups.core.waf，本插件实现 Caddy 语法转换器）、access 日志、Caddy 端口/防火墙。
@@ -9,11 +9,11 @@ WAF 规则模板已提升到核心（安全页「WAF 模板」），本插件不
 
 MANIFEST = {
     "name": "caddy",
-    "title": "Caddy 环境",
+    "title": "Caddy 依赖",
     "version": "1.0.1",
     "description": "Caddy 反代：托管片段（下载路由/WAF 模板转换）、access 日志、Caddy 端口与防火墙",
     "type": "external",
-    "attr": "环境",
+    "attr": "依赖",
     # 反代能力声明：本插件是 proxy 能力提供者
     "provides": {"proxy": "caddy"},
     "proxy": "caddy",

@@ -1,7 +1,7 @@
 {
   "name": "caddy",
-  "title": "Caddy 环境",
-  "attr": "环境",
+  "title": "Caddy 依赖",
+  "attr": "依赖",
   "version": "1.0.1",
   "description": "Caddy 反代：托管片段（下载路由/WAF 模板转换）、access 日志、Caddy 端口与防火墙"
 }

@@ -31,26 +31,26 @@
     },
     {
       "name": "caddy",
-      "title": "Caddy 环境",
-      "attr": "环境",
+      "title": "Caddy 依赖",
+      "attr": "依赖",
       "version": "1.0.1",
       "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙",
       "files": {
         "README.md": "ec8c1e867b7904e9e7715b5ce75913fead578e53f24c76a795bc530027569582",
         "frontend.js": "262ebb8ee45be1d2e4d0f2dea98bc86f0a149647b47b73171789c3ce46e2f492",
-        "manifest.json": "e2655be241f98e91a40f577e23bb94af7bc44a8c2aa1d59cbfb3b07d714250e1",
+        "manifest.json": "b298801f796640c7cb5d700265965ea9d0fcf50a9eef6a315772bf051cb28173",
         "module/__init__.py": "7da098dedbe8612e211b60c2198fc89b58ca28317877ab9854710c8dd70118ce",
         "module/api.py": "10c74f28dc4a3799de7da966ad875dc75ebcf2789cbd7860104769f3b9a532c5",
         "module/cli.py": "5f80bf291210a81ec89e2434d3275e715327de32a0f79503f948c1f8561f42cc",
         "module/env.py": "cc4b2b67b3f5d1d9f789dd4d482068986e7a2c94a15d0a176d11a92818c65965",
-        "module/manifest.py": "d38128da7f4aaa06c61571c01260dfd9283fdfa835f3d4aaa21ff8ef31a1733d",
+        "module/manifest.py": "f019992cd854d825bc4a1e42789cdb1945fee39b66d036ca6c9489d1331c228e",
         "module/rproxy/caddy.py": "12e2cc898c13b08262f3340476579c60a32c966fa1a4d54675b4f054e892cd8e"
       }
     },
     {
       "name": "nginx",
-      "title": "Nginx 环境",
-      "attr": "环境",
+      "title": "Nginx 依赖",
+      "attr": "依赖",
       "version": "0.1.0",
       "description": "Nginx 反代：站点配置、证书（通过 certbot/acme 申请）",
       "install_params": [
@@ -65,11 +65,11 @@
       "files": {
         "README.md": "774fe01b011fed01959f1d2e89bbc72dc64bdab3883c612ba32b9400818d471b",
         "frontend.js": "4ce8aaad5b821e742386078cf5b46ae44a00c865b682372b6f6ce2e104d38a76",
-        "manifest.json": "3c401706d1c1f433459f7993fbbaaa0fe8eb07333e6fe863717ba78a0d04491b",
+        "manifest.json": "961fcb62e8f6c4594eb59b2136358582ae05d38681be436ac4a24318d86cc336",
         "module/__init__.py": "24ec284993d41bc58a60fbe5fcd75a3d4568f5f2e085af2b80e167dbefe9e699",
         "module/api.py": "b384fedd5886d23d0ca94d31c5f18611bae9bd2e71ff490e13ad46a4fe71337c",
         "module/cli.py": "b2e9ff790601b4dafbd8d417af4c84447561c728510d45d4800055feafa1b833",
-        "module/manifest.py": "300bfc4e06b857243cbbcb9dd8ea18e388e9d5ad8beee6eed386456a15a1bc6b",
+        "module/manifest.py": "d3449f7c1b72ecac4aba1ab49fad1beb45305550d7285024fac384fa1f0ba174",
         "module/webapi.py": "e6216d9d6152f55934fd1eaa0a6f775a8f777cd4fe77feca7e272990a370a836"
       }
     },
