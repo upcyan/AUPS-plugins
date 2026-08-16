@@ -27,7 +27,10 @@ MANIFEST = {
         "/api/baseline/report/{rid}",
     ],
     "modules": ["scanner"],
-    "provides": {"baseline": "baseline"},
+    "provides": {"ids": "baseline"},
+    "entry": [
+        {"id": "overview", "title": "基线巡检"},
+    ],
     "plugins": [
         {"id": "overview", "title": "基线巡检",
          "description": "账号、系统配置、内核网络、服务应用四类基线检查"},

@@ -30,7 +30,10 @@ MANIFEST = {
         "/api/rkhunter/reports",
     ],
     "modules": ["scanner"],
-    "provides": {"rkhunter": "rkhunter"},
+    "provides": {"ids": "rkhunter"},
+    "entry": [
+        {"id": "overview", "title": "rkhunter 检测"},
+    ],
     "plugins": [
         {"id": "overview", "title": "rkhunter",
          "description": "rkhunter 状态 / 安装 / 重装 / 卸载"},

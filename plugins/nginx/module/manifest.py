@@ -13,6 +13,9 @@ MANIFEST = {
     "cli_groups": ["nginx"],
     "api_module": "aups.modules.nginx.webapi",
     "api_paths": ["/api/nginx", "/api/nginx/status", "/api/nginx/install", "/api/nginx/remove"],
+    "entry": [
+        {"id": "main", "title": "Nginx 反代"},
+    ],
     "plugins": [
         {"id": "main", "title": "Nginx 反代", "description": "Nginx 状态、安装与卸载（部署到面板目录）"},
     ],

@@ -45,6 +45,9 @@ MANIFEST = {
         "/api/ports/caddy",
     ],
     "frontend_tabs": ["caddy-rproxy"],
+    "entry": [
+        {"id": "rproxy", "title": "反代配置"},
+    ],
     "plugins": [
         {"id": "rproxy", "title": "反代配置",
          "description": "Caddy 后端状态、托管片段（下载路由/WAF 转换）、端口与防火墙"},

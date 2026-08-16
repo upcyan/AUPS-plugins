@@ -22,6 +22,9 @@ MANIFEST = {
     "deploy": {"host": True},
     "config_dir": "cyansecengine",
     "data_dir": "cyansecengine",
+    "entry": [
+        {"id": "migrated", "title": "迁移指引"},
+    ],
     "plugins": [
         {"id": "migrated", "title": "青·擎",
          "description": "功能已迁移至核心，本页为迁移指引"},

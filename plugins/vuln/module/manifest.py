@@ -31,6 +31,9 @@ MANIFEST = {
     ],
     "modules": ["scanner"],
     "provides": {"vuln": "vuln"},
+    "entry": [
+        {"id": "overview", "title": "漏洞检测"},
+    ],
     "plugins": [
         {"id": "overview", "title": "漏洞检测",
          "description": "系统安全更新与部署软件漏洞检测，一键修复"},

@@ -39,6 +39,11 @@ MANIFEST = {
     ],
     "frontend_tabs": ["apps", "storage", "users", "ssh"],
     "modules": ["apps", "storage", "downloads", "users", "sshkeys"],
+    "entry": [
+        {"id": "apps", "title": "应用管理"},
+        {"id": "users", "title": "CI 用户"},
+        {"id": "ssh", "title": "SSH 公钥"},
+    ],
     "plugins": [
         {"id": "apps", "title": "应用管理",
          "description": "应用注册/版本、存储与配额、APK 管理、未注册检测"},

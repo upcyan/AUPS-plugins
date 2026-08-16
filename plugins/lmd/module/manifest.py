@@ -32,7 +32,11 @@ MANIFEST = {
         "/api/lmd/quarantine/restore",
     ],
     "modules": ["scanner"],
-    "provides": {"lmd": "lmd"},
+    "provides": {"antivirus": "lmd"},
+    "entry": [
+        {"id": "overview", "title": "LMD 扫描"},
+        {"id": "quarantine", "title": "隔离区"},
+    ],
     "plugins": [
         {"id": "overview", "title": "LMD",
          "description": "LMD 状态 / 安装 / 重装 / 卸载"},

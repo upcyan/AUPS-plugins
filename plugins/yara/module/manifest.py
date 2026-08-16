@@ -30,7 +30,11 @@ MANIFEST = {
     ],
     "frontend_tabs": ["yara"],
     "modules": ["scanner"],
-    "provides": {"yara": "yara"},
+    "provides": {"ids": "yara"},
+    "entry": [
+        {"id": "overview", "title": "引擎概览"},
+        {"id": "rules", "title": "规则订阅"},
+    ],
     "plugins": [
         {"id": "overview", "title": "引擎概览",
          "description": "YARA 引擎状态、安装与快速扫描"},
