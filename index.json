@@ -13,14 +13,39 @@
         {
           "capability": "proxy"
         }
-      ]
+      ],
+      "files": {
+        "README.md": "9b9aa53e3c524af4a2e6a094d7bedb3639df2e841da36d63c283d5e951188d73",
+        "frontend.js": "c374a95614abf38c92a7a95bb6e28caf43c5fa5ce9b9109baa1c5adb6a0c35f9",
+        "manifest.json": "6450659836c7ddf946a1180dbe6cd13ea020339700b814fb135cc50197423157",
+        "module/__init__.py": "4bc627b6a99224fed24ed8f42a2ad484015e5c2bfffec66debf090d85ba98ddc",
+        "module/api.py": "31da9f3653208226bbf4af2f26ae4d202e6706315804e29f9e97bb34983a249b",
+        "module/apps.py": "579e576ad496ff924d5624e1b54b47b5f2aef9cef452e0a975118b847562206d",
+        "module/cli.py": "52c776a71ed47c570172c55486bd7e5e1d7489a88bbeec74170463b5eafcbc94",
+        "module/downloads.py": "9ca7b9b3711dd2332a284042c14b5f6fb2fc108e8f22fbd7e40ffa10adaaf542",
+        "module/manifest.py": "0d5207acdfeaed1f041162113827ca71a2e069af0e584dbc6df6b5df50a68f69",
+        "module/sshkeys.py": "063a53cd0cb2a363b509464374fec8c38130485aa8833c0c13dc4c07b52d8811",
+        "module/storage.py": "fcb509465c516cbccc501ef7079e97f322a428be5932cdc1accbffa873d5a64b",
+        "module/users.py": "d4e0567b40066134b189c0631e13af7045ef631a567649f54e70a4fd8a9cb0bf"
+      }
     },
     {
       "name": "caddy",
       "title": "Caddy 环境",
       "attr": "环境",
       "version": "1.0.1",
-      "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙"
+      "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙",
+      "files": {
+        "README.md": "ec8c1e867b7904e9e7715b5ce75913fead578e53f24c76a795bc530027569582",
+        "frontend.js": "262ebb8ee45be1d2e4d0f2dea98bc86f0a149647b47b73171789c3ce46e2f492",
+        "manifest.json": "e2655be241f98e91a40f577e23bb94af7bc44a8c2aa1d59cbfb3b07d714250e1",
+        "module/__init__.py": "7da098dedbe8612e211b60c2198fc89b58ca28317877ab9854710c8dd70118ce",
+        "module/api.py": "10c74f28dc4a3799de7da966ad875dc75ebcf2789cbd7860104769f3b9a532c5",
+        "module/cli.py": "5f80bf291210a81ec89e2434d3275e715327de32a0f79503f948c1f8561f42cc",
+        "module/env.py": "cc4b2b67b3f5d1d9f789dd4d482068986e7a2c94a15d0a176d11a92818c65965",
+        "module/manifest.py": "d38128da7f4aaa06c61571c01260dfd9283fdfa835f3d4aaa21ff8ef31a1733d",
+        "module/rproxy/caddy.py": "12e2cc898c13b08262f3340476579c60a32c966fa1a4d54675b4f054e892cd8e"
+      }
     },
     {
       "name": "nginx",
@@ -36,63 +61,145 @@
           "default": 8080,
           "description": "面板 nginx 监听端口（示例参数）"
         }
-      ]
+      ],
+      "files": {
+        "README.md": "774fe01b011fed01959f1d2e89bbc72dc64bdab3883c612ba32b9400818d471b",
+        "frontend.js": "4ce8aaad5b821e742386078cf5b46ae44a00c865b682372b6f6ce2e104d38a76",
+        "manifest.json": "3c401706d1c1f433459f7993fbbaaa0fe8eb07333e6fe863717ba78a0d04491b",
+        "module/__init__.py": "24ec284993d41bc58a60fbe5fcd75a3d4568f5f2e085af2b80e167dbefe9e699",
+        "module/api.py": "b384fedd5886d23d0ca94d31c5f18611bae9bd2e71ff490e13ad46a4fe71337c",
+        "module/cli.py": "b2e9ff790601b4dafbd8d417af4c84447561c728510d45d4800055feafa1b833",
+        "module/manifest.py": "300bfc4e06b857243cbbcb9dd8ea18e388e9d5ad8beee6eed386456a15a1bc6b",
+        "module/webapi.py": "e6216d9d6152f55934fd1eaa0a6f775a8f777cd4fe77feca7e272990a370a836"
+      }
     },
     {
       "name": "certbot",
       "title": "Certbot",
       "attr": "依赖",
       "version": "0.2.0",
-      "description": "Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录"
+      "description": "Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录",
+      "files": {
+        "README.md": "bcd00cf04a90c709291e2282d1c067872a4e1ee339cf544e221752fab002345d",
+        "frontend.js": "bff0663aa0ad934b06c30c18fd8173fe251d6c316e12f875f9634afbb4e7c427",
+        "manifest.json": "d8702dcf8582f7004b9e0b6cf031cf90d534b9b5b8b84ef6010471dc306ec65c",
+        "module/__init__.py": "f369be9775bd4382b41f1db7d1c7d6f7f1a2549707956e817ba9bd2fe25426d5",
+        "module/api.py": "c162b3db403884dccdf99282b4b478bebb2e2b35b71620568b0b5e9cdb646a68",
+        "module/cli.py": "62846774000d5da07972c368c71131459d1f668ceea9fda989f2b91325c65154",
+        "module/manifest.py": "e42745f82b357565266cffd5f2296390bb4d215760308089d848abc9658fcfb6",
+        "module/webapi.py": "e29ab804e3bd821c0ee720e035fdf5457b2eedd095daa4e3062239f04384f021"
+      }
     },
     {
       "name": "acme",
       "title": "acme.sh",
       "attr": "依赖",
       "version": "0.2.0",
-      "description": "acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录"
+      "description": "acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录",
+      "files": {
+        "README.md": "650d63c3e0c5d4291247a409c65b92b1bd0b3c8ee03aed8ce8b032d9a8887aca",
+        "frontend.js": "804c8120ef74dd2c8e0b6206c96ec400d60201f865d3e67cda75c91ced259f9d",
+        "manifest.json": "1d85371f8491d2f95c63d04933c15b3d4c086147b8a7f9e3a7d8f58b3d67f5e0",
+        "module/__init__.py": "67eb0d4243dadd03017441ef9978c426cfa4ed19063111b9b344c0c67f660951",
+        "module/api.py": "b0cbce7d96b9be0bf719aa38b74ac0105dfa3e9f3e22b213e29fa179f31b176c",
+        "module/cli.py": "42051e8abe6a5c16460406823a57ea88895745f6a5a075d222cf55f054f7e6c0",
+        "module/manifest.py": "469eb1e478183652f5835abc6e06ff363bc5368a2802ce5f0c1034adc87ee6b3",
+        "module/webapi.py": "f945d75ed4ac4886fbd336d72ac027d13d662de5399b284ef2d43536ca80df89"
+      }
     },
     {
       "name": "cyansecengine",
       "title": "青·擎",
       "attr": "功能",
       "version": "3.0.0",
-      "description": "青·擎（原安全加固）。主机安全（rkhunter/LMD）、实时防护与 YARA 引擎已并入面板核心与 yara 依赖插件，本插件为保留占位壳"
+      "description": "青·擎（原安全加固）。主机安全（rkhunter/LMD）、实时防护与 YARA 引擎已并入面板核心与 yara 依赖插件，本插件为保留占位壳",
+      "files": {
+        "README.md": "9921ffbe9115b7eb7dbff20f8b2dd9eaf628c183ae9e1f59e7d4c7a7c76092d5",
+        "frontend.js": "653cdf56cea001183a1073b48611eccbaca2e206c47e1fae6c7292c21a22b02c",
+        "manifest.json": "531c01b4ddd408d3e15a2feb11aaf823a71cd6b68760f28ab122d2d84ac13bdf",
+        "module/__init__.py": "f75bf1088550268d6a281a1929dad5382ae1040a334e99681efb4256900524c1",
+        "module/manifest.py": "617d5ae0349b0d912ab0a0b47b4c836966b4dffee4c08c6e97d3a24b1cbf5923"
+      }
     },
     {
       "name": "yara",
       "title": "YARA 引擎",
       "attr": "依赖",
       "version": "1.0.0",
-      "description": "YARA 规则扫描引擎：引擎安装、规则订阅与扫描，规则数据由核心持有。供核心主机安全与 cyansecengine 调用"
+      "description": "YARA 规则扫描引擎：引擎安装、规则订阅与扫描，规则数据由核心持有。供核心主机安全与 cyansecengine 调用",
+      "files": {
+        "README.md": "41db8960e53f7094175153f49c5c3fd4bf5518816b670c1e74b107e55ffdb3b5",
+        "frontend.js": "73ef41ed21eafa4105ffb2167208f4bd2c62df54bf8cc7a93d3a3a06eb6b2daf",
+        "manifest.json": "62e443f0d6203921cd35cb158961b89d89d3a9eb62808bafb502e856605c2279",
+        "module/__init__.py": "cc9a6171b8dd0a88a422a64ec9a471d2a9bce1033ac48e31d64353af2cfbd7d1",
+        "module/api.py": "cf32f83ba7c7f1d9b461195f34994fffb09d9b42308b757fee615c3225748163",
+        "module/manifest.py": "cb4c506a92c68fe0842d4f5b6894257d420093e979705fdafea2bf7c070e65bd",
+        "module/scanner.py": "d76e7bb6f4879cfa02436da0598ee6d252d86791a3cb47318a616fd2ec1361fd"
+      }
     },
     {
       "name": "rkhunter",
       "title": "rkhunter",
       "attr": "依赖",
       "version": "1.1.0",
-      "description": "rkhunter 主机入侵检测引擎（依赖插件）：二进制部署与扫描由插件实现，报告由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管"
+      "description": "rkhunter 主机入侵检测引擎（依赖插件）：二进制部署与扫描由插件实现，报告由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
+      "files": {
+        "README.md": "43b8435088bb1f22c1ff63b0d21819ebf30df8fe6844ff19c1fd3298d7f61588",
+        "frontend.js": "025dc32828379c967b21f2a43800c3c9a9117d58619df00698998f52a778456e",
+        "manifest.json": "297efce6cc1cd9302e056cd77bcaf505310d7b61260e6eb6f4381a7f24ca7cc2",
+        "module/__init__.py": "285afa448b7dd281e9f3e64ca3d92df9d94e700abf06d94211530df9aa804d2d",
+        "module/api.py": "a771e92b444e1d8e343889a1e69a1b126af43dcf78ccc41ef2ba281df579a6cc",
+        "module/manifest.py": "97cacfd904d3d4d9378813ecf42843d5a4bb231950a9c073007a87c3e54fb135",
+        "module/scanner.py": "2d4ab9684caec3f86fd6b8191f620ee8a3906f08dee70cb07481f228b26ed4c3"
+      }
     },
     {
       "name": "lmd",
       "title": "LMD",
       "attr": "依赖",
       "version": "1.1.0",
-      "description": "LMD (maldet) 恶意软件扫描引擎（依赖插件）：二进制部署与扫描由插件实现，报告/隔离区由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管"
+      "description": "LMD (maldet) 恶意软件扫描引擎（依赖插件）：二进制部署与扫描由插件实现，报告/隔离区由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
+      "files": {
+        "README.md": "8f2e77042a07a43633cb896908b73ec8b9603cd2fad32580997ec86dc60a9a4f",
+        "frontend.js": "cbb464e1104c5c7fcc5f3405032b6cfc9fc3f949f100be47e4f0cc1dd14ea443",
+        "manifest.json": "4c5cb87e713de5614827f4bba9e453b80962ccdda3f23d093a2bac5335121d4b",
+        "module/__init__.py": "d22d15f69a132013d6fe86768c336c0b6cddc6df945c2bbe82c252161c5197e2",
+        "module/api.py": "5ab31f60301f6728a204039dae6c36f8964a29e59243500dd2d4ecee3c1c016f",
+        "module/manifest.py": "66b76801495b87c0c0a8c896cf771b76ffc93fc7fbe5c406aab3d940b47d4e03",
+        "module/scanner.py": "bbb31a163254e7e0dff6b22c4cb6834c54087b0f5b6c02bd260419b68db8507f"
+      }
     },
     {
       "name": "baseline",
       "title": "基线检查",
       "attr": "功能",
       "version": "1.0.0",
-      "description": "VPS 基线检查（纯只读审计）：账号与权限 / 系统配置 / 内核网络加固 / 服务应用，四类检查项一键巡检并生成报告"
+      "description": "VPS 基线检查（纯只读审计）：账号与权限 / 系统配置 / 内核网络加固 / 服务应用，四类检查项一键巡检并生成报告",
+      "files": {
+        "README.md": "073e687870d2762c8df1bf08d41037ba4f7134740988990598d0b52db6da2644",
+        "frontend.js": "dd3a8b90f56a1a5ce78657fd1d4d6bd13b8a5079e53215a6df6b5ef556076c68",
+        "manifest.json": "0403c1d7b905380f2c65a1d2a32a4c8b24f1f2e1c7749e3b1e52872f3b049730",
+        "module/__init__.py": "e2527eaa363198dc1f5687327a4d9a105129e6634fed4c46c1cd93a95be6d0af",
+        "module/api.py": "464fae9144ea942d10955c86c36c3c89799a7b4c5cffcbc5e132d48e70b2caee",
+        "module/manifest.py": "786a66a766bb770c307da2d9034d61caca2ea5138dcc60877cb70d9a0a802530",
+        "module/scanner.py": "43d645fc6b73c04abb2b856f33912c909e4051db2bb51f91adc6698e259c0f88"
+      }
     },
     {
       "name": "vuln",
       "title": "漏洞检测",
       "attr": "功能",
       "version": "1.0.0",
-      "description": "系统与部署软件漏洞检测：待安全更新/补丁、部署软件版本比对，检测到漏洞提示解决方案并可一键修复（装补丁/升级）"
+      "description": "系统与部署软件漏洞检测：待安全更新/补丁、部署软件版本比对，检测到漏洞提示解决方案并可一键修复（装补丁/升级）",
+      "files": {
+        "README.md": "7fa679bf5a244f55b2e2971e736a9666b8c139be46f4988ab1f1db67e7940c78",
+        "frontend.js": "79cf65c73aead6bdee2c96b8e90909599581ed4f76b471c0663ec7b57fc75383",
+        "manifest.json": "f6ac9f78ad39e951d23a89bbd6f564b7e472510c9b95c335ce77ac91be2f84c2",
+        "module/__init__.py": "72655c5d3b93b7a2e5e99e70982ba718135976ad259b9db2e9d97edab088db4b",
+        "module/api.py": "87d3f2e749ae861249faa353bd99d74da2b224aede762e1a7e14441c2bce2adf",
+        "module/manifest.py": "b1aa047abfa4712259720a861a43369a3abd15b79bab236b2184f8ddc66fbefc",
+        "module/scanner.py": "7bd7887d77fda701f114550da60ed2a582ab913afb9e0e0b9338e0750764c51e"
+      }
     }
   ]
 }

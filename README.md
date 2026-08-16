@@ -41,3 +41,17 @@ aups plugins market uninstall appupdate      # 卸载
 2. 放入 `manifest.json`、`module/`（含 `manifest.py`）、`frontend.js`；
 3. 在 `index.json` 的 `plugins` 列表补一条记录；
 4. 可为本插件编写 `README.md` 说明用途与使用方式。
+
+## 下载完整性（files 哈希，必须）
+
+面板安装插件前会用 `index.json` 中该插件的 `files` 段（相对 `plugins/<name>/` 的
+每文件 SHA-256）双向校验解压目录：声明文件哈希必须一致、且不允许出现未声明的
+多余文件，失败会拒绝安装（防下载被篡改/注入）。**改动插件文件后必须重新生成
+`files`**，否则面板无法安装该插件。可用以下脚本生成：
+
+```bash
+python gen_index_hashes.py   # 遍历 plugins/ 各插件并写入 index.json 的 files
+```
+
+- 生成脚本不入库（临时使用），但改动插件后提交前务必重跑。
+- 新增/删除/重命名插件目录里的文件都要同步刷新 `files`。
