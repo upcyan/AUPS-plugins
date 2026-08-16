@@ -23,6 +23,28 @@ def status():
             "runtime_dir": d["runtime"], "config_dir": d["config"], "data_dir": d["data"]}
 
 
+def find_cert(domain=None):
+    """查找本插件数据目录下的证书。返回 (cert, key) 或 (None, None)。
+
+    certbot 证书落在 `data/certbot/live/<domain>/fullchain.pem`。
+    核心 SSL 抽象层（aups.core.ssl）在签发前用它做去重，避免重复申请。
+    """
+    data = config.plugin_dir("certbot", "data")
+    candidates = []
+    if domain:
+        candidates.append(os.path.join(data, "live", (domain or "").strip().lower(), "fullchain.pem"))
+    else:
+        live = os.path.join(data, "live")
+        if os.path.isdir(live):
+            for d in sorted(os.listdir(live)):
+                candidates.append(os.path.join(live, d, "fullchain.pem"))
+    for cert in candidates:
+        key = cert.replace("fullchain.pem", "privkey.pem")
+        if os.path.isfile(cert) and os.path.isfile(key):
+            return cert, key
+    return None, None
+
+
 def install():
     """安装 certbot：优先复用系统，否则用包管理器安装（跨发行版，含发行版别名）。"""
     if has_cmd("certbot"):

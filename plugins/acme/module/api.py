@@ -29,6 +29,29 @@ def status():
             "runtime_dir": d["runtime"], "config_dir": d["config"], "data_dir": d["data"]}
 
 
+def find_cert(domain=None):
+    """查找本插件数据目录下的证书。返回 (cert, key) 或 (None, None)。
+
+    acme.sh 证书落在 `data/acme/<domain>/fullchain.cer` + `<domain>.key`。
+    核心 SSL 抽象层（aups.core.ssl）在签发前用它做去重，避免重复申请。
+    """
+    data = config.plugin_dir("acme", "data")
+    candidates = []
+    if domain:
+        candidates.append(os.path.join(data, (domain or "").strip().lower()))
+    else:
+        if os.path.isdir(data):
+            for d in sorted(os.listdir(data)):
+                if os.path.isdir(os.path.join(data, d)):
+                    candidates.append(os.path.join(data, d))
+    for base in candidates:
+        cert = os.path.join(base, "fullchain.cer")
+        key = os.path.join(base, f"{os.path.basename(base)}.key")
+        if os.path.isfile(cert) and os.path.isfile(key):
+            return cert, key
+    return None, None
+
+
 def install():
     """部署 acme.sh 到 PANEL_HOME/runtime/acme，home 指向 PANEL_HOME/data/acme。"""
     bin_path = _acme_bin()
