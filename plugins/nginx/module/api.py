@@ -171,3 +171,16 @@ def remove():
     _stop()
     shutil.rmtree(config.plugin_dir("nginx", "runtime"), ignore_errors=True)
     return {"name": "nginx", "removed": True}
+
+
+def stop():
+    """停用插件：停止面板部署的 nginx 服务（保留配置/数据/二进制）。"""
+    _stop()
+    return {"name": "nginx", "stopped": True}
+
+
+def start():
+    """重新启用插件：启动面板部署的 nginx 服务。"""
+    if os.path.isfile(_bin()) and os.path.isfile(_cfg()):
+        _start()
+    return {"name": "nginx", "started": True}

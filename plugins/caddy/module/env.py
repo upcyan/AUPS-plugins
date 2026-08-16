@@ -135,3 +135,25 @@ def remove():
     # 仅删除面板部署的二进制（runtime 目录），保留 config/data
     shutil.rmtree(config.plugin_dir("caddy", "runtime"), ignore_errors=True)
     return {"name": "caddy", "removed": True}
+
+
+def stop():
+    """停用插件：停止 caddy 服务（systemd stop 或二进制 stop），保留配置/数据/二进制。"""
+    if has_cmd("systemctl"):
+        run(["systemctl", "stop", "caddy"], check=False)
+        return {"name": "caddy", "stopped": True}
+    bin_path = caddy_binary()
+    if bin_path:
+        run([bin_path, "stop"], check=False)
+    return {"name": "caddy", "stopped": True}
+
+
+def start():
+    """重新启用插件：启动 caddy 服务（systemd start 或二进制运行）。"""
+    if has_cmd("systemctl"):
+        run(["systemctl", "start", "caddy"], check=False)
+        return {"name": "caddy", "started": True}
+    bin_path = caddy_binary()
+    if bin_path:
+        run([bin_path, "run"], check=False)
+    return {"name": "caddy", "started": True}
