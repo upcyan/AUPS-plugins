@@ -45,7 +45,7 @@
         "module/api.py": "b8bd78b58d01636bd0000081cc63809333e3a8c9c7a9fb526e79384564f124e2",
         "module/caddyfile.py": "2cca375a58fefb51e2754cc547821ab1c642377f3dc7a9cf970dfea8b66f681a",
         "module/cli.py": "0e62a9275ddab5bba9ba405af8606e0867c1e8e742863a32bd1a9b1ccb2fef44",
-        "module/env.py": "c457aad94d9eab8ed0ba4e8859b89e39f18438b606d825543b23cbc1ac40e5fd",
+        "module/env.py": "3b822a26221fa8345757a0658169677160cd88f7992af671aa411ff1f357e7ec",
         "module/manifest.py": "6ec30783dbe586d8a4f69e8032399eab93c9668c14d3d46fefc42b6f05566d3b",
         "module/rproxy/caddy.py": "369af35ea80207a77c4c9e73e0e41210ea826dd865b6c5cb86401b00a37e30d0"
       },
