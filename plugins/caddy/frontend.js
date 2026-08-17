@@ -221,9 +221,16 @@ window.AUPS_PLUGINS['caddy'] = (function () {
       const deployHtml = cs.deploy === 'container'
         ? `容器 <b>${esc(c.name||'-')}</b> · ${esc(c.runtime||'-')} · ${esc(c.image||'-')} · ${c.exists ? (c.running ? '<b style="color:var(--ok)">运行中</b>' : '<b style="color:var(--err)">已停止</b>') : '<span class="mut">未创建</span>'}`
         : `实机 · reload: ${esc(st.reload_method || '-')}${st.version ? ' · Caddy ' + esc(st.version) : ''}`;
+      const installBtn = (!cs.installed && cs.deploy !== 'container')
+        ? `<div class="row" style="margin-top:12px;padding:10px;border:1px solid var(--err);border-radius:6px">
+             <span style="color:var(--err)">Caddy 未安装</span>
+             <button onclick="${P}caddyInstall()" style="margin-left:auto">安装 Caddy</button>
+           </div>`
+        : '';
       view.innerHTML = navHtml() + `
       <div class="card"><h2>实例控制</h2>
         <div class="row"><span class="mut">部署: ${deployHtml}</span></div>
+        ${installBtn}
         <div class="row" style="margin-top:12px">
           <button onclick="${P}inst('stop')">停止</button>
           <button onclick="${P}inst('restart')">重启</button>
@@ -234,6 +241,14 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     } catch (e) {
       view.innerHTML = navHtml() + errCard(e);
     }
+  }
+  async function caddyInstall() {
+    if (!confirm('安装 Caddy？将通过系统包管理器安装并部署到面板目录。')) return;
+    try {
+      const r = await api('POST', '/api/caddy/install');
+      alert('Caddy 已安装: ' + (r.message || ''));
+      await instanceTab();
+    } catch (e) { alert('安装失败: ' + ((e && e.detail) || e)); }
   }
   async function inst(action) {
     const names = { stop:'停止', restart:'重启', reload:'重载' };
@@ -257,6 +272,6 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     siteUpdate: siteUpdate, siteDelete: siteDelete, siteCreate: siteCreate, siteClose: siteClose,
     caddyfileSave: caddyfileSave, caddyfileReload: caddyfileReload,
     cfPresets: cfPresets, cfInsertPreset: cfInsertPreset,
-    instanceTab: instanceTab, inst: inst,
+    instanceTab: instanceTab, inst: inst, caddyInstall: caddyInstall,
   };
 })();
