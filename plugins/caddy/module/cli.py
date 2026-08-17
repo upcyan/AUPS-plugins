@@ -1,7 +1,8 @@
 """caddy 插件 CLI：命令组构建(build)、派发(run)、只读豁免(READ_ONLY)。
 
-caddy 插件提供 caddyconf（反代配置 + WAF）。核心 cli.py 的
-`aups plugins caddy` 自动 import 本模块并调用 build/run。
+caddy 插件提供 caddyconf（反代配置 + WAF）、caddy（环境状态/安装/实例控制/
+Caddyfile 管理）。核心 cli.py 的 `aups plugins caddy` 自动 import 本模块并调用
+build/run。
 """
 
 import argparse
@@ -14,20 +15,42 @@ from ...core import waf
 from ...errors import AppError
 from ...util import print_json
 from . import env
+from . import caddyfile as CF
 
 # 只读命令（免 root）；其余命令要求 root
 READ_ONLY = {
     "caddyconf": {"status", "show", "preview"},
-    "caddy": {"status"},
+    "caddy": {"status", "caddyfile-show", "caddyfile-sites"},
 }
 
 
 def build(sub):
-    """注册命令组：caddyconf（反代/WAF）、caddy（环境状态/安装）。"""
-    ce = sub.add_parser("caddy", help="Caddy 环境部署（状态/安装）")
+    """注册命令组：caddyconf（反代/WAF）、caddy（环境状态/安装/实例/Caddyfile）。"""
+    ce = sub.add_parser("caddy", help="Caddy 环境部署（状态/安装/实例控制/Caddyfile 管理）")
     ces = ce.add_subparsers(dest="action", required=True)
     ces.add_parser("status", help="查看 caddy 状态与部署目录").add_argument("--json", action="store_true")
-    ces.add_parser("install", help="部署 caddy 二进制到面板目录")
+    ces.add_parser("install", help="部署 caddy（实机或容器，按 deploy 方式）")
+    ci = ces.add_parser("instance", help="实例控制：停止/重启/重载 Caddy 服务")
+    ci.add_argument("what", choices=("stop", "restart", "reload"), metavar="ACTION")
+    cfs = ces.add_parser("caddyfile", help="Caddyfile 管理")
+    cfss = cfs.add_subparsers(dest="cfa", required=True)
+    cfss.add_parser("show", help="显示完整 Caddyfile").add_argument("--json", action="store_true")
+    cfss.add_parser("sites", help="列出站点块").add_argument("--json", action="store_true")
+    cfs_add = cfss.add_parser("add", help="新增站点")
+    cfs_add.add_argument("host")
+    cfs_add.add_argument("--mode", choices=("reverse_proxy", "file_server"), default="reverse_proxy")
+    cfs_add.add_argument("--target", default="")
+    cfs_add.add_argument("--extra", default="")
+    cfs_up = cfss.add_parser("update", help="更新站点")
+    cfs_up.add_argument("host")
+    cfs_up.add_argument("--mode", choices=("reverse_proxy", "file_server"))
+    cfs_up.add_argument("--target", default=None)
+    cfs_up.add_argument("--extra", default=None)
+    cfs_del = cfss.add_parser("delete", help="删除站点")
+    cfs_del.add_argument("host")
+    cfs_save = cfss.add_parser("save", help="保存完整 Caddyfile（内容从 --file 读取）")
+    cfs_save.add_argument("--file", default="", help="Caddyfile 内容文件路径（默认 stdin）")
+    cfs_save.add_argument("--no-reload", action="store_true")
 
     cc = sub.add_parser("caddyconf", help="反代配置管理（Caddy，含 WAF 防护）")
     ccs = cc.add_subparsers(dest="action", required=True)
@@ -101,14 +124,56 @@ def _caddy(a):
             print_json(s)
             return
         print(f"caddy: {'已安装' if s['installed'] else '未检测到'}  {s['version'] or ''}")
-        print(f"  部署: {'面板目录' if s['deployed'] else '系统安装'}")
-        print(f"  二进制: {s['binary'] or '-'}")
+        print(f"  部署: {'容器' if s.get('deploy') == 'container' else '实机'}")
+        if s.get("deploy") == "container":
+            cs = s.get("container") or {}
+            print(f"  容器: {cs.get('name')}  {'运行中' if cs.get('running') else '已停止'}"
+                  f"  {cs.get('runtime')}  {cs.get('image')}")
+        else:
+            print(f"  部署: {'面板目录' if s['deployed'] else '系统安装'}")
+            print(f"  二进制: {s['binary'] or '-'}")
         print(f"  配置: {s['config_file']}")
         print(f"  runtime: {s['runtime_dir']}")
         print(f"  config : {s['config_dir']}")
         print(f"  data   : {s['data_dir']}")
     elif a.action == "install":
         print_json(env.install())
+    elif a.action == "instance":
+        print_json(env.instance(a.what))
+    elif a.action == "caddyfile":
+        _caddy_caddyfile(a)
+
+
+def _caddy_caddyfile(a):
+    if a.cfa == "show":
+        d = CF.read()
+        if a.json:
+            print_json(d)
+            return
+        print(d["content"], end="")
+    elif a.cfa == "sites":
+        d = CF.list_sites()
+        if a.json:
+            print_json(d)
+            return
+        if not d["sites"]:
+            print("(暂无站点块)")
+            return
+        for s in d["sites"]:
+            print(f"  {s['host']:<30} {s['mode']:<14} {s['target']}")
+    elif a.cfa == "add":
+        print_json(CF.create_site(a.host, a.mode, a.target, a.extra))
+    elif a.cfa == "update":
+        print_json(CF.update_site(a.host, a.mode, a.target, a.extra))
+    elif a.cfa == "delete":
+        print_json(CF.delete_site(a.host))
+    elif a.cfa == "save":
+        if a.file:
+            with open(a.file, encoding="utf-8") as f:
+                content = f.read()
+        else:
+            content = input("请输入 Caddyfile 内容（Ctrl+D 结束）:\n")
+        print_json(CF.write(content, reload_=not a.no_reload))
 
 
 def _caddyconf(a):

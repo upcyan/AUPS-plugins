@@ -12,6 +12,7 @@ from ... import rproxy as RP
 from ... import ports as PORTS
 from ...core import waf as WAFM
 from . import env as ENV
+from . import caddyfile as CF
 
 router = APIRouter()
 
@@ -25,6 +26,52 @@ def caddy_env_status(auth=Depends(require_auth)):
 @router.post("/caddy/install")
 def caddy_env_install(auth=Depends(require_auth)):
     return ENV.install()
+
+
+# ---------- 实例控制（stop / restart / reload）----------
+@router.post("/caddy/instance/{action}")
+def caddy_instance(action: str, auth=Depends(require_auth)):
+    return ENV.instance(action)
+
+
+# ---------- Caddyfile 管理（全文件 / 站点块）----------
+@router.get("/caddy/caddyfile")
+def caddyfile_get(auth=Depends(require_auth)):
+    return CF.read()
+
+
+@router.post("/caddy/caddyfile")
+def caddyfile_save(body: dict = None, auth=Depends(require_auth)):
+    b = body or {}
+    return CF.write(b.get("content", ""), reload_=bool(b.get("reload", True)))
+
+
+@router.get("/caddy/sites")
+def caddyfile_sites(auth=Depends(require_auth)):
+    return CF.list_sites()
+
+
+@router.post("/caddy/sites")
+def caddyfile_site_add(body: dict = None, auth=Depends(require_auth)):
+    b = body or {}
+    return CF.create_site(b.get("host", ""), b.get("mode", "reverse_proxy"),
+                          b.get("target", ""), b.get("extra", ""))
+
+
+@router.put("/caddy/sites/{host}")
+def caddyfile_site_update(host: str, body: dict = None, auth=Depends(require_auth)):
+    b = body or {}
+    return CF.update_site(host, b.get("mode"), b.get("target"), b.get("extra"))
+
+
+@router.delete("/caddy/sites/{host}")
+def caddyfile_site_delete(host: str, auth=Depends(require_auth)):
+    return CF.delete_site(host)
+
+
+@router.get("/caddy/presets")
+def caddyfile_presets(auth=Depends(require_auth)):
+    return CF.presets()
 
 
 # ---------- 反代配置（Caddy / WAF）----------

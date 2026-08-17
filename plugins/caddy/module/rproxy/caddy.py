@@ -45,14 +45,18 @@ def status():
         if r.returncode == 0 and (r.stdout or r.stderr).strip():
             ver = (r.stdout or r.stderr).strip().split()[0]
     caddyfile = env.caddy_config_file()
+    deploy = env.deploy_method()
     return {
         "name": NAME,
         "caddyfile": caddyfile,
         "exists": os.path.isfile(caddyfile),
         "binary": bin_path,
         "version": ver,
-        "reload_method": ("systemctl" if has_cmd("systemctl")
-                          else ("caddy" if bin_path else None)),
+        "deploy": deploy,
+        "container": env.container_status() if deploy == "container" else None,
+        "reload_method": ("container" if deploy == "container"
+                          else ("systemctl" if has_cmd("systemctl")
+                                else ("caddy" if bin_path else None))),
         "waf_enabled": bool(waf.get_config().get("enabled")),
     }
 
@@ -102,22 +106,13 @@ def set_port(port):
 
 
 def _reload(warn_only=False):
-    """reload caddy（原核心 reload_caddy）。"""
-    if has_cmd("systemctl"):
-        res = run(["systemctl", "reload", "caddy"])
-        if res.returncode == 0:
-            return
+    """reload caddy（原核心 reload_caddy），兼容容器/实机部署。"""
+    try:
+        env.instance("reload")
+    except AppError:
         if warn_only:
             return
-        raise AppError("caddy reload 失败，请检查服务")
-    bin_path = env.caddy_binary()
-    if bin_path:
-        res = run([bin_path, "reload", "--config", env.caddy_config_file()])
-        if res.returncode != 0 and not warn_only:
-            raise AppError("caddy reload 失败")
-        return
-    if not warn_only:
-        raise AppError("未找到 caddy 命令，无法 reload")
+        raise
 
 
 # ---------- access 日志 ----------
