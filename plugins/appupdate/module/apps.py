@@ -1,8 +1,9 @@
-"""多应用管理：应用注册中心、版本解析、Caddy 下载路由自动生成。
+"""多应用管理：应用注册、部署配置、版本管理、反代路由集成。
 
-应用注册在 /etc/aups/apps.json；每个应用有唯一的名称和目录。
-版本从 APK 文件名解析（如 dateforshift-0.1.0007.apk → 0.1.0007）。
-Caddy 下载路由：每个应用注册后，可自动把其版本的下载重定向规则写入 Caddyfile。
+应用注册在 /etc/aups/apps.json；每个应用有唯一名称、目录和部署配置。
+部署配置包含：域名、SSL、端口、工作目录、系统用户、CI 用户/SSH 密钥。
+版本从文件名解析（支持 APK/JAR/TAR.GZ 等）。
+反代路由：通过 rproxy 公共 API 与 caddy/nginx 解耦。
 """
 
 import json
@@ -14,6 +15,7 @@ from ...errors import AppError
 from ...util import run
 
 _APK_RE = re.compile(r".+?[_-](v?\d+(?:\.\d+)*)\.apk$", re.IGNORECASE)
+_VER_RE = re.compile(r"(?:^|[_-])v?(\d+(?:\.\d+)+)", re.IGNORECASE)
 
 
 def _registry():
@@ -23,13 +25,15 @@ def _registry():
             return json.load(open(path))
         except (OSError, ValueError):
             pass
-    return {"apps": {}}
+    return {"apps": {}, "total_quota_mb": 0}
 
 
 def _save_registry(reg):
     os.makedirs(config.CONF_DIR, exist_ok=True)
-    with open(config.APPS_FILE, "w") as f:
+    tmp = config.APPS_FILE + ".tmp"
+    with open(tmp, "w") as f:
         json.dump(reg, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, config.APPS_FILE)
 
 
 def _norm_name(name):
@@ -39,16 +43,22 @@ def _norm_name(name):
     return name.lower()
 
 
-def parse_version(filename):
-    """从 APK 文件名解析版本号。返回 version 字符串，或 None。"""
-    m = _APK_RE.search(filename)
-    if not m:
-        return None
-    return m.group(1).lstrip("v")
-
-
 def _version_key(vstr):
-    return tuple(int(x) for x in vstr.split("."))
+    try:
+        return tuple(int(x) for x in vstr.split("."))
+    except (ValueError, TypeError):
+        return (0,)
+
+
+def parse_version(filename):
+    """从文件名解析版本号。支持 APK 和通用版本格式。"""
+    m = _APK_RE.search(filename)
+    if m:
+        return m.group(1).lstrip("v")
+    m = _VER_RE.search(filename)
+    if m:
+        return m.group(1)
+    return None
 
 
 def _quota_mb(meta):
@@ -63,6 +73,12 @@ def _locked(meta):
     return locked if isinstance(locked, list) else []
 
 
+def _deploy(meta):
+    return meta.get("deploy", {})
+
+
+# -------------------- 应用 CRUD --------------------
+
 def list_apps():
     reg = _registry().get("apps", {})
     return [
@@ -72,6 +88,7 @@ def list_apps():
             "comment": meta.get("comment", ""),
             "quota_mb": _quota_mb(meta),
             "locked": list(_locked(meta)),
+            "deploy": _deploy(meta),
         }
         for name, meta in sorted(reg.items())
     ]
@@ -83,7 +100,8 @@ def get_app(name):
     if not meta:
         raise AppError(f"应用未注册：{name}")
     return {"name": name, "dir": meta.get("dir", ""), "comment": meta.get("comment", ""),
-            "quota_mb": _quota_mb(meta), "locked": list(_locked(meta))}
+            "quota_mb": _quota_mb(meta), "locked": list(_locked(meta)),
+            "deploy": _deploy(meta)}
 
 
 def app_exists(name):
@@ -96,23 +114,24 @@ def add_app(name, path=None, comment=""):
         raise AppError(f"应用已注册：{name}")
     if path:
         real = os.path.realpath(path)
-        if not os.path.isdir(real):
-            os.makedirs(real, exist_ok=True)
+        os.makedirs(real, exist_ok=True)
     else:
         real = os.path.join(config.BASE_DIR, name)
         os.makedirs(real, exist_ok=True)
     reg = _registry()
-    reg["apps"][name] = {"dir": real, "comment": comment or ""}
+    reg.setdefault("apps", {})[name] = {
+        "dir": real, "comment": comment or "",
+        "deploy": {"domain": "", "ssl": {"mode": "none"}, "port": 0},
+    }
     _save_registry(reg)
-    return {"name": name, "dir": real, "comment": comment or ""}
+    return get_app(name)
 
 
 def remove_app(name):
     reg = _registry()
     if name not in reg.get("apps", {}):
         raise AppError(f"应用未注册：{name}")
-    meta = reg["apps"][name]
-    reg["apps"].pop(name, None)
+    meta = reg["apps"].pop(name)
     _save_registry(reg)
     return {"name": name, "removed": True, "dir": meta.get("dir", "")}
 
@@ -121,14 +140,43 @@ def app_dir(name):
     return get_app(name)["dir"]
 
 
+# -------------------- 部署配置 --------------------
+
+def set_deploy(name, **kwargs):
+    """设置应用部署配置（domain/ssl/port/workdir/user/ci_user/ssh_key）。"""
+    reg = _registry()
+    meta = reg.get("apps", {}).get(name)
+    if not meta:
+        raise AppError(f"应用未注册：{name}")
+    deploy = meta.setdefault("deploy", {})
+    for k in ("domain", "port", "workdir", "user", "ci_user", "ssh_key", "comment"):
+        if k in kwargs and kwargs[k] is not None:
+            deploy[k] = kwargs[k]
+    if "ssl" in kwargs and isinstance(kwargs["ssl"], dict):
+        deploy.setdefault("ssl", {}).update(kwargs["ssl"])
+    if "port" in kwargs:
+        try:
+            deploy["port"] = int(kwargs["port"])
+        except (TypeError, ValueError):
+            pass
+    _save_registry(reg)
+    return get_app(name)
+
+
+def get_deploy(name):
+    return get_app(name).get("deploy", {})
+
+
+# -------------------- 版本管理 --------------------
+
 def list_versions(name):
-    """列出应用目录下所有 APK 的版本，按版本号降序。"""
     base = os.path.realpath(app_dir(name))
     versions = []
     if os.path.isdir(base):
-        for root, dirs, files in os.walk(base):
+        for root, _dirs, files in os.walk(base):
             for fn in sorted(files):
-                if not fn.lower().endswith(".apk"):
+                lower = fn.lower()
+                if not any(lower.endswith(ext) for ext in (".apk", ".jar", ".tar.gz", ".zip")):
                     continue
                 vstr = parse_version(fn)
                 if not vstr:
@@ -156,7 +204,6 @@ def latest_version(name):
 
 
 def discover():
-    """扫描站点目录，找出含 APK 但尚未注册的目录作为候选应用。"""
     base = os.path.realpath(config.BASE_DIR)
     registered = set()
     for a in list_apps():
@@ -175,7 +222,7 @@ def discover():
                 continue
             cnt = 0
             for root, _dirs, files in os.walk(real):
-                cnt += sum(1 for fn in files if fn.lower().endswith(".apk"))
+                cnt += sum(1 for fn in files if fn.lower().endswith((".apk", ".jar", ".zip")))
             if cnt:
                 candidates.append({"name": entry, "dir": real, "apk_count": cnt})
     return {"base": base, "candidates": candidates}
@@ -192,7 +239,6 @@ def _meta(name):
 
 
 def set_quota(name, quota_mb):
-    """设置应用容量配额（MB）。0 表示不限。不能超过总配额。"""
     reg, meta = _meta(name)
     quota_mb = int(quota_mb)
     if quota_mb < 0 or quota_mb > 2 ** 31 - 1:
@@ -206,7 +252,6 @@ def set_quota(name, quota_mb):
 
 
 def get_total_quota():
-    """全局总容量配额（MB，0=不限）。"""
     reg = _registry()
     try:
         return int(reg.get("total_quota_mb", 0))
@@ -215,7 +260,6 @@ def get_total_quota():
 
 
 def set_total_quota(quota_mb):
-    """设置全局总容量配额（MB，0=不限）。不能小于任一应用配额。"""
     reg = _registry()
     quota_mb = int(quota_mb)
     if quota_mb < 0 or quota_mb > 2 ** 31 - 1:
@@ -230,7 +274,6 @@ def set_total_quota(quota_mb):
 
 
 def lock_version(name, version):
-    """锁定某版本，容量清理时不会被删除。"""
     reg, meta = _meta(name)
     locked = meta.setdefault("locked", [])
     if version not in locked:
@@ -251,7 +294,10 @@ def unlock_version(name, version):
 def _delete_apk_safe(path):
     base = os.path.realpath(config.BASE_DIR)
     real = os.path.realpath(path)
-    if not real.endswith(".apk") or not real.startswith(base + os.sep):
+    if not real.startswith(base + os.sep):
+        return False
+    lower = real.lower()
+    if not any(lower.endswith(ext) for ext in (".apk", ".jar", ".tar.gz", ".zip")):
         return False
     if not os.path.isfile(real):
         return False
@@ -260,10 +306,6 @@ def _delete_apk_safe(path):
 
 
 def enforce_quota(name=None):
-    """按配额清理：应用总大小超过 quota_mb 时，删除最老的未锁定版本，直到达标。
-
-    name 为空时对所有已注册应用执行。返回 {app: [删除文件]}。
-    """
     targets = [name] if name else [a["name"] for a in list_apps()]
     removed = {}
     for app in targets:
@@ -273,7 +315,6 @@ def enforce_quota(name=None):
             continue
         limit = quota * 1024 * 1024
         locked = set(_locked(meta))
-        # 降序（最新在前）
         vers = list_versions(app)
         total = sum(v["size_bytes"] for v in vers)
         keep = []
@@ -293,7 +334,6 @@ def enforce_quota(name=None):
 
 
 def _enforce_total_quota(removed):
-    """总配额超出时，全局删除最老的未锁定版本直到达标。"""
     total_q = get_total_quota()
     if total_q <= 0:
         return
@@ -318,31 +358,21 @@ def _enforce_total_quota(removed):
             removed.setdefault(r["app"], []).append(r["file"])
 
 
-# -------------------- 反代路由更新（经 rproxy 公共 API，与具体反代解耦） --------------------
-#
-# 下载路由的 Caddyfile 写入职责属于反代领域（caddy 插件提供 download_route 能力）。
-# appupdate 只提供公共数据（list_apps / list_versions），并通过 rproxy.apply()
-# 触发反代重渲染 + reload，不直接依赖 caddy 内部实现。更换反代无需改动本模块。
+# -------------------- 反代路由集成 --------------------
 
-
-def update_caddy_routes(reload=True):
-    """触发当前反代重写下载路由并 reload。
-
-    反代后端（caddy/nginx...）通过 rproxy 统一调度；若当前反代不支持
-    download_route 能力则提示。返回 {backend, written, reloaded}。
-    """
+def update_proxy_routes(reload=True):
+    """触发当前反代重写下载路由并 reload。"""
     from ... import rproxy
     backend = rproxy.backend_name()
     if not backend:
         raise AppError("未检测到可用的反代后端（请安装 caddy/nginx 等）")
     if not rproxy.has_capability("download_route", backend):
-        raise AppError(f"反代 {backend} 不支持 download_route 能力，无法更新下载路由")
+        raise AppError(f"反代 {backend} 不支持 download_route 能力")
     result = rproxy._call(backend, "apply", reload=reload)
     return {"backend": backend, "written": True, "reloaded": reload, **result}
 
 
-def _caddy_preview():
-    """预览反代将写入的下载路由片段（经反代 preview 能力）。"""
+def proxy_preview():
     from ... import rproxy
     backend = rproxy.backend_name()
     if not backend:
@@ -352,8 +382,80 @@ def _caddy_preview():
     return rproxy._call(backend, "preview").get("apps", "")
 
 
+def request_domain(name):
+    """向反代插件请求为应用设定域名。"""
+    app = get_app(name)
+    domain = app.get("deploy", {}).get("domain", "")
+    if not domain:
+        raise AppError(f"应用 {name} 未配置域名")
+    from ... import rproxy
+    backend = rproxy.backend_name()
+    if not backend:
+        return {"ok": False, "message": "未检测到反代后端"}
+    return {"ok": True, "domain": domain, "backend": backend}
+
+
+def request_ssl(name):
+    """向反代插件请求 SSL 证书配置。"""
+    app = get_app(name)
+    ssl_cfg = app.get("deploy", {}).get("ssl", {})
+    if ssl_cfg.get("mode") == "none":
+        return {"ok": False, "message": "SSL 未启用"}
+    from ... import rproxy
+    backend = rproxy.backend_name()
+    if not backend:
+        return {"ok": False, "message": "未检测到反代后端"}
+    return {"ok": True, "ssl": ssl_cfg, "backend": backend}
+
+
+def request_port(name):
+    app = get_app(name)
+    port = app.get("deploy", {}).get("port", 0)
+    return {"ok": bool(port), "port": port}
+
+
+def request_workdir(name):
+    app = get_app(name)
+    workdir = app.get("deploy", {}).get("workdir", "") or app.get("dir", "")
+    return {"ok": bool(workdir), "workdir": workdir}
+
+
+def request_user(name):
+    app = get_app(name)
+    user = app.get("deploy", {}).get("user", "")
+    if not user:
+        return {"ok": False, "message": "未配置系统用户"}
+    import shutil as _sh
+    if not _sh.which("id"):
+        return {"ok": False, "message": "id 命令不可用"}
+    r = run(["id", "-u", user], check=False)
+    if r.returncode != 0:
+        return {"ok": False, "message": f"用户 {user} 不存在"}
+    return {"ok": True, "user": user}
+
+
+def request_ssh_key(name):
+    app = get_app(name)
+    ci_user = app.get("deploy", {}).get("ci_user", "")
+    if not ci_user:
+        return {"ok": False, "message": "未配置 CI 用户"}
+    import pwd as _pwd
+    try:
+        home = _pwd.getpwnam(ci_user).pw_dir
+    except KeyError:
+        return {"ok": False, "message": f"用户 {ci_user} 不存在"}
+    key_file = os.path.join(home, ".ssh", "authorized_keys")
+    if not os.path.isfile(key_file):
+        return {"ok": False, "message": " authorized_keys 不存在"}
+    try:
+        with open(key_file) as f:
+            keys = [ln.strip() for ln in f if ln.strip() and not ln.startswith("#")]
+    except OSError:
+        return {"ok": False, "message": "读取 authorized_keys 失败"}
+    return {"ok": True, "ci_user": ci_user, "keys": keys}
+
+
 def remove():
-    """卸载：移除配额清理定时任务（保留应用/用户数据，便于重装后继续使用）。"""
     cron = "/etc/cron.d/aups-enforce-quota"
     try:
         os.remove(cron)

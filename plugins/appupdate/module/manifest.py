@@ -1,4 +1,4 @@
-"""appupdate 模块清单：声明 CLI 命令组 / Web 路由 / 前端页签接入点。
+"""appupdate 模块清单：多应用管理、部署配置、版本管理、CI 用户。
 
 CLI 命令组在 aups/core/cli.py 中按此清单注册；Web 路由在 aups/web/app.py 中按此挂载。
 """
@@ -6,8 +6,8 @@ CLI 命令组在 aups/core/cli.py 中按此清单注册；Web 路由在 aups/web
 MANIFEST = {
     "name": "appupdate",
     "title": "应用更新管理",
-    "version": "1.0.0",
-    "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
+    "version": "2.0.0",
+    "description": "多应用管理：部署配置（域名/SSL/端口/用户）、版本管理、CI 上传、存储配额、下载统计",
     "type": "external",
     "attr": "功能",
     "depends": [{"capability": "proxy"}],
@@ -20,9 +20,15 @@ MANIFEST = {
         "/api/apps/{name}/versions/{version}/lock",
         "/api/apps/{name}/versions/{version}/unlock",
         "/api/apps/{name}/quota",
+        "/api/apps/{name}/deploy",
+        "/api/apps/{name}/deploy/domain",
+        "/api/apps/{name}/deploy/ssl",
+        "/api/apps/{name}/deploy/port",
+        "/api/apps/{name}/deploy/workdir",
+        "/api/apps/{name}/deploy/user",
+        "/api/apps/{name}/deploy/sshkey",
         "/api/apps/caddy",
         "/api/apps/discover",
-        "/api/storage",
         "/api/storage/usage",
         "/api/storage/apks",
         "/api/storage/quota",
@@ -33,24 +39,22 @@ MANIFEST = {
         "/api/users/{name}",
         "/api/users/{name}/dirs",
         "/api/users/{name}/dirs/remove",
-        "/api/ssh",
         "/api/ssh/{user}",
         "/api/ssh/{user}/{index}",
     ],
-    "frontend_tabs": ["apps", "storage", "users", "ssh"],
-    "modules": ["apps", "storage", "downloads", "users", "sshkeys"],
+    "frontend_tabs": ["apps", "users", "storage"],
     "entry": [
         {"id": "apps", "title": "应用管理"},
         {"id": "users", "title": "CI 用户"},
-        {"id": "ssh", "title": "SSH 公钥"},
+        {"id": "storage", "title": "存储管理"},
     ],
     "plugins": [
         {"id": "apps", "title": "应用管理",
-         "description": "应用注册/版本、存储与配额、APK 管理、未注册检测"},
+         "description": "应用注册、部署配置（域名/SSL/端口/用户）、版本管理、反代路由"},
         {"id": "users", "title": "CI 用户",
-         "description": "APK 上传账号与目录 ACL 授权"},
-        {"id": "ssh", "title": "SSH 公钥",
-         "description": "CI 用户的上传鉴权公钥管理"},
+         "description": "系统用户创建、SSH 公钥管理、目录 ACL 授权"},
+        {"id": "storage", "title": "存储管理",
+         "description": "磁盘用量、配额设置、版本清理"},
     ],
     "cards": [
         {"id": "downloads", "title": "下载统计",
