@@ -53,6 +53,7 @@ MANIFEST = {
         "/api/caddyconf/waf/subscribe",
         "/api/caddyconf/waf/subscribe/recommended",
         "/api/stats/accesslog",
+        "/api/caddy/journal",
     ],
     "frontend_tabs": ["caddy-rproxy"],
     "entry": [

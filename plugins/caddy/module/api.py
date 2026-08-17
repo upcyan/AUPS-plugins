@@ -30,6 +30,14 @@ def caddy_env_install(auth=Depends(require_auth)):
 # ---------- 实例控制（stop / restart / reload）----------
 @router.post("/caddy/instance/{action}")
 def caddy_instance(action: str, auth=Depends(require_auth)):
+    """stop / restart / reload。reload 前检查 caddy 二进制是否存在。"""
+    if action == "reload" and ENV.deploy_method() != "container":
+        b = ENV.caddy_binary()
+        if not b:
+            raise HTTPException(
+                status_code=400,
+                detail="Caddy 未安装（未找到 caddy 二进制），无法执行 reload。"
+                       + "请先安装 Caddy（aups plugins market install caddy）。")
     return ENV.instance(action)
 
 
@@ -174,3 +182,23 @@ def stats_accesslog_status(auth=Depends(require_auth)):
 @router.post("/stats/accesslog")
 def stats_accesslog_enable(auth=Depends(require_auth)):
     return RP.enable_access_log()
+
+
+# ---------- Caddy 运行日志 ----------
+@router.get("/caddy/journal")
+def caddy_journal(lines: int = 100, auth=Depends(require_auth)):
+    """读取 caddy systemd journal 日志（最近 N 行）。"""
+    import subprocess as _sp
+    try:
+        r = _sp.run(["journalctl", "-u", "caddy", "-n", str(min(lines, 500)),
+                      "--no-pager", "--output=short-iso"],
+                     capture_output=True, text=True, timeout=10)
+        raw = r.stdout.strip()
+        if r.returncode != 0 and not raw:
+            return {"lines": [], "error": r.stderr.strip() or "无法读取 caddy 日志"}
+        log_lines = [ln for ln in raw.splitlines() if ln.strip()]
+        return {"lines": log_lines[-lines:], "error": None}
+    except _sp.TimeoutExpired:
+        return {"lines": [], "error": "读取日志超时"}
+    except FileNotFoundError:
+        return {"lines": [], "error": "journalctl 不可用"}

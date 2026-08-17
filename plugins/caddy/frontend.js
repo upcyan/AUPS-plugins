@@ -54,7 +54,11 @@ window.AUPS_PLUGINS['caddy'] = (function () {
         <div class="mut" style="margin-top:10px">下载路由 + WAF 规则由面板写入 Caddyfile（AUPS APPS / AUPS WAF 标记区）。WAF 规则模板在「安全管理 → WAF 模板」维护，变更后自动重载本反代。</div>
       </div>
       <div class="card"><h2>监听端口</h2><pre>${listening || '无'}</pre></div>
-      <div id="ccPreviewBox"></div>`;
+      <div id="ccPreviewBox"></div>
+      <div class="card"><h2>Caddy 日志</h2>
+        <div class="row"><button class="ghost" onclick="${P}caddyLogs()">查看最近日志</button></div>
+        <pre id="ccLogBox" style="margin-top:8px;max-height:400px;overflow:auto;color:var(--mut);font-size:12px"></pre>
+      </div>`;
     } catch (e) {
       view.innerHTML = navHtml() + errCard(e);
     }
@@ -67,6 +71,15 @@ window.AUPS_PLUGINS['caddy'] = (function () {
       <h2 class="mut">WAF（来自核心模板）</h2><pre>${esc(d.waf)}</pre></div>`;
   }
   async function caddyApply() { await api('POST', '/api/caddyconf/apply', { reload: true }); alert('已写入 Caddyfile 并 reload'); await rproxyTab(); }
+  async function caddyLogs() {
+    const box = document.getElementById('ccLogBox');
+    box.textContent = '加载中...';
+    try {
+      const d = await api('GET', '/api/caddy/journal?lines=100');
+      if (d.error) { box.textContent = d.error; return; }
+      box.textContent = (d.lines || []).join('\n') || '(无日志)';
+    } catch (e) { box.textContent = '加载失败: ' + ((e && e.message) || e); }
+  }
 
   /* ---------- Caddyfile 管理（参考 caddydash） ---------- */
   let sitesCache = [];
@@ -239,7 +252,7 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     go: go,
     open: function (s) { go(s || 'rproxy'); },
     rproxyTab: rproxyTab,
-    caddyPreview: caddyPreview, caddyApply: caddyApply,
+    caddyPreview: caddyPreview, caddyApply: caddyApply, caddyLogs: caddyLogs,
     caddyfileTab: caddyfileTab, siteNew: siteNew, siteEdit: siteEdit,
     siteUpdate: siteUpdate, siteDelete: siteDelete, siteCreate: siteCreate, siteClose: siteClose,
     caddyfileSave: caddyfileSave, caddyfileReload: caddyfileReload,

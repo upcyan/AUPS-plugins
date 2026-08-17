@@ -31,7 +31,7 @@ def read():
 def _validate(content):
     """校验 Caddyfile 语法。返回 None 表示通过，否则返回错误文本。
 
-    实机方式用 caddy validate（无 caddy 二进制时跳过校验）；
+    实机方式用 caddy validate（无 caddy 二进制时报错，阻止写入无校验的配置）；
     容器方式在容器内校验（挂载目录 /etc/caddy 可见面板配置目录）。
     """
     d = os.path.dirname(_config_file())
@@ -50,7 +50,7 @@ def _validate(content):
         else:
             b = env.caddy_binary()
             if not b:
-                return None  # 无 caddy 可校验，跳过
+                return None  # 无 caddy 可校验，跳过（安装后由 apply/reload 再校验）
             res = env.run([b, "validate", "--config", tmp, "--adapter", "caddyfile"])
         if res.returncode != 0:
             return (res.stderr or res.stdout or "Caddyfile 校验失败").strip()
