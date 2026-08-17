@@ -166,6 +166,14 @@ def install():
     return {"ok": True, "source": source, "message": msg, **status()}
 
 
+def post_install():
+    """市场安装后自动部署 nginx 二进制并启动。"""
+    bin_path = _bin()
+    if os.path.isfile(bin_path) and os.access(bin_path, os.X_OK):
+        return {"skipped": True, "message": f"nginx 已安装: {bin_path}"}
+    return install()
+
+
 def remove():
     """卸载：停止面板部署的 nginx，删除运行时二进制（保留 config/data，由市场 keep_data 决定）。"""
     _stop()
