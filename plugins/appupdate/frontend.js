@@ -1,4 +1,4 @@
-/* AUPS 插件：appupdate — 应用管理 / 部署配置 / CI 用户 / 存储
+/* AUPS 插件：appupdate — 应用管理 / 部署配置 / CI 用户 / 存储与版本
  * 由「插件中心」按需加载并注册到 window.AUPS_PLUGINS。
  */
 window.AUPS_PLUGINS = window.AUPS_PLUGINS || {};
@@ -11,7 +11,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     return `<div class="secnav">
       <button class="${section === 'apps' ? 'on' : ''}" onclick="${P}go('apps')">应用管理</button>
       <button class="${section === 'users' ? 'on' : ''}" onclick="${P}go('users')">CI 用户</button>
-      <button class="${section === 'storage' ? 'on' : ''}" onclick="${P}go('storage')">存储管理</button>
+      <button class="${section === 'storage' ? 'on' : ''}" onclick="${P}go('storage')">存储与版本</button>
     </div>`;
   }
 
@@ -43,18 +43,14 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       appsCache = d.apps || [];
       const rows = appsCache.map(a => {
         const dep = a.deploy || {};
-        const domain = dep.domain || '-';
-        const port = dep.port || '-';
-        const user = dep.user || dep.ci_user || '-';
         return `<tr>
           <td><b>${esc(a.name)}</b><div class="mut" style="font-size:11px">${esc(a.comment || '')}</div></td>
-          <td class="mut" style="font-size:12px">${esc(domain)}</td>
-          <td class="mut">${port}</td>
-          <td class="mut">${esc(user)}</td>
+          <td class="mut" style="font-size:12px">${esc(dep.domain || '-')}</td>
+          <td class="mut">${dep.port || '-'}</td>
+          <td class="mut">${esc(dep.user || dep.ci_user || '-')}</td>
           <td class="mut" style="font-size:12px">${esc(a.dir)}</td>
           <td>
             <button class="ghost" onclick="${P}appDeploy('${esc(a.name)}')">部署</button>
-            <button class="ghost" onclick="${P}appVersions('${esc(a.name)}')">版本</button>
             <button class="ghost danger" onclick="${P}appDelete('${esc(a.name)}')">删除</button>
           </td></tr>`;
       }).join('');
@@ -68,7 +64,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
           <button class="ghost" onclick="${P}appsCaddy()">同步反代路由</button>
         </div>
       </div>
-      <div id="appVersionsBox"></div>`;
+      <div id="appDeployBox"></div>`;
     } catch (e) {
       view.innerHTML = navHtml() + errCard(e);
     }
@@ -87,31 +83,6 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
   }
 
-  async function appVersions(name) {
-    const box = document.getElementById('appVersionsBox');
-    box.innerHTML = '<div class="card"><span class="spinner"></span> 加载版本...</div>';
-    try {
-      const d = await api('GET', '/api/apps/' + encodeURIComponent(name) + '/versions');
-      const vs = (d.versions || []).map(v => `<tr>
-        <td>${esc(v.version)}</td>
-        <td class="mut">${fmtSize(v.size_bytes)}</td>
-        <td class="mut" style="font-size:11px">${esc(v.rel)}</td>
-        <td><button class="ghost danger" onclick="${P}apkDelete('${esc(name)}','${esc(v.rel)}')">删除</button></td>
-      </tr>`).join('');
-      box.innerHTML = `<div class="card"><h2>${esc(name)} 版本</h2>
-        <div class="mut" style="margin-bottom:8px">最新: ${d.latest ? esc(d.latest.version) : '-'}</div>
-        <table><thead><tr><th>版本</th><th>大小</th><th>文件</th><th></th></tr></thead>
-        <tbody>${vs || '<tr><td colspan="4" class="mut">暂无版本</td></tr>'}</tbody></table>
-      </div>`;
-    } catch(e) { box.innerHTML = errCard(e); }
-  }
-
-  async function apkDelete(name, rel) {
-    if (!confirm('删除文件 ' + rel + '？')) return;
-    try { await api('POST', '/api/storage/delete', { paths: [rel] }); await appVersions(name); }
-    catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
-  }
-
   async function appsCaddy() {
     try { await api('POST', '/api/apps/caddy', { reload: true }); alert('反代路由已更新'); }
     catch(e){ alert('更新失败：' + ((e&&e.detail)||e)); }
@@ -119,7 +90,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
 
   /* ---------- 部署配置 ---------- */
   async function appDeploy(name) {
-    const box = document.getElementById('appVersionsBox');
+    const box = document.getElementById('appDeployBox');
     box.innerHTML = '<div class="card"><span class="spinner"></span> 加载部署配置...</div>';
     try {
       const [app, domainR, sslR, portR, workdirR, userR, sshR] = await Promise.all([
@@ -257,13 +228,17 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
   }
 
-  /* ---------- 存储管理 ---------- */
+  /* ---------- 存储与版本 ---------- */
+  let _storageApps = [];
+  let _storageVersions = {};
+  let _selectedApp = '';
+
   async function storageTab() {
     view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
     try {
       const d = await api('GET', '/api/storage/quota');
-      const apps = d.apps || [];
-      const rows = apps.map(a => {
+      _storageApps = d.apps || [];
+      const quotaRows = _storageApps.map(a => {
         const pct = a.quota_mb > 0 ? Math.min(100, Math.round(a.usage_bytes / (a.quota_mb * 1024 * 1024) * 100)) : 0;
         return `<tr>
           <td>${esc(a.name)}</td>
@@ -274,21 +249,90 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
             <button class="ghost" onclick="${P}setQuota('${esc(a.name)}')">设置</button></td>
         </tr>`;
       }).join('');
+
+      // 版本选择器
+      const appOpts = _storageApps.map(a => `<option value="${esc(a.name)}" ${a.name===_selectedApp?'selected':''}>${esc(a.name)}</option>`).join('');
+
       view.innerHTML = navHtml() + `
       <div class="card"><h2>存储配额</h2>
         <div class="row"><span class="mut">总用量: ${fmtSize(d.total_usage_bytes || 0)} / 总配额: ${d.total_quota_mb > 0 ? d.total_quota_mb + ' MB' : '不限'}</span></div>
         <table><thead><tr><th>应用</th><th>用量</th><th>配额</th><th>进度</th><th>设置</th></tr></thead>
-        <tbody>${rows}</tbody></table>
+        <tbody>${quotaRows}</tbody></table>
         <div class="row" style="margin-top:8px">
           <span class="mut">总配额(MB):</span>
           <input id="totalQuota" type="number" value="${d.total_quota_mb||''}" placeholder="0=不限" style="width:100px">
           <button class="ghost" onclick="${P}setTotalQuota()">设置总配额</button>
           <button class="ghost" onclick="${P}enforceQuota()">执行清理</button>
         </div>
+      </div>
+      <div class="card"><h2>版本管理</h2>
+        <div class="row" style="margin-bottom:8px">
+          <span class="mut">选择应用:</span>
+          <select id="verAppSel" onchange="${P}loadVersions(this.value)" style="width:180px">
+            <option value="">-- 选择应用 --</option>
+            ${appOpts}
+          </select>
+        </div>
+        <div id="verListBox"></div>
       </div>`;
+
+      // 自动加载上次选择的应用
+      if (_selectedApp) loadVersions(_selectedApp);
     } catch (e) {
       view.innerHTML = navHtml() + errCard(e);
     }
+  }
+
+  async function loadVersions(name) {
+    _selectedApp = name;
+    const box = document.getElementById('verListBox');
+    if (!name) { box.innerHTML = '<div class="mut">请选择应用查看版本</div>'; return; }
+    box.innerHTML = '<div class="mut"><span class="spinner"></span> 加载版本...</div>';
+    try {
+      const [verData, appData] = await Promise.all([
+        api('GET', '/api/apps/' + encodeURIComponent(name) + '/versions'),
+        api('GET', '/api/apps/' + encodeURIComponent(name)),
+      ]);
+      const locked = new Set(appData.locked || []);
+      const versions = verData.versions || [];
+      const rows = versions.map(v => {
+        const isLocked = locked.has(v.version);
+        return `<tr>
+          <td>${esc(v.version)}</td>
+          <td class="mut">${fmtSize(v.size_bytes)}</td>
+          <td class="mut" style="font-size:11px">${esc(v.rel)}</td>
+          <td>${isLocked
+            ? `<button class="ghost" onclick="${P}unlockVer('${esc(name)}','${esc(v.version)}')">解锁</button>
+               <span class="ok" style="font-size:11px">🔒 已锁定</span>`
+            : `<button class="ghost" onclick="${P}lockVer('${esc(name)}','${esc(v.version)}')">锁定</button>`}</td>
+          <td><button class="ghost danger" onclick="${P}apkDelete('${esc(name)}','${esc(v.rel)}')">删除</button></td>
+        </tr>`;
+      }).join('');
+      box.innerHTML = `
+        <div class="mut" style="margin-bottom:6px">最新: ${verData.latest ? esc(verData.latest.version) : '-'} · 共 ${versions.length} 个版本</div>
+        <table><thead><tr><th>版本</th><th>大小</th><th>文件</th><th>锁定</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5" class="mut">暂无版本</td></tr>'}</tbody></table>`;
+    } catch(e) { box.innerHTML = errCard(e); }
+  }
+
+  async function lockVer(name, version) {
+    try {
+      await api('POST', '/api/apps/' + encodeURIComponent(name) + '/versions/' + encodeURIComponent(version) + '/lock');
+      await loadVersions(name);
+    } catch(e) { alert('锁定失败：' + ((e&&e.detail)||e)); }
+  }
+
+  async function unlockVer(name, version) {
+    try {
+      await api('POST', '/api/apps/' + encodeURIComponent(name) + '/versions/' + encodeURIComponent(version) + '/unlock');
+      await loadVersions(name);
+    } catch(e) { alert('解锁失败：' + ((e&&e.detail)||e)); }
+  }
+
+  async function apkDelete(name, rel) {
+    if (!confirm('删除文件 ' + rel + '？')) return;
+    try { await api('POST', '/api/storage/delete', { paths: [rel] }); await loadVersions(name); }
+    catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
   }
 
   async function setQuota(name) {
@@ -318,13 +362,14 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     sections: [
       { id: 'apps', title: '应用管理' },
       { id: 'users', title: 'CI 用户' },
-      { id: 'storage', title: '存储管理' },
+      { id: 'storage', title: '存储与版本' },
     ],
     go: go,
     open: function (s) { go(s || 'apps'); },
-    appsTab, appAdd, appDelete, appVersions, apkDelete, appsCaddy,
+    appsTab, appAdd, appDelete, appsCaddy,
     appDeploy, deploySave, deployProxy,
     usersTab, userCreate, userDelete, userSsh, sshAdd, sshRemove,
-    storageTab, setQuota, setTotalQuota, enforceQuota,
+    storageTab, loadVersions, lockVer, unlockVer, apkDelete,
+    setQuota, setTotalQuota, enforceQuota,
   };
 })();
