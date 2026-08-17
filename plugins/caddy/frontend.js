@@ -199,8 +199,23 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     const mode = document.getElementById('siteMode').value;
     const target = document.getElementById('siteTarget').value.trim();
     const extra = document.getElementById('siteExtra').value;
-    try { await api('PUT', '/api/caddy/sites/' + encodeURIComponent(host), { mode, target, extra }); alert('已保存'); await caddyfileTab(); }
-    catch(e){ alert('保存失败：' + ((e&&e.detail)||e)); }
+    try {
+      await api('PUT', '/api/caddy/sites/' + encodeURIComponent(host), { mode, target, extra });
+      // 直接更新本地缓存 + 表格行，避免全量刷新时 GET 被浏览器缓存
+      const cached = sitesCache.find(s => s.host === host);
+      if (cached) { cached.mode = mode; cached.target = target; }
+      siteClose();
+      // 重绘站点表格（不重新请求 API）
+      const rows = sitesCache.map(s => `<tr>
+        <td>${esc(s.host)}</td>
+        <td>${esc(s.mode)}</td>
+        <td>${esc(s.target || '-')}</td>
+        <td>
+          <button class="ghost" onclick="${P}siteEdit('${esc(s.host)}')">编辑</button>
+          <button class="ghost danger" onclick="${P}siteDelete('${esc(s.host)}')">删除</button>
+        </td></tr>`).join('') || '<tr><td colspan="4" class="mut">暂无站点块</td></tr>';
+      document.querySelectorAll('table tbody').forEach(t => { t.innerHTML = rows; });
+    } catch(e){ alert('保存失败：' + ((e&&e.detail)||e)); }
   }
   async function siteDelete(host) {
     if (!confirm('删除站点 ' + host + ' ？')) return;
