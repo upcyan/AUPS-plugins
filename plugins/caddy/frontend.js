@@ -1,15 +1,14 @@
-/* AUPS 插件：caddy — 反代配置 / Caddyfile 管理 / 实例控制
+/* AUPS 插件：caddy — Caddyfile 管理 / 实例控制
  * 由「插件中心」按需加载并注册到 window.AUPS_PLUGINS。
  * 依赖核心全局：api / esc / fmt / view / alert / confirm。
  */
 window.AUPS_PLUGINS = window.AUPS_PLUGINS || {};
 window.AUPS_PLUGINS['caddy'] = (function () {
   const P = 'AUPS_PLUGINS.caddy.';
-  let section = 'rproxy';
+  let section = 'caddyfile';
 
   function navHtml() {
     return `<div class="secnav">
-      <button class="${section === 'rproxy' ? 'on' : ''}" onclick="${P}go('rproxy')">反代配置</button>
       <button class="${section === 'caddyfile' ? 'on' : ''}" onclick="${P}go('caddyfile')">Caddyfile 管理</button>
       <button class="${section === 'instance' ? 'on' : ''}" onclick="${P}go('instance')">实例控制</button>
     </div>`;
@@ -23,62 +22,9 @@ window.AUPS_PLUGINS['caddy'] = (function () {
   }
 
   function go(s) {
-    section = s || 'rproxy';
-    if (section === 'rproxy') rproxyTab();
-    else if (section === 'caddyfile') caddyfileTab();
+    section = s || 'caddyfile';
+    if (section === 'caddyfile') caddyfileTab();
     else if (section === 'instance') instanceTab();
-  }
-
-  /* ---------- 反代配置 ---------- */
-  async function rproxyTab() {
-    view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
-    try {
-      const [st, pt] = await Promise.all([
-        api('GET', '/api/caddyconf/status'),
-        api('GET', '/api/ports')
-      ]);
-      const listening = (pt.listening || []).map(x => `${x.local}  (${x.process})`).join('\n');
-      const deploy = st.deploy === 'container'
-        ? `容器 · ${esc((st.container||{}).name||'')} ${(st.container||{}).running ? '运行中' : '已停止'}`
-        : `实机 · ${esc(st.reload_method || '-')}`;
-      view.innerHTML = navHtml() + `
-      <div class="card"><h2>反代后端 · ${esc(st.backend)}</h2>
-        <div class="row">
-          <span>配置: <span class="mut">${esc(st.caddyfile || '-')}</span></span>
-          <span class="mut">${deploy}${st.name === 'caddy' && st.version ? ` · Caddy ${esc(st.version)}` : ''}</span>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button class="ghost" onclick="${P}caddyPreview()">预览片段</button>
-          <button onclick="${P}caddyApply()">应用并 reload</button>
-        </div>
-        <div class="mut" style="margin-top:10px">下载路由 + WAF 规则由面板写入 Caddyfile（AUPS APPS / AUPS WAF 标记区）。WAF 规则模板在「安全管理 → WAF 模板」维护，变更后自动重载本反代。</div>
-      </div>
-      <div class="card"><h2>监听端口</h2><pre>${listening || '无'}</pre></div>
-      <div id="ccPreviewBox"></div>
-      <div class="card"><h2>Caddy 日志</h2>
-        <div class="row"><button class="ghost" onclick="${P}caddyLogs()">查看最近日志</button></div>
-        <pre id="ccLogBox" style="margin-top:8px;max-height:400px;overflow:auto;color:var(--mut);font-size:12px"></pre>
-      </div>`;
-    } catch (e) {
-      view.innerHTML = navHtml() + errCard(e);
-    }
-  }
-  async function caddyPreview() {
-    const box = document.getElementById('ccPreviewBox');
-    const d = await api('GET', '/api/caddyconf/preview');
-    box.innerHTML = `<div class="card"><h2>预览（尚未写入）</h2>
-      <h2 class="mut">下载路由</h2><pre>${esc(d.apps)}</pre>
-      <h2 class="mut">WAF（来自核心模板）</h2><pre>${esc(d.waf)}</pre></div>`;
-  }
-  async function caddyApply() { await api('POST', '/api/caddyconf/apply', { reload: true }); alert('已写入 Caddyfile 并 reload'); await rproxyTab(); }
-  async function caddyLogs() {
-    const box = document.getElementById('ccLogBox');
-    box.textContent = '加载中...';
-    try {
-      const d = await api('GET', '/api/caddy/journal?lines=100');
-      if (d.error) { box.textContent = d.error; return; }
-      box.textContent = (d.lines || []).join('\n') || '(无日志)';
-    } catch (e) { box.textContent = '加载失败: ' + ((e && e.message) || e); }
   }
 
   /* ---------- Caddyfile 管理（参考 caddydash） ---------- */
@@ -103,7 +49,7 @@ window.AUPS_PLUGINS['caddy'] = (function () {
         </td></tr>`).join('') || '<tr><td colspan="4" class="mut">暂无站点块</td></tr>';
       view.innerHTML = navHtml() + `
       <div class="card"><h2>Caddyfile 管理</h2>
-        <div class="row"><span class="mut">配置: ${esc(cf.path)} · 部署: ${deploy}</span></div>
+        <div class="row"><span class="mut">配置: ${esc(cf.path)} · 部署: ${deploy}${st.version ? ' · Caddy ' + esc(st.version) : ''}</span></div>
         <div class="row" style="margin-top:8px">
           <button onclick="${P}siteNew()">新增站点</button>
           <button class="ghost" onclick="${P}caddyfileReload()">重载配置</button>
@@ -201,11 +147,9 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     const extra = document.getElementById('siteExtra').value;
     try {
       await api('PUT', '/api/caddy/sites/' + encodeURIComponent(host), { mode, target, extra });
-      // 直接更新本地缓存 + 表格行，避免全量刷新时 GET 被浏览器缓存
       const cached = sitesCache.find(s => s.host === host);
       if (cached) { cached.mode = mode; cached.target = target; }
       siteClose();
-      // 重绘站点表格（不重新请求 API）
       const rows = sitesCache.map(s => `<tr>
         <td>${esc(s.host)}</td>
         <td>${esc(s.mode)}</td>
@@ -225,17 +169,20 @@ window.AUPS_PLUGINS['caddy'] = (function () {
   function siteClose() { document.getElementById('siteModal').innerHTML = ''; }
 
   /* ---------- 实例控制 ---------- */
+  let _instTimer = null;
   async function instanceTab() {
+    if (_instTimer) { clearInterval(_instTimer); _instTimer = null; }
     view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
     try {
-      const [st, cs] = await Promise.all([
-        api('GET', '/api/caddyconf/status'),
-        api('GET', '/api/caddy/status')
+      const [cs, pt] = await Promise.all([
+        api('GET', '/api/caddy/status'),
+        api('GET', '/api/ports')
       ]);
+      const listening = (pt.listening || []).map(x => `${x.local}  (${x.process})`).join('\n');
       const c = cs.container || {};
       const deployHtml = cs.deploy === 'container'
         ? `容器 <b>${esc(c.name||'-')}</b> · ${esc(c.runtime||'-')} · ${esc(c.image||'-')} · ${c.exists ? (c.running ? '<b style="color:var(--ok)">运行中</b>' : '<b style="color:var(--err)">已停止</b>') : '<span class="mut">未创建</span>'}`
-        : `实机 · reload: ${esc(st.reload_method || '-')}${st.version ? ' · Caddy ' + esc(st.version) : ''}`;
+        : `实机 · ${cs.version ? 'Caddy ' + esc(cs.version) : '未安装'}`;
       const installBtn = (!cs.installed && cs.deploy !== 'container')
         ? `<div class="row" style="margin-top:12px;padding:10px;border:1px solid var(--err);border-radius:6px">
              <span style="color:var(--err)">Caddy 未安装</span>
@@ -243,19 +190,35 @@ window.AUPS_PLUGINS['caddy'] = (function () {
            </div>`
         : '';
       view.innerHTML = navHtml() + `
-      <div class="card"><h2>实例控制</h2>
+      <div class="card"><h2>实例状态</h2>
         <div class="row"><span class="mut">部署: ${deployHtml}</span></div>
         ${installBtn}
         <div class="row" style="margin-top:12px">
           <button onclick="${P}inst('stop')">停止</button>
           <button onclick="${P}inst('restart')">重启</button>
           <button onclick="${P}inst('reload')">重载</button>
+          <button class="ghost" onclick="${P}instanceTab()" style="margin-left:auto">刷新状态</button>
         </div>
-        <div class="mut" style="margin-top:8px">停止后下载/WAF 站点将不可用；重载用于应用 Caddyfile 改动。</div>
+      </div>
+      <div class="card"><h2>监听端口</h2><pre>${listening || '无'}</pre></div>
+      <div class="card"><h2>工作日志</h2>
+        <div class="row"><button class="ghost" onclick="${P}caddyLogs()">加载最近日志</button>
+        <span class="mut" style="font-size:12px;margin-left:8px">最近 100 行</span></div>
+        <pre id="ccLogBox" style="margin-top:8px;max-height:400px;overflow:auto;color:var(--mut);font-size:12px">点击「加载最近日志」查看</pre>
       </div>`;
     } catch (e) {
       view.innerHTML = navHtml() + errCard(e);
     }
+  }
+  async function caddyLogs() {
+    const box = document.getElementById('ccLogBox');
+    if (!box) return;
+    box.textContent = '加载中...';
+    try {
+      const d = await api('GET', '/api/caddy/journal?lines=100');
+      if (d.error) { box.textContent = d.error; return; }
+      box.textContent = (d.lines || []).join('\n') || '(无日志)';
+    } catch (e) { box.textContent = '加载失败: ' + ((e && e.message) || e); }
   }
   async function caddyInstall() {
     if (!confirm('安装 Caddy？将通过系统包管理器安装并部署到面板目录。')) return;
@@ -275,18 +238,15 @@ window.AUPS_PLUGINS['caddy'] = (function () {
   return {
     title: 'Caddy 环境',
     sections: [
-      { id: 'rproxy', title: '反代配置' },
       { id: 'caddyfile', title: 'Caddyfile 管理' },
       { id: 'instance', title: '实例控制' },
     ],
     go: go,
-    open: function (s) { go(s || 'rproxy'); },
-    rproxyTab: rproxyTab,
-    caddyPreview: caddyPreview, caddyApply: caddyApply, caddyLogs: caddyLogs,
+    open: function (s) { go(s || 'caddyfile'); },
     caddyfileTab: caddyfileTab, siteNew: siteNew, siteEdit: siteEdit,
     siteUpdate: siteUpdate, siteDelete: siteDelete, siteCreate: siteCreate, siteClose: siteClose,
     caddyfileSave: caddyfileSave, caddyfileReload: caddyfileReload,
     cfPresets: cfPresets, cfInsertPreset: cfInsertPreset,
-    instanceTab: instanceTab, inst: inst, caddyInstall: caddyInstall,
+    instanceTab: instanceTab, inst: inst, caddyInstall: caddyInstall, caddyLogs: caddyLogs,
   };
 })();

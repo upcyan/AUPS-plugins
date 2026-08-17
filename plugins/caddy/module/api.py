@@ -81,25 +81,10 @@ def caddyfile_presets(auth=Depends(require_auth)):
     return CF.presets()
 
 
-# ---------- 反代配置（Caddy / WAF）----------
+# ---------- 反代状态（供实例控制页使用）----------
 @router.get("/caddyconf/status")
 def caddyconf_status(auth=Depends(require_auth)):
     return RP.status()
-
-
-@router.get("/caddyconf/show")
-def caddyconf_show(auth=Depends(require_auth)):
-    return RP.show()
-
-
-@router.get("/caddyconf/preview")
-def caddyconf_preview(auth=Depends(require_auth)):
-    return RP.preview()
-
-
-@router.post("/caddyconf/apply")
-def caddyconf_apply(body: dict = None, auth=Depends(require_auth)):
-    return RP.apply(reload=bool((body or {}).get("reload", True)))
 
 
 # ---------- WAF ----------
