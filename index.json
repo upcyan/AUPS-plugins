@@ -7,7 +7,7 @@
       "name": "appupdate",
       "title": "应用更新管理",
       "attr": "功能",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
