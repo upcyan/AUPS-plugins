@@ -30,14 +30,23 @@ def caddy_env_install(auth=Depends(require_auth)):
 # ---------- 实例控制（stop / restart / reload）----------
 @router.post("/caddy/instance/{action}")
 def caddy_instance(action: str, auth=Depends(require_auth)):
-    """stop / restart / reload。reload 前检查 caddy 二进制是否存在。"""
+    """stop / restart / reload。reload 前检查服务状态，未运行时自动启动。"""
     if action == "reload" and ENV.deploy_method() != "container":
+        import subprocess as _sp
         b = ENV.caddy_binary()
         if not b:
             raise HTTPException(
                 status_code=400,
                 detail="Caddy 未安装（未找到 caddy 二进制），无法执行 reload。"
                        + "请先安装 Caddy（aups plugins market install caddy）。")
+        # 服务未运行时 systemctl reload 会失败，自动改用 start
+        try:
+            st = _sp.run(["systemctl", "is-active", "caddy"],
+                         capture_output=True, text=True, timeout=5)
+            if st.stdout.strip() != "active":
+                return ENV.instance("start")
+        except Exception:
+            pass
     return ENV.instance(action)
 
 
