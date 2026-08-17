@@ -15,18 +15,18 @@
         }
       ],
       "files": {
-        "README.md": "9b9aa53e3c524af4a2e6a094d7bedb3639df2e841da36d63c283d5e951188d73",
-        "frontend.js": "c374a95614abf38c92a7a95bb6e28caf43c5fa5ce9b9109baa1c5adb6a0c35f9",
-        "manifest.json": "6450659836c7ddf946a1180dbe6cd13ea020339700b814fb135cc50197423157",
-        "module/__init__.py": "4bc627b6a99224fed24ed8f42a2ad484015e5c2bfffec66debf090d85ba98ddc",
-        "module/api.py": "31da9f3653208226bbf4af2f26ae4d202e6706315804e29f9e97bb34983a249b",
-        "module/apps.py": "579e576ad496ff924d5624e1b54b47b5f2aef9cef452e0a975118b847562206d",
-        "module/cli.py": "52c776a71ed47c570172c55486bd7e5e1d7489a88bbeec74170463b5eafcbc94",
-        "module/downloads.py": "9ca7b9b3711dd2332a284042c14b5f6fb2fc108e8f22fbd7e40ffa10adaaf542",
-        "module/manifest.py": "d229e322e33ccaf07f830fbb5e55c79da387d6794513c2abc7d2ea3df11991ae",
-        "module/sshkeys.py": "063a53cd0cb2a363b509464374fec8c38130485aa8833c0c13dc4c07b52d8811",
-        "module/storage.py": "fcb509465c516cbccc501ef7079e97f322a428be5932cdc1accbffa873d5a64b",
-        "module/users.py": "d4e0567b40066134b189c0631e13af7045ef631a567649f54e70a4fd8a9cb0bf"
+        "README.md": "5e710adff23ebd94fb2d0367757e438260899b9067aff70c18278e405415bf93",
+        "frontend.js": "aff6ff0205df3c116fb3fd4e4c5eff9295ae095569b13ffafab2c4ea724db86e",
+        "manifest.json": "b3f1b79dd0eceaa8191cbf1e924c4de27a33dcb00e975da1c24391f28b7774b9",
+        "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
+        "module/api.py": "35be34b96e9bd416899893612f631a2882683fd8e7583d54d3d51a1205fc0e4e",
+        "module/apps.py": "a05058cf7efc655d4d821a6a338333ba898bdb09507d767e3fe15269883b2902",
+        "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
+        "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
+        "module/manifest.py": "80788688ee65aa540fe8b92fdac9419f76d78d5ce0cd4d27a8aadec4cfb67fa8",
+        "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
+        "module/storage.py": "b855d9366992830f314086be420f5088997a696351e359aae96cb3a008044521",
+        "module/users.py": "f25182380549fef703e1b023692b6d20cad2b42816f02f534798c3a8eb411483"
       },
       "cards": true,
       "provides": []
@@ -40,14 +40,14 @@
       "files": {
         "README.md": "01ee26eb370e24b0aa106536da809d25214aab79cc96a0552ab8970c2c6b0588",
         "frontend.js": "a940330743edda9e8da335a32d5e792904d28533f75023b0690b2694db97fdf9",
-        "manifest.json": "b0c2d89224f7338045feb2ec4ae8ce065a0c107b9f36918a9931cacfef825296",
-        "module/__init__.py": "7da098dedbe8612e211b60c2198fc89b58ca28317877ab9854710c8dd70118ce",
-        "module/api.py": "02b7219cf3fbb7303988153b05492505c59e979efddb220b06eca60e0464f1ee",
+        "manifest.json": "0378493ee0a0bc7a344b60c1c29fa0aefec868378f77a15f0a62f1afb79440d7",
+        "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
+        "module/api.py": "a606ba5544076b7b87072dfaf1ec2533b8a163d1ae4a738103775cf724e9de1e",
         "module/caddyfile.py": "35f0c371f31e9a42daea6cefd7335f232acfd5a0e8ba953a6c2b33551da00804",
-        "module/cli.py": "6d8a22ad2ef784cf81eec7222cfd8e16e58c0b7831485c2de396b09944689f13",
-        "module/env.py": "d2affc07b4c77c6941125a593bdcfb7668d91db8cd1c610948393af05ac28c6d",
+        "module/cli.py": "0e62a9275ddab5bba9ba405af8606e0867c1e8e742863a32bd1a9b1ccb2fef44",
+        "module/env.py": "c457aad94d9eab8ed0ba4e8859b89e39f18438b606d825543b23cbc1ac40e5fd",
         "module/manifest.py": "da572646e8db3a12302983894db85b95a08291a2350612a59fc77f8ea38bfef4",
-        "module/rproxy/caddy.py": "7593a43614bedef2b89e86792b1c47366ebb5668be7aad1312d4e8fbea6c088b"
+        "module/rproxy/caddy.py": "369af35ea80207a77c4c9e73e0e41210ea826dd865b6c5cb86401b00a37e30d0"
       },
       "cards": false,
       "provides": [
@@ -79,14 +79,14 @@
         }
       ],
       "files": {
-        "README.md": "774fe01b011fed01959f1d2e89bbc72dc64bdab3883c612ba32b9400818d471b",
-        "frontend.js": "4ce8aaad5b821e742386078cf5b46ae44a00c865b682372b6f6ce2e104d38a76",
-        "manifest.json": "961fcb62e8f6c4594eb59b2136358582ae05d38681be436ac4a24318d86cc336",
-        "module/__init__.py": "24ec284993d41bc58a60fbe5fcd75a3d4568f5f2e085af2b80e167dbefe9e699",
-        "module/api.py": "b384fedd5886d23d0ca94d31c5f18611bae9bd2e71ff490e13ad46a4fe71337c",
-        "module/cli.py": "b2e9ff790601b4dafbd8d417af4c84447561c728510d45d4800055feafa1b833",
-        "module/manifest.py": "20d9aa99cec5b17e49d40cf40ea6da7c9124b353a72076b72b7382b9c8f9b20b",
-        "module/webapi.py": "e6216d9d6152f55934fd1eaa0a6f775a8f777cd4fe77feca7e272990a370a836"
+        "README.md": "2fb9ae81f2777414715c19fe852ce24d5c9e9c5221333f85fca3b74b39082f4f",
+        "frontend.js": "54bbdbc14770f21ac51c546c2d993cb9d15293645faa0b357a58277d3cdc50d4",
+        "manifest.json": "4cbd130ac058f665dcb1ef17483f62558e5b2d9562f6cd78ad93d5b48b51621f",
+        "module/__init__.py": "4dad3b5e3fd946cbd24fb74eff88dab5c3574b2707419a88676cccdedf4f7c55",
+        "module/api.py": "3cf631280c9d4abd1b4ae03627469e89cecedf143338ca22e06f95874f55552e",
+        "module/cli.py": "a1889b0da989611aee38d7426b1544fd435f3ef246f3fdc5d15403d473ae94e3",
+        "module/manifest.py": "80004ce7f5d4bf3328702eecca3852028cd62f5231e44212620af27f90d30ff2",
+        "module/webapi.py": "954d2e9cb88310fa5b1dbcdd65c79dcfa25ee44192b0013c6909c5c94b8b68d6"
       },
       "cards": false,
       "provides": []
@@ -98,14 +98,14 @@
       "version": "0.2.0",
       "description": "Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录",
       "files": {
-        "README.md": "bcd00cf04a90c709291e2282d1c067872a4e1ee339cf544e221752fab002345d",
-        "frontend.js": "bff0663aa0ad934b06c30c18fd8173fe251d6c316e12f875f9634afbb4e7c427",
-        "manifest.json": "d8702dcf8582f7004b9e0b6cf031cf90d534b9b5b8b84ef6010471dc306ec65c",
-        "module/__init__.py": "f369be9775bd4382b41f1db7d1c7d6f7f1a2549707956e817ba9bd2fe25426d5",
-        "module/api.py": "c162b3db403884dccdf99282b4b478bebb2e2b35b71620568b0b5e9cdb646a68",
-        "module/cli.py": "62846774000d5da07972c368c71131459d1f668ceea9fda989f2b91325c65154",
-        "module/manifest.py": "e42745f82b357565266cffd5f2296390bb4d215760308089d848abc9658fcfb6",
-        "module/webapi.py": "e29ab804e3bd821c0ee720e035fdf5457b2eedd095daa4e3062239f04384f021"
+        "README.md": "24ebee3899d0f44153443f9ec58ba0982e15dd541a59fd38cf6277c44ba196f7",
+        "frontend.js": "f3a7037ced423e9c75822764a57a4f90b38e6741d09f7ce8a1be89647665ff11",
+        "manifest.json": "2b77c490a645e1845d246233a0070021dea2b831363cb338849a406213aa6c69",
+        "module/__init__.py": "80c35c8af1068f969d1b091017f9445b8ba586ae8c1393f5bdf26f709e71a7a3",
+        "module/api.py": "9b21727c60f761d144de89b0244bd5aaeea36c68f8645bdcc13999a94f7eee86",
+        "module/cli.py": "3e307a0d1cd3ede85aac8bedc8c9d0b4181399ef71146618be6597680b8d02e3",
+        "module/manifest.py": "1492914b04e4dd0988bfb8a286f0487c28876a9e1f8422406872ecd39b2bf54a",
+        "module/webapi.py": "60fc107157d91b5c9e76d920ea5655d3ef9e0a9d32f15f1cbf977c3f08bd754a"
       },
       "cards": false,
       "provides": [
@@ -119,14 +119,14 @@
       "version": "0.2.0",
       "description": "acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录",
       "files": {
-        "README.md": "650d63c3e0c5d4291247a409c65b92b1bd0b3c8ee03aed8ce8b032d9a8887aca",
-        "frontend.js": "804c8120ef74dd2c8e0b6206c96ec400d60201f865d3e67cda75c91ced259f9d",
-        "manifest.json": "1d85371f8491d2f95c63d04933c15b3d4c086147b8a7f9e3a7d8f58b3d67f5e0",
-        "module/__init__.py": "67eb0d4243dadd03017441ef9978c426cfa4ed19063111b9b344c0c67f660951",
-        "module/api.py": "b0cbce7d96b9be0bf719aa38b74ac0105dfa3e9f3e22b213e29fa179f31b176c",
-        "module/cli.py": "42051e8abe6a5c16460406823a57ea88895745f6a5a075d222cf55f054f7e6c0",
-        "module/manifest.py": "469eb1e478183652f5835abc6e06ff363bc5368a2802ce5f0c1034adc87ee6b3",
-        "module/webapi.py": "f945d75ed4ac4886fbd336d72ac027d13d662de5399b284ef2d43536ca80df89"
+        "README.md": "9f3085a722daa6ad75594aae190c74e4bc7a1f38f7d880c5f53976ed300da099",
+        "frontend.js": "1211c35d79ad22e857ce4cf13cdd36ab1eca3994eb2ea1c3597b951885d889f6",
+        "manifest.json": "5bda46a88d87ca730b8fddd1c1c008f689c3ff6a28d2d718d967e9b7fb2676e8",
+        "module/__init__.py": "57eb64d0b44feb6604e575eb19fec5df7bb0f0e565d0105ca50033158034af50",
+        "module/api.py": "53911da2dd267992a94bb25f3a45fd092bfa839cfcfad3ce3520c5dc16c6a28c",
+        "module/cli.py": "21b9c1581e97d9cc66f1db7f5b24ea4d99c337dcc40a3e4fddbb3687bc44cbf7",
+        "module/manifest.py": "50775328da541cf61864a4ad07ae2d8eefd3f925384f607941c3ea49289d916a",
+        "module/webapi.py": "b1d34df98f6f2f790c627ea7c79c1555eac17a9a26b451dd6d6a6aeda2f28a1c"
       },
       "cards": false,
       "provides": [
@@ -140,11 +140,11 @@
       "version": "3.0.0",
       "description": "青·擎（原安全加固）。主机安全（rkhunter/LMD）、实时防护与 YARA 引擎已并入面板核心与 yara 依赖插件，本插件为保留占位壳",
       "files": {
-        "README.md": "9921ffbe9115b7eb7dbff20f8b2dd9eaf628c183ae9e1f59e7d4c7a7c76092d5",
-        "frontend.js": "653cdf56cea001183a1073b48611eccbaca2e206c47e1fae6c7292c21a22b02c",
-        "manifest.json": "531c01b4ddd408d3e15a2feb11aaf823a71cd6b68760f28ab122d2d84ac13bdf",
-        "module/__init__.py": "f75bf1088550268d6a281a1929dad5382ae1040a334e99681efb4256900524c1",
-        "module/manifest.py": "2577d41edb2d7b0a1c122f973a119b4089c25c084ede7196acefcd58a82ac070"
+        "README.md": "112047b9715062fd5f25341a2ed0060ed8688a63692f38d9d4df39ef5e5208bd",
+        "frontend.js": "351bcc3cd4b10d0012d2b73660c2e8d86437e742cea392a65df3b58923bb208b",
+        "manifest.json": "d64e89502f4f42449b80402d45a4cee5101e17a52bfb9d4913ae6c17ff01e9b0",
+        "module/__init__.py": "77b33ed03591734d016788a7d8dbf50410606057ace5c44cb9e2da576a892d04",
+        "module/manifest.py": "e43d5895b0ce04144acf4dbd24a3396b71d06af78deda4a58741f91db1b5aa4d"
       },
       "cards": false,
       "provides": []
@@ -156,13 +156,13 @@
       "version": "1.0.0",
       "description": "YARA 规则扫描引擎：引擎安装、规则订阅与扫描，规则数据由核心持有。供核心主机安全与 cyansecengine 调用",
       "files": {
-        "README.md": "41db8960e53f7094175153f49c5c3fd4bf5518816b670c1e74b107e55ffdb3b5",
-        "frontend.js": "73ef41ed21eafa4105ffb2167208f4bd2c62df54bf8cc7a93d3a3a06eb6b2daf",
-        "manifest.json": "62e443f0d6203921cd35cb158961b89d89d3a9eb62808bafb502e856605c2279",
-        "module/__init__.py": "cc9a6171b8dd0a88a422a64ec9a471d2a9bce1033ac48e31d64353af2cfbd7d1",
-        "module/api.py": "cf32f83ba7c7f1d9b461195f34994fffb09d9b42308b757fee615c3225748163",
-        "module/manifest.py": "aeca8436f3a7ae7da2379b5803c516e56f267edc0c92afbeed2817fc47846147",
-        "module/scanner.py": "d76e7bb6f4879cfa02436da0598ee6d252d86791a3cb47318a616fd2ec1361fd"
+        "README.md": "09ee986df232e43a4644b0b8dd1fc1e5ebca2a47bc636a8f59cf0e3c482b7a7f",
+        "frontend.js": "d54b11aa648bd73c0e4d37f988301924d18ae209c07a39d61488748f435748a7",
+        "manifest.json": "3275400de742cfd50fc5d54bc4669ba13be51626fcf3e9af9f4305d527c9365c",
+        "module/__init__.py": "30db9a99b3bff061b382b0fd543a9db7e473e1aa1e44fab731e4580bd7fa17a4",
+        "module/api.py": "dd851aec7f9341489c4a66b8364beee400194daf3ab5f5bd75b6573691e3da71",
+        "module/manifest.py": "c3fc919a435b8397f0cd7dc064afae3619e4375e8bb91795f3bde3dc7d254d38",
+        "module/scanner.py": "0460433ec4450fb7f3da627184ba7a9609aff50f95bdbf23174fca1250c79e0f"
       },
       "cards": false,
       "provides": [
@@ -176,13 +176,13 @@
       "version": "1.1.0",
       "description": "rkhunter 主机入侵检测引擎（依赖插件）：二进制部署与扫描由插件实现，报告由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
       "files": {
-        "README.md": "43b8435088bb1f22c1ff63b0d21819ebf30df8fe6844ff19c1fd3298d7f61588",
-        "frontend.js": "025dc32828379c967b21f2a43800c3c9a9117d58619df00698998f52a778456e",
-        "manifest.json": "297efce6cc1cd9302e056cd77bcaf505310d7b61260e6eb6f4381a7f24ca7cc2",
-        "module/__init__.py": "285afa448b7dd281e9f3e64ca3d92df9d94e700abf06d94211530df9aa804d2d",
-        "module/api.py": "a771e92b444e1d8e343889a1e69a1b126af43dcf78ccc41ef2ba281df579a6cc",
-        "module/manifest.py": "a9547e26d851ba24e9c0476003458f83b7d783539f89bc607b5a26412b1d1a48",
-        "module/scanner.py": "2d4ab9684caec3f86fd6b8191f620ee8a3906f08dee70cb07481f228b26ed4c3"
+        "README.md": "4e44cfc20567b9f9cbac409234ad9c4df4b129019813a7964fda8ad2a2ab7ad2",
+        "frontend.js": "50b8aca4ff809132970b4aa920d039c4b7415ae6ed7a655f8927df11307d733b",
+        "manifest.json": "a720bd4162ac0d9b13313186774c48cd3b552ca1a4d9733cf9b6124b7a73016c",
+        "module/__init__.py": "446bc3c7a08d03b37b0e5254b1cd73bc8727472bb714c149670d0339fbcd080e",
+        "module/api.py": "0294fce5112ebb8a08dd151c427f060834a0eb8165d704aa0e652cf860ddf66f",
+        "module/manifest.py": "8188c4146f9e6a8142d27af60ebf7df754de59d2255eb1d029ba942de70ff81f",
+        "module/scanner.py": "4726d84896b110d34704b2b88f416282ee9f4601965830544e799761e342e7bd"
       },
       "cards": false,
       "provides": [
@@ -196,13 +196,13 @@
       "version": "1.1.0",
       "description": "LMD (maldet) 恶意软件扫描引擎（依赖插件）：二进制部署与扫描由插件实现，报告/隔离区由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
       "files": {
-        "README.md": "8f2e77042a07a43633cb896908b73ec8b9603cd2fad32580997ec86dc60a9a4f",
-        "frontend.js": "cbb464e1104c5c7fcc5f3405032b6cfc9fc3f949f100be47e4f0cc1dd14ea443",
-        "manifest.json": "4c5cb87e713de5614827f4bba9e453b80962ccdda3f23d093a2bac5335121d4b",
-        "module/__init__.py": "d22d15f69a132013d6fe86768c336c0b6cddc6df945c2bbe82c252161c5197e2",
-        "module/api.py": "5ab31f60301f6728a204039dae6c36f8964a29e59243500dd2d4ecee3c1c016f",
-        "module/manifest.py": "b71ee80f64fb5e8d39879eb0cc99f2b0d451c50f320c610dfe2bdc7a5f065c95",
-        "module/scanner.py": "bbb31a163254e7e0dff6b22c4cb6834c54087b0f5b6c02bd260419b68db8507f"
+        "README.md": "da8d3ea1601a0f22e15f08f2f933cb5e435eaeb0097b0e1d353059535aba5d39",
+        "frontend.js": "a7e1f16722d9ee257e36e875a81485da82b01ab2cae754654ea2c14d20b6a9f7",
+        "manifest.json": "95288c0aebb47f6e15f5456fbcb92bd1ed04f2daef1edb416e031cf99f154f0e",
+        "module/__init__.py": "d616ac336a47a47e3e37c0bed77d4b6b7f990a308b1f2975858cb8660b8f5865",
+        "module/api.py": "93202aa79d5513d4286658974c55886094d70c4962d68a3c00e0629b84db1acc",
+        "module/manifest.py": "ca4c415f7f1d4d24cb8e17e183ff2e18f1298202c33513d426b485ee911284f7",
+        "module/scanner.py": "6d1b7172779bb049f42e26dd8634bb29bb3de032eb5dd0da8ddedaba9ff262ad"
       },
       "cards": false,
       "provides": [
@@ -216,13 +216,13 @@
       "version": "1.0.0",
       "description": "VPS 基线检查（纯只读审计）：账号与权限 / 系统配置 / 内核网络加固 / 服务应用，四类检查项一键巡检并生成报告",
       "files": {
-        "README.md": "073e687870d2762c8df1bf08d41037ba4f7134740988990598d0b52db6da2644",
-        "frontend.js": "dd3a8b90f56a1a5ce78657fd1d4d6bd13b8a5079e53215a6df6b5ef556076c68",
-        "manifest.json": "0403c1d7b905380f2c65a1d2a32a4c8b24f1f2e1c7749e3b1e52872f3b049730",
-        "module/__init__.py": "e2527eaa363198dc1f5687327a4d9a105129e6634fed4c46c1cd93a95be6d0af",
-        "module/api.py": "464fae9144ea942d10955c86c36c3c89799a7b4c5cffcbc5e132d48e70b2caee",
-        "module/manifest.py": "daa09e5e615b31b300f610f4255a682776c3e1a7a4fda8692ecc2c8446f542dd",
-        "module/scanner.py": "43d645fc6b73c04abb2b856f33912c909e4051db2bb51f91adc6698e259c0f88"
+        "README.md": "53aa53cf1f781adf004ed88ed5669ab1b9824b800a7092fba32d9a8ed762cb8d",
+        "frontend.js": "0e99ba8547077d20a579ef60b829aa7d9535869b27aca3e4b0a4c317c16e5909",
+        "manifest.json": "a8c1382a7635c81a068155dca1ac6f3bb434d58fbb0daa62a22e77745d946590",
+        "module/__init__.py": "259c5075b9a3219e2f04900475fd9e2468c4d0da97c449ba4fb7615171ecc607",
+        "module/api.py": "952b1ad1540b2615d5a777201e1516261f76929886b5e0484b745f1b0817c731",
+        "module/manifest.py": "8cd80c431b275aee6859a9af728d8eb50552df576c48146110f9572484919593",
+        "module/scanner.py": "4243d96d941cf494092e899cdb5d1b830b9d39ee76e8995d0282c7720c4558a4"
       },
       "cards": false,
       "provides": [
@@ -236,13 +236,13 @@
       "version": "1.0.0",
       "description": "系统与部署软件漏洞检测：待安全更新/补丁、部署软件版本比对，检测到漏洞提示解决方案并可一键修复（装补丁/升级）",
       "files": {
-        "README.md": "7fa679bf5a244f55b2e2971e736a9666b8c139be46f4988ab1f1db67e7940c78",
-        "frontend.js": "79cf65c73aead6bdee2c96b8e90909599581ed4f76b471c0663ec7b57fc75383",
-        "manifest.json": "f6ac9f78ad39e951d23a89bbd6f564b7e472510c9b95c335ce77ac91be2f84c2",
-        "module/__init__.py": "72655c5d3b93b7a2e5e99e70982ba718135976ad259b9db2e9d97edab088db4b",
-        "module/api.py": "87d3f2e749ae861249faa353bd99d74da2b224aede762e1a7e14441c2bce2adf",
-        "module/manifest.py": "c3e30d7ca08165626f43bee10a7de0dcd708883ba996f91cb1bc21d99dad1fdb",
-        "module/scanner.py": "7bd7887d77fda701f114550da60ed2a582ab913afb9e0e0b9338e0750764c51e"
+        "README.md": "619b0b7ad3aa06ef7f1164357008eccf2ede4e9962d39b907c7b71533a570505",
+        "frontend.js": "b301f59d9fa7c5662546bbf98ee3b20247b0d0207c82ec9325796ff4cad4c5c5",
+        "manifest.json": "39bc9007747eb6c81c74f790ee65ae05cfda3bfb66bf22436353db99dd0d7914",
+        "module/__init__.py": "adb4db53f39bc0da7b394d4687a0534553e10b1de61505c8398635087ee81b70",
+        "module/api.py": "56612b0bd3db5a8fbe0a16cf47da6b205154cb88fe6937dfb9c45e5e32865ced",
+        "module/manifest.py": "6af1cc7af9273fdd7dd51e2db4608a5d5cb24c897c98daa5f056da594086c9e7",
+        "module/scanner.py": "9dfe22879be30d1d419b6a98d3b6318d590bb373113ec47c9966ffd4579d6720"
       },
       "cards": false,
       "provides": [
