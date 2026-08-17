@@ -42,7 +42,7 @@
         "frontend.js": "cba21b033355510bf9444af9e4cf6d8f00307a9c416f1ccbfdc812a3f685498a",
         "manifest.json": "a6da3b8871127c3ef7725630313d62e947c9e853a375b0cd01f9780d390d7a7e",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
-        "module/api.py": "3de90a0576892c3137856558f40b024d627af99ea44568f69c908b1f18a6bd06",
+        "module/api.py": "b8bcf71b86a8bba8eeb690e366fd518068dafea843f7e26b2a7fdcbe4f23f27a",
         "module/caddyfile.py": "2cca375a58fefb51e2754cc547821ab1c642377f3dc7a9cf970dfea8b66f681a",
         "module/cli.py": "0e62a9275ddab5bba9ba405af8606e0867c1e8e742863a32bd1a9b1ccb2fef44",
         "module/env.py": "3b822a26221fa8345757a0658169677160cd88f7992af671aa411ff1f357e7ec",
