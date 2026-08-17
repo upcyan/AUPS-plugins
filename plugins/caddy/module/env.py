@@ -98,6 +98,19 @@ def status():
             "runtime_dir": d["runtime"], "config_dir": d["config"], "data_dir": d["data"]}
 
 
+def post_install():
+    """市场安装后自动部署 caddy 二进制（实机方式自动 apt install + 复制）。
+
+    容器方式不自动拉镜像（需 docker/podman，且镜像较大），留给用户手动触发。
+    """
+    if deploy_method() == "container":
+        return {"skipped": True, "message": "容器部署需手动安装（拉取镜像较慢）"}
+    bin_path = caddy_binary()
+    if bin_path:
+        return {"skipped": True, "message": f"caddy 已安装: {bin_path}"}
+    return install()
+
+
 def install():
     """部署 caddy：容器方式（deploy=container）或实机方式（host）。"""
     if deploy_method() == "container":
