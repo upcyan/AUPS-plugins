@@ -16,7 +16,7 @@
       ],
       "files": {
         "README.md": "5e710adff23ebd94fb2d0367757e438260899b9067aff70c18278e405415bf93",
-        "frontend.js": "67351d4cfa69ae3d4b053d7da64a1de66f91b2bcc38a699bb99ff0c983db3bd2",
+        "frontend.js": "b578372b648ed3a257111df5026c23219521da5ce9c58e4d6c3e64ef35ab81fb",
         "manifest.json": "68401e273521ab2f68cf31f08e04f8808c3d06bf98596b6e8951a5f1b63b2824",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
         "module/api.py": "dc7436af563f7db38645e1321a9af9b838fa58f5bd94035c36886a9709115d37",
