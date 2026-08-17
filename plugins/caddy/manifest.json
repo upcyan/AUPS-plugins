@@ -2,8 +2,8 @@
   "name": "caddy",
   "title": "Caddy 依赖",
   "attr": "依赖",
-  "version": "1.1.0",
-  "description": "Caddy 反代：托管片段（下载路由/WAF 模板转换）、Caddyfile 管理、实例控制、access 日志、端口与防火墙",
+  "version": "1.1.1",
+  "description": "Caddy 反代：托管片段（下载路由/WAF 模板转换）、Caddyfile 管理、实例控制、access 日志、防火墙",
   "deploy": {
     "host": true,
     "container": {

@@ -15,6 +15,13 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     </div>`;
   }
 
+  function errCard(e) {
+    const msg = (e && e.message) || e || '未知错误';
+    return `<div class="card"><h2>加载失败</h2>
+      <pre style="white-space:pre-wrap">${esc(msg)}</pre>
+      <div class="mut" style="margin-top:6px">请确认面板服务已重启、插件已启用（插件中心）。</div></div>`;
+  }
+
   function go(s) {
     section = s || 'rproxy';
     if (section === 'rproxy') rproxyTab();
@@ -24,42 +31,33 @@ window.AUPS_PLUGINS['caddy'] = (function () {
 
   /* ---------- 反代配置 ---------- */
   async function rproxyTab() {
-    const [st, pt] = await Promise.all([
-      api('GET', '/api/caddyconf/status'),
-      api('GET', '/api/ports')
-    ]);
-    const caddy = pt.caddy || {};
-    const listening = (pt.listening || []).map(x => `${x.local}  (${x.process})`).join('\n');
-    const deploy = st.deploy === 'container'
-      ? `容器 · ${esc((st.container||{}).name||'')} ${(st.container||{}).running ? '运行中' : '已停止'}`
-      : `实机 · ${esc(st.reload_method || '-')}`;
-    view.innerHTML = navHtml() + `
-    <div class="card"><h2>反代后端 · ${esc(st.backend)}</h2>
-      <div class="row">
-        <span>配置: <span class="mut">${esc(st.caddyfile || '-')}</span></span>
-        <span class="mut">${deploy}${st.name === 'caddy' && st.version ? ` · Caddy ${esc(st.version)}` : ''}</span>
+    view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
+    try {
+      const [st, pt] = await Promise.all([
+        api('GET', '/api/caddyconf/status'),
+        api('GET', '/api/ports')
+      ]);
+      const listening = (pt.listening || []).map(x => `${x.local}  (${x.process})`).join('\n');
+      const deploy = st.deploy === 'container'
+        ? `容器 · ${esc((st.container||{}).name||'')} ${(st.container||{}).running ? '运行中' : '已停止'}`
+        : `实机 · ${esc(st.reload_method || '-')}`;
+      view.innerHTML = navHtml() + `
+      <div class="card"><h2>反代后端 · ${esc(st.backend)}</h2>
+        <div class="row">
+          <span>配置: <span class="mut">${esc(st.caddyfile || '-')}</span></span>
+          <span class="mut">${deploy}${st.name === 'caddy' && st.version ? ` · Caddy ${esc(st.version)}` : ''}</span>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="ghost" onclick="${P}caddyPreview()">预览片段</button>
+          <button onclick="${P}caddyApply()">应用并 reload</button>
+        </div>
+        <div class="mut" style="margin-top:10px">下载路由 + WAF 规则由面板写入 Caddyfile（AUPS APPS / AUPS WAF 标记区）。WAF 规则模板在「安全管理 → WAF 模板」维护，变更后自动重载本反代。</div>
       </div>
-      <div class="row" style="margin-top:10px">
-        <button class="ghost" onclick="${P}caddyPreview()">预览片段</button>
-        <button onclick="${P}caddyApply()">应用并 reload</button>
-      </div>
-      <div class="mut" style="margin-top:10px">下载路由 + WAF 规则由面板写入 Caddyfile（AUPS APPS / AUPS WAF 标记区）。WAF 规则模板在「安全管理 → WAF 模板」维护，变更后自动重载本反代。</div>
-    </div>
-    <div class="card"><h2>Caddy HTTPS 端口</h2>
-      <div class="row">
-        <span>当前: <b>${esc(caddy.https_port || '未配置')}</b></span>
-        <input id="portVal" type="text" placeholder="新端口，如 2096">
-        <button onclick="${P}setCaddyPort()">修改并 reload</button>
-      </div>
-      <div class="mut" style="margin-top:6px">面板自身端口在「面板设置 → 面板端口」查看。</div></div>
-    <div class="card"><h2>监听端口</h2><pre>${listening || '无'}</pre></div>
-    <div id="ccPreviewBox"></div>`;
-  }
-  async function setCaddyPort() {
-    const p = parseInt(document.getElementById('portVal').value);
-    if (isNaN(p)) { alert('请输入端口'); return; }
-    await api('POST', '/api/ports/caddy', { port: p });
-    await rproxyTab();
+      <div class="card"><h2>监听端口</h2><pre>${listening || '无'}</pre></div>
+      <div id="ccPreviewBox"></div>`;
+    } catch (e) {
+      view.innerHTML = navHtml() + errCard(e);
+    }
   }
   async function caddyPreview() {
     const box = document.getElementById('ccPreviewBox');
@@ -73,43 +71,48 @@ window.AUPS_PLUGINS['caddy'] = (function () {
   /* ---------- Caddyfile 管理（参考 caddydash） ---------- */
   let sitesCache = [];
   async function caddyfileTab() {
-    const [st, cf, sites] = await Promise.all([
-      api('GET', '/api/caddy/status'),
-      api('GET', '/api/caddy/caddyfile'),
-      api('GET', '/api/caddy/sites')
-    ]);
-    sitesCache = (sites.sites || []).slice();
-    const deploy = st.deploy === 'container' ? '容器' : '实机';
-    const rows = sitesCache.map(s => `<tr>
-      <td>${esc(s.host)}</td>
-      <td>${esc(s.mode)}</td>
-      <td>${esc(s.target || '-')}</td>
-      <td>
-        <button class="ghost" onclick="${P}siteEdit('${esc(s.host)}')">编辑</button>
-        <button class="ghost danger" onclick="${P}siteDelete('${esc(s.host)}')">删除</button>
-      </td></tr>`).join('') || '<tr><td colspan="4" class="mut">暂无站点块</td></tr>';
-    view.innerHTML = navHtml() + `
-    <div class="card"><h2>Caddyfile 管理</h2>
-      <div class="row"><span class="mut">配置: ${esc(cf.path)} · 部署: ${deploy}</span></div>
-      <div class="row" style="margin-top:8px">
-        <button onclick="${P}siteNew()">新增站点</button>
-        <button class="ghost" onclick="${P}caddyfileReload()">重载配置</button>
+    view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
+    try {
+      const [st, cf, sites] = await Promise.all([
+        api('GET', '/api/caddy/status'),
+        api('GET', '/api/caddy/caddyfile'),
+        api('GET', '/api/caddy/sites')
+      ]);
+      sitesCache = (sites.sites || []).slice();
+      const deploy = st.deploy === 'container' ? '容器' : '实机';
+      const rows = sitesCache.map(s => `<tr>
+        <td>${esc(s.host)}</td>
+        <td>${esc(s.mode)}</td>
+        <td>${esc(s.target || '-')}</td>
+        <td>
+          <button class="ghost" onclick="${P}siteEdit('${esc(s.host)}')">编辑</button>
+          <button class="ghost danger" onclick="${P}siteDelete('${esc(s.host)}')">删除</button>
+        </td></tr>`).join('') || '<tr><td colspan="4" class="mut">暂无站点块</td></tr>';
+      view.innerHTML = navHtml() + `
+      <div class="card"><h2>Caddyfile 管理</h2>
+        <div class="row"><span class="mut">配置: ${esc(cf.path)} · 部署: ${deploy}</span></div>
+        <div class="row" style="margin-top:8px">
+          <button onclick="${P}siteNew()">新增站点</button>
+          <button class="ghost" onclick="${P}caddyfileReload()">重载配置</button>
+        </div>
       </div>
-    </div>
-    <div class="card"><h2>站点块</h2>
-      <table><thead><tr><th>域名</th><th>模式</th><th>目标</th><th></th></tr></thead>
-      <tbody>${rows}</tbody></table>
-    </div>
-    <div class="card"><h2>完整 Caddyfile</h2>
-      <textarea id="cfEditor" rows="18" style="width:100%;font-family:monospace" spellcheck="false">${esc(cf.content)}</textarea>
-      <div class="row" style="margin-top:8px">
-        <button onclick="${P}caddyfileSave()">保存并 reload</button>
-        <button class="ghost" onclick="${P}cfPresets()">常用片段预设</button>
-        <span class="mut" style="margin-left:auto">${esc(cf.lines)} 行</span>
+      <div class="card"><h2>站点块</h2>
+        <table><thead><tr><th>域名</th><th>模式</th><th>目标</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table>
       </div>
-      <div id="cfPresetBox"></div>
-    </div>
-    <div id="siteModal"></div>`;
+      <div class="card"><h2>完整 Caddyfile</h2>
+        <textarea id="cfEditor" rows="18" style="width:100%;font-family:monospace" spellcheck="false">${esc(cf.content)}</textarea>
+        <div class="row" style="margin-top:8px">
+          <button onclick="${P}caddyfileSave()">保存并 reload</button>
+          <button class="ghost" onclick="${P}cfPresets()">常用片段预设</button>
+          <span class="mut" style="margin-left:auto">${esc(cf.lines)} 行</span>
+        </div>
+        <div id="cfPresetBox"></div>
+      </div>
+      <div id="siteModal"></div>`;
+    } catch (e) {
+      view.innerHTML = navHtml() + errCard(e);
+    }
   }
   async function caddyfileReload() { await api('POST', '/api/caddy/instance/reload'); alert('已重载 Caddy'); await caddyfileTab(); }
   async function caddyfileSave() {
@@ -195,24 +198,29 @@ window.AUPS_PLUGINS['caddy'] = (function () {
 
   /* ---------- 实例控制 ---------- */
   async function instanceTab() {
-    const [st, cs] = await Promise.all([
-      api('GET', '/api/caddyconf/status'),
-      api('GET', '/api/caddy/status')
-    ]);
-    const c = cs.container || {};
-    const deployHtml = cs.deploy === 'container'
-      ? `容器 <b>${esc(c.name||'-')}</b> · ${esc(c.runtime||'-')} · ${esc(c.image||'-')} · ${c.exists ? (c.running ? '<b style="color:var(--ok)">运行中</b>' : '<b style="color:var(--err)">已停止</b>') : '<span class="mut">未创建</span>'}`
-      : `实机 · reload: ${esc(st.reload_method || '-')}${st.version ? ' · Caddy ' + esc(st.version) : ''}`;
-    view.innerHTML = navHtml() + `
-    <div class="card"><h2>实例控制</h2>
-      <div class="row"><span class="mut">部署: ${deployHtml}</span></div>
-      <div class="row" style="margin-top:12px">
-        <button onclick="${P}inst('stop')">停止</button>
-        <button onclick="${P}inst('restart')">重启</button>
-        <button onclick="${P}inst('reload')">重载</button>
-      </div>
-      <div class="mut" style="margin-top:8px">停止后下载/WAF 站点将不可用；重载用于应用 Caddyfile 改动。</div>
-    </div>`;
+    view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
+    try {
+      const [st, cs] = await Promise.all([
+        api('GET', '/api/caddyconf/status'),
+        api('GET', '/api/caddy/status')
+      ]);
+      const c = cs.container || {};
+      const deployHtml = cs.deploy === 'container'
+        ? `容器 <b>${esc(c.name||'-')}</b> · ${esc(c.runtime||'-')} · ${esc(c.image||'-')} · ${c.exists ? (c.running ? '<b style="color:var(--ok)">运行中</b>' : '<b style="color:var(--err)">已停止</b>') : '<span class="mut">未创建</span>'}`
+        : `实机 · reload: ${esc(st.reload_method || '-')}${st.version ? ' · Caddy ' + esc(st.version) : ''}`;
+      view.innerHTML = navHtml() + `
+      <div class="card"><h2>实例控制</h2>
+        <div class="row"><span class="mut">部署: ${deployHtml}</span></div>
+        <div class="row" style="margin-top:12px">
+          <button onclick="${P}inst('stop')">停止</button>
+          <button onclick="${P}inst('restart')">重启</button>
+          <button onclick="${P}inst('reload')">重载</button>
+        </div>
+        <div class="mut" style="margin-top:8px">停止后下载/WAF 站点将不可用；重载用于应用 Caddyfile 改动。</div>
+      </div>`;
+    } catch (e) {
+      view.innerHTML = navHtml() + errCard(e);
+    }
   }
   async function inst(action) {
     const names = { stop:'停止', restart:'重启', reload:'重载' };
@@ -231,7 +239,7 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     go: go,
     open: function (s) { go(s || 'rproxy'); },
     rproxyTab: rproxyTab,
-    setCaddyPort: setCaddyPort, caddyPreview: caddyPreview, caddyApply: caddyApply,
+    caddyPreview: caddyPreview, caddyApply: caddyApply,
     caddyfileTab: caddyfileTab, siteNew: siteNew, siteEdit: siteEdit,
     siteUpdate: siteUpdate, siteDelete: siteDelete, siteCreate: siteCreate, siteClose: siteClose,
     caddyfileSave: caddyfileSave, caddyfileReload: caddyfileReload,

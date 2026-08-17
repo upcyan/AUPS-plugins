@@ -19,13 +19,13 @@ def _config_file():
 
 
 def read():
-    """读取完整 Caddyfile。返回 {path, content, lines}。"""
+    """读取完整 Caddyfile。返回 {path, content, lines}。文件不存在返回空内容。"""
     p = _config_file()
     if not os.path.isfile(p):
-        raise AppError(f"Caddyfile 不存在：{p}")
+        return {"path": p, "content": "", "lines": 0, "missing": True}
     with open(p, encoding="utf-8") as f:
         content = f.read()
-    return {"path": p, "content": content, "lines": content.count("\n") + 1}
+    return {"path": p, "content": content, "lines": content.count("\n") + 1, "missing": False}
 
 
 def _validate(content):
@@ -189,7 +189,7 @@ def create_site(host, mode="reverse_proxy", target="", extra=""):
         if blk["host"] == host:
             raise AppError(f"站点 {host} 已存在")
     block = _render_site(host, mode, target, extra)
-    new = d["content"].rstrip("\n") + "\n\n" + block + "\n"
+    new = (d["content"].rstrip("\n") + "\n\n" + block + "\n") if d["content"] else block + "\n"
     write(new)
     return {"host": host, "mode": mode, "target": target}
 
