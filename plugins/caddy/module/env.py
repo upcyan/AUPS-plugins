@@ -140,6 +140,11 @@ def _host_install():
         shutil.copy2(CADDYFILE, dst_caddyfile)
     # 切换 systemd 单元，让运行中的 caddy 加载面板二进制+配置
     _switch_unit(runtime_bin, caddy_config_file())
+    # 确保服务启动并开机自启
+    if has_cmd("systemctl"):
+        run(["systemctl", "daemon-reload"], check=False)
+        run(["systemctl", "start", "caddy"], check=False)
+        run(["systemctl", "enable", "caddy"], check=False)
     return {"ok": True, "source": "runtime", "message": "caddy 已部署到面板目录", **status()}
 
 
@@ -179,10 +184,31 @@ def _switch_unit(runtime_bin, panel_caddyfile):
 
     这样运行中的 caddy 才真正加载面板目录的配置，reload（systemctl reload caddy）
     也随之作用于面板配置，避免「面板改面板配置、进程却读系统配置」的分裂。
+    若系统无 caddy.service 单元文件，自动创建一个。
     """
     unit = next((u for u in _UNIT_FILES if os.path.isfile(u)), None)
     if not unit:
-        return
+        # 无单元文件：创建一个指向面板目录的基本单元
+        unit = _UNIT_FILES[0]
+        try:
+            os.makedirs(os.path.dirname(unit), exist_ok=True)
+            with open(unit, "w") as f:
+                f.write(f"""[Unit]
+Description=Caddy web server (AUPS managed)
+After=network.target
+
+[Service]
+Type=notify
+ExecStart={runtime_bin} run --config {panel_caddyfile} --adapter caddyfile
+ExecReload=/bin/kill -USR1 $MAINPID
+Restart=on-failure
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
+""")
+        except OSError:
+            return
     try:
         with open(unit) as f:
             content = f.read()
