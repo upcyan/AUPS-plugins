@@ -6,6 +6,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   const P = 'AUPS_PLUGINS.appupdate.';
   let section = 'apps';
   let appsCache = [];
+  let usersCache = [];
 
   function navHtml() {
     return `<div class="secnav">
@@ -35,28 +36,40 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     return s.toFixed(i ? 1 : 0) + ' ' + u[i];
   }
 
+  function modal(html) {
+    document.getElementById('appModal').innerHTML =
+      `<div class="ov-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50">
+        <div class="card" style="min-width:480px;max-width:90vw;max-height:85vh;overflow:auto">${html}</div>
+      </div>`;
+  }
+  function modalClose() { const m = document.getElementById('appModal'); if (m) m.innerHTML = ''; }
+
   /* ---------- 应用管理 ---------- */
   async function appsTab() {
     view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
     try {
-      const d = await api('GET', '/api/apps');
+      const [d, ud] = await Promise.all([
+        api('GET', '/api/apps'),
+        api('GET', '/api/users').catch(() => ({users:[]})),
+      ]);
       appsCache = d.apps || [];
+      usersCache = ud.users || [];
       const rows = appsCache.map(a => {
         const dep = a.deploy || {};
         return `<tr>
           <td><b>${esc(a.name)}</b><div class="mut" style="font-size:11px">${esc(a.comment || '')}</div></td>
           <td class="mut" style="font-size:12px">${esc(dep.domain || '-')}</td>
           <td class="mut">${dep.port || '-'}</td>
-          <td class="mut">${esc(dep.user || dep.ci_user || '-')}</td>
-          <td class="mut" style="font-size:12px">${esc(a.dir)}</td>
+          <td class="mut" style="font-size:12px">${esc(dep.workdir || a.dir)}</td>
+          <td class="mut">${esc(dep.ci_user || '-')}</td>
           <td>
-            <button class="ghost" onclick="${P}appDeploy('${esc(a.name)}')">部署</button>
+            <button class="ghost" onclick="${P}editApp('${esc(a.name)}')">编辑</button>
             <button class="ghost danger" onclick="${P}appDelete('${esc(a.name)}')">删除</button>
           </td></tr>`;
       }).join('');
       view.innerHTML = navHtml() + `
       <div class="card"><h2>应用列表</h2>
-        <table><thead><tr><th>应用</th><th>域名</th><th>端口</th><th>用户</th><th>目录</th><th></th></tr></thead>
+        <table><thead><tr><th>应用</th><th>域名</th><th>端口</th><th>目录</th><th>CI 用户</th><th></th></tr></thead>
         <tbody>${rows || '<tr><td colspan="6" class="mut">暂无应用</td></tr>'}</tbody></table>
         <div class="row" style="margin-top:10px">
           <input id="newAppName" placeholder="应用名" style="width:150px">
@@ -64,7 +77,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
           <button class="ghost" onclick="${P}appsCaddy()">同步反代路由</button>
         </div>
       </div>
-      <div id="appDeployBox"></div>`;
+      <div id="appModal"></div>`;
     } catch (e) {
       view.innerHTML = navHtml() + errCard(e);
     }
@@ -88,71 +101,76 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     catch(e){ alert('更新失败：' + ((e&&e.detail)||e)); }
   }
 
-  /* ---------- 部署配置 ---------- */
-  async function appDeploy(name) {
-    const box = document.getElementById('appDeployBox');
-    box.innerHTML = '<div class="card"><span class="spinner"></span> 加载部署配置...</div>';
+  /* ---------- 编辑应用部署配置（弹窗） ---------- */
+  async function editApp(name) {
     try {
-      const [app, domainR, sslR, portR, workdirR, userR, sshR] = await Promise.all([
-        api('GET', '/api/apps/' + encodeURIComponent(name)),
-        api('GET', '/api/apps/' + encodeURIComponent(name) + '/deploy/domain').catch(() => ({})),
-        api('GET', '/api/apps/' + encodeURIComponent(name) + '/deploy/ssl').catch(() => ({})),
-        api('GET', '/api/apps/' + encodeURIComponent(name) + '/deploy/port').catch(() => ({})),
-        api('GET', '/api/apps/' + encodeURIComponent(name) + '/deploy/workdir').catch(() => ({})),
-        api('GET', '/api/apps/' + encodeURIComponent(name) + '/deploy/user').catch(() => ({})),
-        api('GET', '/api/apps/' + encodeURIComponent(name) + '/deploy/sshkey').catch(() => ({})),
-      ]);
+      const app = await api('GET', '/api/apps/' + encodeURIComponent(name));
       const d = app.deploy || {};
       const ssl = d.ssl || {};
-      box.innerHTML = `<div class="card"><h2>部署配置 · ${esc(name)}</h2>
+      // CI 用户下拉选项
+      const userOpts = usersCache.map(u =>
+        `<option value="${esc(u.name)}" ${d.ci_user===u.name?'selected':''}>${esc(u.name)}${u.comment ? ' ('+esc(u.comment)+')' : ''}</option>`
+      ).join('');
+      modal(`
+        <h2>编辑部署配置 · ${esc(name)}</h2>
         <div class="blk"><span class="mut">域名</span>
-          <input id="dDomain" value="${esc(d.domain || '')}" placeholder="example.com"></div>
+          <input id="eDomain" value="${esc(d.domain || '')}" placeholder="example.com"></div>
         <div class="blk"><span class="mut">SSL</span>
-          <select id="dSslMode">
+          <select id="eSslMode">
             <option value="none" ${ssl.mode==='none'?'selected':''}>无</option>
             <option value="auto" ${ssl.mode==='auto'?'selected':''}>自动申请</option>
             <option value="manual" ${ssl.mode==='manual'?'selected':''}>手动指定</option>
           </select></div>
         <div class="blk"><span class="mut">服务端口</span>
-          <input id="dPort" type="number" value="${d.port || ''}" placeholder="8080"></div>
+          <input id="ePort" type="number" value="${d.port || ''}" placeholder="8080"></div>
         <div class="blk"><span class="mut">工作目录</span>
-          <input id="dWorkdir" value="${esc(d.workdir || '')}" placeholder="${esc(app.dir || '')}"></div>
-        <div class="blk"><span class="mut">系统用户</span>
-          <input id="dUser" value="${esc(d.user || '')}" placeholder="www-data">
-          ${userR.ok ? '<span class="ok" style="font-size:11px">已存在</span>' : '<span class="bad" style="font-size:11px">未检测到</span>'}</div>
+          <input id="eWorkdir" value="${esc(d.workdir || '')}" placeholder="${esc(app.dir || '')}"></div>
         <div class="blk"><span class="mut">CI 用户</span>
-          <input id="dCiUser" value="${esc(d.ci_user || '')}" placeholder="updserver">
-          ${sshR.ok ? '<span class="ok" style="font-size:11px">' + (sshR.keys||[]).length + ' 个密钥</span>' : ''}</div>
-        <div class="row" style="margin-top:10px">
-          <button onclick="${P}deploySave('${esc(name)}')">保存配置</button>
-          <button class="ghost" onclick="${P}deployProxy('${esc(name)}')">应用到反代</button>
+          <select id="eCiUser">
+            <option value="">-- 不指定 --</option>
+            ${userOpts}
+          </select>
+          <div class="mut" style="font-size:11px;margin-top:4px">选择后将自动授予该用户对工作目录的读写权限</div>
         </div>
-        <div class="mut" style="margin-top:8px">配置保存后需「应用到反代」才会生效（写入 Caddyfile/nginx.conf 并 reload）。</div>
-      </div>`;
-    } catch(e) { box.innerHTML = errCard(e); }
+        <div class="row" style="margin-top:12px">
+          <button onclick="${P}saveDeploy('${esc(name)}')">保存并授权</button>
+          <button class="ghost" onclick="${P}modalClose()">取消</button>
+        </div>
+      `);
+    } catch(e) { alert('加载失败：' + ((e&&e.detail)||e)); }
   }
 
-  async function deploySave(name) {
+  async function saveDeploy(name) {
+    const ciUser = document.getElementById('eCiUser').value;
+    const workdir = document.getElementById('eWorkdir').value.trim() || undefined;
     const body = {
-      domain: document.getElementById('dDomain').value.trim(),
-      ssl: { mode: document.getElementById('dSslMode').value },
-      port: parseInt(document.getElementById('dPort').value) || 0,
-      workdir: document.getElementById('dWorkdir').value.trim(),
-      user: document.getElementById('dUser').value.trim(),
-      ci_user: document.getElementById('dCiUser').value.trim(),
+      domain: document.getElementById('eDomain').value.trim(),
+      ssl: { mode: document.getElementById('eSslMode').value },
+      port: parseInt(document.getElementById('ePort').value) || 0,
+      workdir: workdir,
+      ci_user: ciUser,
     };
     try {
       await api('POST', '/api/apps/' + encodeURIComponent(name) + '/deploy', body);
-      alert('部署配置已保存');
-      await appDeploy(name);
+      // 自动授予 CI 用户目录权限
+      if (ciUser && workdir) {
+        try {
+          await api('POST', '/api/users/' + encodeURIComponent(ciUser) + '/dirs', { path: workdir });
+        } catch(e) {
+          // 权限授予失败不阻断，仅提示
+          alert('部署配置已保存，但目录授权失败：' + ((e && e.message) || e) + '\n请在「CI 用户」页手动授权。');
+          modalClose();
+          await appsTab();
+          return;
+        }
+      } else if (ciUser && !workdir) {
+        // 有用户但无工作目录，提示
+        alert('已保存。如需授权目录访问，请指定工作目录后重新保存。');
+      }
+      alert('部署配置已保存' + (ciUser ? '，目录权限已授予 ' + ciUser : ''));
+      modalClose();
+      await appsTab();
     } catch(e) { alert('保存失败：' + ((e&&e.detail)||e)); }
-  }
-
-  async function deployProxy(name) {
-    try {
-      await api('POST', '/api/apps/caddy', { reload: true });
-      alert('已应用到反代');
-    } catch(e) { alert('应用失败：' + ((e&&e.detail)||e)); }
   }
 
   /* ---------- CI 用户 ---------- */
@@ -160,8 +178,8 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
     try {
       const d = await api('GET', '/api/users');
-      const users = d.users || [];
-      const rows = users.map(u => `<tr>
+      usersCache = d.users || [];
+      const rows = usersCache.map(u => `<tr>
         <td><b>${esc(u.name)}</b></td>
         <td class="mut">${esc(u.comment || '')}</td>
         <td class="mut" style="font-size:12px">${(u.dirs||[]).map(esc).join(', ') || '-'}</td>
@@ -230,7 +248,6 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
 
   /* ---------- 存储与版本 ---------- */
   let _storageApps = [];
-  let _storageVersions = {};
   let _selectedApp = '';
 
   async function storageTab() {
@@ -249,10 +266,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
             <button class="ghost" onclick="${P}setQuota('${esc(a.name)}')">设置</button></td>
         </tr>`;
       }).join('');
-
-      // 版本选择器
       const appOpts = _storageApps.map(a => `<option value="${esc(a.name)}" ${a.name===_selectedApp?'selected':''}>${esc(a.name)}</option>`).join('');
-
       view.innerHTML = navHtml() + `
       <div class="card"><h2>存储配额</h2>
         <div class="row"><span class="mut">总用量: ${fmtSize(d.total_usage_bytes || 0)} / 总配额: ${d.total_quota_mb > 0 ? d.total_quota_mb + ' MB' : '不限'}</span></div>
@@ -275,8 +289,6 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
         </div>
         <div id="verListBox"></div>
       </div>`;
-
-      // 自动加载上次选择的应用
       if (_selectedApp) loadVersions(_selectedApp);
     } catch (e) {
       view.innerHTML = navHtml() + errCard(e);
@@ -303,7 +315,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
           <td class="mut" style="font-size:11px">${esc(v.rel)}</td>
           <td>${isLocked
             ? `<button class="ghost" onclick="${P}unlockVer('${esc(name)}','${esc(v.version)}')">解锁</button>
-               <span class="ok" style="font-size:11px">🔒 已锁定</span>`
+               <span class="ok" style="font-size:11px">已锁定</span>`
             : `<button class="ghost" onclick="${P}lockVer('${esc(name)}','${esc(v.version)}')">锁定</button>`}</td>
           <td><button class="ghost danger" onclick="${P}apkDelete('${esc(name)}','${esc(v.rel)}')">删除</button></td>
         </tr>`;
@@ -316,17 +328,13 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   }
 
   async function lockVer(name, version) {
-    try {
-      await api('POST', '/api/apps/' + encodeURIComponent(name) + '/versions/' + encodeURIComponent(version) + '/lock');
-      await loadVersions(name);
-    } catch(e) { alert('锁定失败：' + ((e&&e.detail)||e)); }
+    try { await api('POST', '/api/apps/' + encodeURIComponent(name) + '/versions/' + encodeURIComponent(version) + '/lock'); await loadVersions(name); }
+    catch(e) { alert('锁定失败：' + ((e&&e.detail)||e)); }
   }
 
   async function unlockVer(name, version) {
-    try {
-      await api('POST', '/api/apps/' + encodeURIComponent(name) + '/versions/' + encodeURIComponent(version) + '/unlock');
-      await loadVersions(name);
-    } catch(e) { alert('解锁失败：' + ((e&&e.detail)||e)); }
+    try { await api('POST', '/api/apps/' + encodeURIComponent(name) + '/versions/' + encodeURIComponent(version) + '/unlock'); await loadVersions(name); }
+    catch(e) { alert('解锁失败：' + ((e&&e.detail)||e)); }
   }
 
   async function apkDelete(name, rel) {
@@ -367,7 +375,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     go: go,
     open: function (s) { go(s || 'apps'); },
     appsTab, appAdd, appDelete, appsCaddy,
-    appDeploy, deploySave, deployProxy,
+    editApp, saveDeploy, modalClose,
     usersTab, userCreate, userDelete, userSsh, sshAdd, sshRemove,
     storageTab, loadVersions, lockVer, unlockVer, apkDelete,
     setQuota, setTotalQuota, enforceQuota,
