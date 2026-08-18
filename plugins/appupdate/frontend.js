@@ -86,12 +86,39 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   }
 
   async function registerApp() {
+    // 反代插件下拉
+    const proxyOpts = proxyCache.map(p =>
+      `<option value="${esc(p)}">${esc(p)}</option>`
+    ).join('');
+    // CI 用户下拉
+    const userOpts = usersCache.map(u =>
+      `<option value="${esc(u.name)}">${esc(u.name)}${u.comment ? ' ('+esc(u.comment)+')' : ''}</option>`
+    ).join('');
     modal(`
-      <h2>注册新应用</h2>
-      <div class="blk"><span class="mut">应用名称</span>
+      <h2>添加应用</h2>
+      <div class="blk"><span class="mut">应用名称 *</span>
         <input id="rName" placeholder="myapp（字母数字._-）"></div>
+      <div class="blk"><span class="mut">域名</span>
+        <input id="rDomain" placeholder="example.com">
+        <div class="row" style="margin-top:4px">
+          <button class="ghost" onclick="${P}checkDomainNew()" type="button" style="font-size:11px">校验域名</button>
+          <span id="domainCheckResultNew" class="mut" style="font-size:11px"></span>
+        </div>
+      </div>
+      <div class="blk"><span class="mut">反代插件</span>
+        <select id="rProxy"><option value="">-- 自动检测 --</option>${proxyOpts}</select></div>
+      <div class="blk"><span class="mut">SSL</span>
+        <select id="rSslMode"><option value="none">无</option><option value="auto">自动申请</option><option value="manual">手动指定</option></select></div>
+      <div class="blk"><span class="mut">服务端口</span>
+        <input id="rPort" type="number" placeholder="8080"></div>
+      <div class="blk"><span class="mut">工作目录</span>
+        <input id="rWorkdir" placeholder="/var/www/myapp"></div>
+      <div class="blk"><span class="mut">CI 用户</span>
+        <select id="rCiUser"><option value="">-- 不指定 --</option>${userOpts}</select>
+        <div class="mut" style="font-size:11px;margin-top:4px">选择后将自动授予该用户对工作目录的读写权限</div>
+      </div>
       <div class="row" style="margin-top:12px">
-        <button onclick="${P}doRegister()">注册</button>
+        <button onclick="${P}doRegister()">添加</button>
         <button class="ghost" onclick="${P}modalClose()">取消</button>
       </div>
     `);
@@ -100,8 +127,40 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   async function doRegister() {
     const name = document.getElementById('rName').value.trim();
     if (!name) { alert('请输入应用名称'); return; }
-    try { await api('POST', '/api/apps', { name }); modalClose(); await appsTab(); }
-    catch(e){ alert('注册失败：' + ((e&&e.detail)||e)); }
+    const domain = document.getElementById('rDomain').value.trim();
+    const port = parseInt(document.getElementById('rPort').value) || 0;
+    const workdir = document.getElementById('rWorkdir').value.trim() || undefined;
+    const ciUser = document.getElementById('rCiUser').value;
+    const proxy = document.getElementById('rProxy').value;
+    const sslMode = document.getElementById('rSslMode').value;
+    try {
+      await api('POST', '/api/apps', { name });
+      // 保存部署配置
+      const body = { domain, ssl: { mode: sslMode }, port, workdir, ci_user: ciUser, proxy: proxy || undefined };
+      await api('POST', '/api/apps/' + encodeURIComponent(name) + '/deploy', body);
+      // 自动授权 CI 用户目录
+      if (ciUser && workdir) {
+        try { await api('POST', '/api/users/' + encodeURIComponent(ciUser) + '/dirs', { path: workdir }); }
+        catch(e) { /* 授权失败不阻断 */ }
+      }
+      modalClose(); await appsTab();
+    } catch(e){ alert('添加失败：' + ((e&&e.detail)||e)); }
+  }
+
+  async function checkDomainNew() {
+    const domain = document.getElementById('rDomain').value.trim();
+    const workdir = document.getElementById('rWorkdir').value.trim() || '';
+    const resultEl = document.getElementById('domainCheckResultNew');
+    if (!domain) { resultEl.innerHTML = '<span class="bad">请输入域名</span>'; return; }
+    resultEl.innerHTML = '<span class="mut">校验中...</span>';
+    try {
+      const r = await api('POST', '/api/apps/validate-domain', { domain, workdir });
+      resultEl.innerHTML = r.ok
+        ? `<span class="ok">${esc(r.message)}</span>`
+        : `<span class="bad">${esc(r.message)}</span>`;
+    } catch(e) {
+      resultEl.innerHTML = `<span class="bad">校验失败：${esc((e&&e.message)||e)}</span>`;
+    }
   }
 
   async function appDelete(name) {
@@ -511,7 +570,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     ],
     go: go,
     open: function (s) { go(s || 'apps'); },
-    appsTab, registerApp, doRegister, appDelete, appsCaddy,
+    appsTab, registerApp, doRegister, checkDomainNew, appDelete, appsCaddy,
     editApp, saveDeploy, modalClose,
     toggleSslMode, toggleSslType, checkDomain,
     usersTab, userCreate, userDelete, userSsh, sshAdd, sshRemove,

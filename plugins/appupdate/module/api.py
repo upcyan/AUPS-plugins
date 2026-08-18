@@ -1,4 +1,8 @@
-"""appupdate 插件 Web API 路由。"""
+"""appupdate 插件 Web API 路由。
+
+重要：FastAPI 按注册顺序匹配路由。静态路由必须在参数化路由之前，
+否则 POST /apps/caddy 会被 GET /apps/{name} 吃掉 → 405 Method Not Allowed。
+"""
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -11,7 +15,9 @@ from . import downloads as D
 router = APIRouter()
 
 
-# ---------- 应用管理（参数化路由必须在静态路由之前）----------
+# ==================== 静态路由（必须在 /{name} 之前）====================
+
+# ---------- 应用管理 ----------
 @router.get("/apps")
 def apps_list(auth=Depends(require_auth)):
     return {"apps": A.list_apps(), "total_quota_mb": A.get_total_quota()}
@@ -22,6 +28,30 @@ def apps_create(body: dict = None, auth=Depends(require_auth)):
     b = body or {}
     return A.add_app(b.get("name", ""), b.get("dir"), b.get("comment", ""))
 
+
+@router.post("/apps/validate-domain")
+def validate_domain(body: dict = None, auth=Depends(require_auth)):
+    b = body or {}
+    return A.validate_domain(b.get("domain", ""), b.get("workdir", ""))
+
+
+@router.get("/apps/proxy-list")
+def proxy_list(auth=Depends(require_auth)):
+    from ... import registry
+    return {"proxies": registry.capability_providers("proxy")}
+
+
+@router.post("/apps/caddy")
+def apps_caddy(body: dict = None, auth=Depends(require_auth)):
+    return A.update_proxy_routes(bool((body or {}).get("reload", True)))
+
+
+@router.get("/apps/discover")
+def apps_discover(auth=Depends(require_auth)):
+    return A.discover()
+
+
+# ==================== 参数化路由（静态路由之后）====================
 
 @router.delete("/apps/{name}")
 def apps_delete(name: str, auth=Depends(require_auth)):
@@ -65,7 +95,7 @@ def deploy_set(name: str, body: dict = None, auth=Depends(require_auth)):
     b = body or {}
     return A.set_deploy(name, **{k: v for k, v in b.items()
                                   if k in ("domain", "ssl", "port", "workdir", "user",
-                                           "ci_user", "ssh_key", "comment")})
+                                           "ci_user", "ssh_key", "comment", "proxy")})
 
 
 @router.get("/apps/{name}/deploy/domain")
@@ -98,32 +128,8 @@ def deploy_sshkey(name: str, auth=Depends(require_auth)):
     return A.request_ssh_key(name)
 
 
-@router.post("/apps/validate-domain")
-def validate_domain(body: dict = None, auth=Depends(require_auth)):
-    b = body or {}
-    return A.validate_domain(b.get("domain", ""), b.get("workdir", ""))
+# ==================== 存储管理 ====================
 
-
-@router.get("/apps/proxy-list")
-def proxy_list(auth=Depends(require_auth)):
-    """获取可用的反代插件列表。"""
-    from ... import registry
-    providers = registry.capability_providers("proxy")
-    return {"proxies": providers}
-
-
-# 静态路由必须在参数化路由之后（FastAPI 按注册顺序匹配）
-@router.post("/apps/caddy")
-def apps_caddy(body: dict = None, auth=Depends(require_auth)):
-    return A.update_proxy_routes(bool((body or {}).get("reload", True)))
-
-
-@router.get("/apps/discover")
-def apps_discover(auth=Depends(require_auth)):
-    return A.discover()
-
-
-# ---------- 存储管理 ----------
 @router.get("/storage/usage")
 def storage_usage(auth=Depends(require_auth)):
     return S.usage()
@@ -154,7 +160,8 @@ def storage_enforce(auth=Depends(require_auth)):
     return A.enforce_quota()
 
 
-# ---------- CI 用户 ----------
+# ==================== CI 用户 ====================
+
 @router.get("/users")
 def users_list(auth=Depends(require_auth)):
     return {"users": U.list_users()}
@@ -186,7 +193,8 @@ def users_dirs_remove(name: str, body: dict = None, auth=Depends(require_auth)):
     return U.revoke_dir(name, (body or {}).get("path", ""))
 
 
-# ---------- SSH 公钥 ----------
+# ==================== SSH 公钥 ====================
+
 @router.get("/ssh/{user}")
 def ssh_list(user: str, auth=Depends(require_auth)):
     return {"user": user, "keys": U.list_keys(user)}
@@ -202,7 +210,8 @@ def ssh_remove(user: str, index: int, auth=Depends(require_auth)):
     return U.remove_key(user, index)
 
 
-# ---------- 统计 ----------
+# ==================== 统计 ====================
+
 @router.get("/stats/downloads")
 def stats_downloads(auth=Depends(require_auth)):
     return D.downloads()
