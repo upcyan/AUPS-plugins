@@ -28,6 +28,11 @@ def apps_delete(name: str, auth=Depends(require_auth)):
     return A.remove_app(name)
 
 
+@router.get("/apps/{name}")
+def apps_get(name: str, auth=Depends(require_auth)):
+    return A.get_app(name)
+
+
 @router.get("/apps/{name}/versions")
 def apps_versions(name: str, auth=Depends(require_auth)):
     vs = A.list_versions(name)
