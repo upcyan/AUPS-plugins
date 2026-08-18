@@ -35,13 +35,13 @@ def main():
             elif got != expected:
                 errors.append(f"{name}/{rel}: 哈希不一致")
     if errors:
-        print("❌ 发现哈希不一致：")
+        print("FAIL: 发现哈希不一致：")
         for e in errors:
             print(f"  {e}")
         print(f"\n请运行: python gen_index_hashes.py {REPO}")
         sys.exit(1)
     else:
-        print("✅ 所有插件哈希一致")
+        print("OK: 所有插件哈希一致")
         sys.exit(0)
 
 

@@ -49,7 +49,7 @@ def main():
         sys.exit(1)
 
     # 2. 重算 index.json 哈希（自动同步版本号）
-    print(f"[2/5] 重算 index.json 哈希...")
+    print(f"[2/6] 重算 index.json 哈希...")
     if os.path.isfile(GEN_HASH):
         r = run(["python", GEN_HASH, REPO])
         print(f"  {r.stdout.strip()}")
@@ -57,20 +57,32 @@ def main():
         print(f"  警告: {GEN_HASH} 不存在，跳过哈希重算")
         print(f"  请手动运行: python gen_index_hashes.py {REPO}")
 
-    # 3. git add index.json
-    print("[3/5] git add index.json")
+    # 3. 验证哈希一致性
+    print("[3/6] 验证哈希一致性...")
+    verify_script = os.path.join(REPO, "verify_hashes.py")
+    if os.path.isfile(verify_script):
+        r = run(["python", verify_script, REPO])
+        print(f"  {r.stdout.strip()}")
+        if r.returncode != 0:
+            print("  哈希验证失败，终止提交")
+            sys.exit(1)
+    else:
+        print(f"  跳过（{verify_script} 不存在）")
+
+    # 4. git add index.json
+    print("[4/6] git add index.json")
     r = run(["git", "add", "index.json"])
 
-    # 4. git commit
-    print(f"[4/5] git commit: {msg}")
+    # 5. git commit
+    print(f"[5/6] git commit: {msg}")
     r = run(["git", "commit", "-m", msg])
     if r.returncode != 0:
         print(f"  提交失败或无改动: {r.stderr.strip() or r.stdout.strip()}")
         sys.exit(0)  # 无改动不算错误
     print(f"  {r.stdout.strip()}")
 
-    # 5. git push
-    print("[5/5] git push")
+    # 6. git push
+    print("[6/6] git push")
     r = run(["git", "push", "origin", "main"])
     if r.returncode != 0:
         print(f"  推送失败: {r.stderr}")
