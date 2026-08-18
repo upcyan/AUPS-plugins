@@ -368,7 +368,10 @@ def update_proxy_routes(reload=True):
         raise AppError("未检测到可用的反代后端（请安装 caddy/nginx 等）")
     if not rproxy.has_capability("download_route", backend):
         raise AppError(f"反代 {backend} 不支持 download_route 能力")
-    result = rproxy._call(backend, "apply", reload=reload)
+    try:
+        result = rproxy._call(backend, "apply", reload=reload)
+    except Exception as e:
+        raise AppError(f"反代路由更新失败：{e}")
     return {"backend": backend, "written": True, "reloaded": reload, **result}
 
 

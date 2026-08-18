@@ -19,7 +19,7 @@
         "frontend.js": "8963ff52b233ac49ffa6112612a671435687e188222caa8466c5830fc9bfee94",
         "manifest.json": "c4f9ae67fda53d89cc02371b4fee0557a037b31b782f2ffe437016362ad62544",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "d6ded290d51469261a62ad0f2c7ceb5144736a7921c3333adc7882fa0d17dcec",
+        "module/api.py": "2baf40b8a93c0b36376bfff5bd1bc751429b4692546b88331d8d21074c81c988",
         "module/apps.py": "2a4c8047dcaf3bd1701a0a604378ebe02d844d2cb52754fdab345e517805ab56",
         "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
