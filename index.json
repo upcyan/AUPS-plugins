@@ -7,7 +7,7 @@
       "name": "appupdate",
       "title": "应用更新管理",
       "attr": "功能",
-      "version": "2.2.1",
+      "version": "2.2.3",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -17,13 +17,13 @@
       "files": {
         "README.md": "5e710adff23ebd94fb2d0367757e438260899b9067aff70c18278e405415bf93",
         "frontend.js": "9cf00ff7df18e87300f7e4fb875bd62d90985fa464a587c25d5462687f7d8cfc",
-        "manifest.json": "ab8353d16efb9eeeae93f68d3794b60f19ebf1885fc0005861e4743973cc2aaa",
+        "manifest.json": "2e34d9968ea7434b7d6a514b4c6cedc76480f2dc271270914ab388a520b19738",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
         "module/api.py": "b39e5c19e1222be4fe8870c48e1d8b5725dc44e51620f378ee358e918cc49c29",
         "module/apps.py": "625a4549f1ba1b58b9c023fdf41a8544dc49e8e4c01f679b4bbd85e66d9e6a2c",
         "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "ca57fea0f434ca8ca876f5344c6f6858af6e19d6694eb70ac62a027a1685f290",
+        "module/manifest.py": "1a7b2a061757ed6f75501d05d293f6aafdc95a948dcba481f00793c3b2b1e36b",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "b855d9366992830f314086be420f5088997a696351e359aae96cb3a008044521",
         "module/users.py": "f25182380549fef703e1b023692b6d20cad2b42816f02f534798c3a8eb411483"
