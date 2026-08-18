@@ -413,7 +413,7 @@ def update_proxy_routes(reload=True):
     if not rproxy.has_capability("download_route", backend):
         raise AppError(f"反代 {backend} 不支持 download_route 能力")
     try:
-        result = rproxy._call(backend, "apply", reload=reload)
+        result = rproxy.apply(reload=reload)
     except Exception as e:
         raise AppError(f"反代路由更新失败：{e}")
     return {"backend": backend, "written": True, "reloaded": reload, **result}
@@ -426,7 +426,7 @@ def proxy_preview():
         return "(未检测到反代后端)"
     if not rproxy.has_capability("preview", backend):
         return f"(反代 {backend} 不支持 preview)"
-    return rproxy._call(backend, "preview").get("apps", "")
+    return rproxy.preview().get("apps", "")
 
 
 def request_domain(name):

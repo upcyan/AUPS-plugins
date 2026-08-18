@@ -19,7 +19,7 @@
         "frontend.js": "9cf00ff7df18e87300f7e4fb875bd62d90985fa464a587c25d5462687f7d8cfc",
         "manifest.json": "ab8353d16efb9eeeae93f68d3794b60f19ebf1885fc0005861e4743973cc2aaa",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "c72bba358a5a7092d6dccb7782d349f1fd0ebd5ac3cf17d6c7ec275aff7f6522",
+        "module/api.py": "b39e5c19e1222be4fe8870c48e1d8b5725dc44e51620f378ee358e918cc49c29",
         "module/apps.py": "83521ef8659608f8b9f1796bfc58c3af4637f3a2639f5c03b26001c4f25f957f",
         "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
@@ -47,7 +47,7 @@
         "module/cli.py": "0e62a9275ddab5bba9ba405af8606e0867c1e8e742863a32bd1a9b1ccb2fef44",
         "module/env.py": "9c0fa712bff3ddd6ce03e1d0e40729ac726eba990c190116b566bfda6c905d4a",
         "module/manifest.py": "e13afba32be110d948bd1437eac9f56a080c6324e63a2683bca6c843d4618f43",
-        "module/rproxy/caddy.py": "369af35ea80207a77c4c9e73e0e41210ea826dd865b6c5cb86401b00a37e30d0"
+        "module/rproxy/caddy.py": "64dba44a6ece8cebb9e6cfeea08f96a0ae57731da3c1cd65ec54960173d97017"
       },
       "cards": false,
       "provides": [
