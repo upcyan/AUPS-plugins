@@ -98,6 +98,20 @@ def deploy_sshkey(name: str, auth=Depends(require_auth)):
     return A.request_ssh_key(name)
 
 
+@router.post("/apps/validate-domain")
+def validate_domain(body: dict = None, auth=Depends(require_auth)):
+    b = body or {}
+    return A.validate_domain(b.get("domain", ""), b.get("workdir", ""))
+
+
+@router.get("/apps/proxy-list")
+def proxy_list(auth=Depends(require_auth)):
+    """获取可用的反代插件列表。"""
+    from ... import registry
+    providers = registry.capability_providers("proxy")
+    return {"proxies": providers}
+
+
 # 静态路由必须在参数化路由之后（FastAPI 按注册顺序匹配）
 @router.post("/apps/caddy")
 def apps_caddy(body: dict = None, auth=Depends(require_auth)):

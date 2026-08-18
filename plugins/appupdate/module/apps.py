@@ -143,13 +143,13 @@ def app_dir(name):
 # -------------------- 部署配置 --------------------
 
 def set_deploy(name, **kwargs):
-    """设置应用部署配置（domain/ssl/port/workdir/user/ci_user/ssh_key）。"""
+    """设置应用部署配置（domain/ssl/port/workdir/user/ci_user/ssh_key/proxy）。"""
     reg = _registry()
     meta = reg.get("apps", {}).get(name)
     if not meta:
         raise AppError(f"应用未注册：{name}")
     deploy = meta.setdefault("deploy", {})
-    for k in ("domain", "port", "workdir", "user", "ci_user", "ssh_key", "comment"):
+    for k in ("domain", "port", "workdir", "user", "ci_user", "ssh_key", "comment", "proxy"):
         if k in kwargs and kwargs[k] is not None:
             deploy[k] = kwargs[k]
     if "ssl" in kwargs and isinstance(kwargs["ssl"], dict):
@@ -164,7 +164,50 @@ def set_deploy(name, **kwargs):
 
 
 def get_deploy(name):
-    return get_app(name).get("deploy", {})
+    return get_app(name).get("deploy", "")
+
+
+def validate_domain(domain, workdir):
+    """校验域名是否指向本机：在工作目录写入随机文件，通过 HTTP 访问验证。"""
+    import random
+    import string
+    import urllib.request
+    import urllib.error
+
+    if not domain or not workdir:
+        return {"ok": False, "message": "域名和工作目录不能为空"}
+
+    real_dir = os.path.realpath(workdir)
+    if not os.path.isdir(real_dir):
+        return {"ok": False, "message": f"工作目录不存在：{real_dir}"}
+
+    # 生成随机测试文件
+    rand_name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
+    test_file = os.path.join(real_dir, f".aups_test_{rand_name}.txt")
+    test_content = f"aups-domain-verify-{rand_name}"
+
+    try:
+        with open(test_file, "w") as f:
+            f.write(test_content)
+
+        # 尝试通过域名访问
+        for scheme in ("http", "https"):
+            url = f"{scheme}://{domain}/.aups_test_{rand_name}.txt"
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "AUPS/1.0"})
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    body = resp.read().decode()
+                    if test_content in body:
+                        return {"ok": True, "message": f"域名 {domain} 已验证指向本机"}
+            except (urllib.error.URLError, OSError):
+                continue
+
+        return {"ok": False, "message": f"域名 {domain} 未指向本机（HTTP 访问失败）"}
+    finally:
+        try:
+            os.remove(test_file)
+        except OSError:
+            pass
 
 
 # -------------------- 版本管理 --------------------
