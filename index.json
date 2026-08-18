@@ -7,7 +7,7 @@
       "name": "appupdate",
       "title": "应用更新管理",
       "attr": "功能",
-      "version": "2.1.0",
+      "version": "2.1.1",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -19,7 +19,7 @@
         "frontend.js": "8963ff52b233ac49ffa6112612a671435687e188222caa8466c5830fc9bfee94",
         "manifest.json": "a0ecc73943e86677bae1ac3525c3d73cab0ebf67f0da478911aba5a9b3618062",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "dc7436af563f7db38645e1321a9af9b838fa58f5bd94035c36886a9709115d37",
+        "module/api.py": "d6ded290d51469261a62ad0f2c7ceb5144736a7921c3333adc7882fa0d17dcec",
         "module/apps.py": "2a4c8047dcaf3bd1701a0a604378ebe02d844d2cb52754fdab345e517805ab56",
         "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
