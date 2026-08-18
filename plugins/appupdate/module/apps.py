@@ -114,10 +114,9 @@ def add_app(name, path=None, comment=""):
         raise AppError(f"应用已注册：{name}")
     if path:
         real = os.path.realpath(path)
-        os.makedirs(real, exist_ok=True)
     else:
         real = os.path.join(config.BASE_DIR, name)
-        os.makedirs(real, exist_ok=True)
+    os.makedirs(real, exist_ok=True)
     reg = _registry()
     reg.setdefault("apps", {})[name] = {
         "dir": real, "comment": comment or "",
@@ -169,30 +168,19 @@ def get_deploy(name):
 
 def validate_domain(domain, workdir=""):
     """校验域名是否指向本机：在工作目录写入随机文件，通过 HTTP 访问验证。
-    无工作目录时只验证域名解析。
+    无工作目录时使用 BASE_DIR 默认目录；目录不存在则自动创建。
     """
     import random
     import string
     import urllib.request
     import urllib.error
-    import socket
 
     if not domain:
         return {"ok": False, "message": "域名不能为空"}
 
-    # 检查域名解析到本机 IP
-    try:
-        ip = socket.gethostbyname(domain)
-    except socket.gaierror:
-        return {"ok": False, "message": f"域名 {domain} 无法解析"}
-
-    # 如果没有工作目录，只检查域名解析
-    if not workdir:
-        return {"ok": True, "message": f"域名 {domain} 解析到 {ip}（未指定工作目录，跳过文件验证）"}
-
-    real_dir = os.path.realpath(workdir)
-    if not os.path.isdir(real_dir):
-        return {"ok": False, "message": f"工作目录不存在：{real_dir}"}
+    # 确定工作目录：优先使用传入值，否则用默认目录
+    real_dir = os.path.realpath(workdir) if workdir else os.path.join(config.BASE_DIR, "_domain_verify")
+    os.makedirs(real_dir, exist_ok=True)
 
     # 生成随机测试文件
     rand_name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
@@ -203,7 +191,7 @@ def validate_domain(domain, workdir=""):
         with open(test_file, "w") as f:
             f.write(test_content)
 
-        # 尝试通过域名访问
+        # 尝试通过域名访问（HTTP 和 HTTPS）
         for scheme in ("http", "https"):
             url = f"{scheme}://{domain}/.aups_test_{rand_name}.txt"
             try:
@@ -211,11 +199,11 @@ def validate_domain(domain, workdir=""):
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     body = resp.read().decode()
                     if test_content in body:
-                        return {"ok": True, "message": f"域名 {domain} 已验证指向本机（{ip}）"}
+                        return {"ok": True, "message": f"域名 {domain} 已验证指向本机"}
             except (urllib.error.URLError, OSError):
                 continue
 
-        return {"ok": False, "message": f"域名 {domain} 解析到 {ip}，但 HTTP 访问未通过（请检查反代配置）"}
+        return {"ok": False, "message": f"域名 {domain} 未指向本机（HTTP 访问失败，请检查反代配置）"}
     finally:
         try:
             os.remove(test_file)
