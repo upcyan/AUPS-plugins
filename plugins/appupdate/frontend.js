@@ -204,13 +204,13 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     }
     try {
       if (isNew) {
-        await api('POST', '/api/apps', { name: appName });
+        await api('POST', '/api/apps', { name: appName }, true);
       }
       const body = { domain, ssl, port, workdir, ci_user: ciUser, proxy: proxy || undefined };
-      await api('POST', '/api/apps/' + encodeURIComponent(appName) + '/deploy', body);
+      await api('POST', '/api/apps/' + encodeURIComponent(appName) + '/deploy', body, true);
       // 自动授权 CI 用户目录
       if (ciUser && workdir) {
-        try { await api('POST', '/api/users/' + encodeURIComponent(ciUser) + '/dirs', { path: workdir }); }
+        try { await api('POST', '/api/users/' + encodeURIComponent(ciUser, true) + '/dirs', { path: workdir }); }
         catch(e) { /* 授权失败不阻断 */ }
       }
       modalClose(); await appsTab();
@@ -254,12 +254,12 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
 
   async function appDelete(name) {
     if (!confirm('删除应用 ' + name + '？（仅取消注册，不删除文件）')) return;
-    try { await api('DELETE', '/api/apps/' + encodeURIComponent(name)); await appsTab(); }
+    try { await api('DELETE', '/api/apps/' + encodeURIComponent(name, true), null, true); await appsTab(); }
     catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
   }
 
   async function appsCaddy() {
-    try { await api('POST', '/api/apps/caddy', { reload: true }); alert('反代路由已更新'); }
+    try { await api('POST', '/api/apps/caddy', { reload: true }, true); alert('反代路由已更新'); }
     catch(e){ alert('更新失败：' + ((e&&e.detail)||e)); }
   }
 
@@ -295,13 +295,13 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   async function userCreate() {
     const name = document.getElementById('newUserName').value.trim();
     if (!name) return;
-    try { await api('POST', '/api/users', { name }); await usersTab(); }
+    try { await api('POST', '/api/users', { name }, true); await usersTab(); }
     catch(e){ alert('创建失败：' + ((e&&e.detail)||e)); }
   }
 
   async function userDelete(name) {
     if (!confirm('删除用户 ' + name + '？')) return;
-    try { await api('DELETE', '/api/users/' + encodeURIComponent(name)); await usersTab(); }
+    try { await api('DELETE', '/api/users/' + encodeURIComponent(name, true)); await usersTab(); }
     catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
   }
 
@@ -327,12 +327,12 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   async function sshAdd(user) {
     const key = document.getElementById('newSshKey').value.trim();
     if (!key) return;
-    try { await api('POST', '/api/ssh/' + encodeURIComponent(user), { key }); await userSsh(user); }
+    try { await api('POST', '/api/ssh/' + encodeURIComponent(user, true), { key }); await userSsh(user); }
     catch(e){ alert('添加失败：' + ((e&&e.detail)||e)); }
   }
 
   async function sshRemove(user, index) {
-    try { await api('DELETE', '/api/ssh/' + encodeURIComponent(user) + '/' + index); await userSsh(user); }
+    try { await api('DELETE', '/api/ssh/' + encodeURIComponent(user, true) + '/' + index); await userSsh(user); }
     catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
   }
 
@@ -418,30 +418,30 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   }
 
   async function lockVer(name, version) {
-    try { await api('POST', '/api/apps/' + encodeURIComponent(name) + '/versions/' + encodeURIComponent(version) + '/lock'); await loadVersions(name); }
+    try { await api('POST', '/api/apps/' + encodeURIComponent(name, true) + '/versions/' + encodeURIComponent(version) + '/lock'); await loadVersions(name); }
     catch(e) { alert('锁定失败：' + ((e&&e.detail)||e)); }
   }
 
   async function unlockVer(name, version) {
-    try { await api('POST', '/api/apps/' + encodeURIComponent(name) + '/versions/' + encodeURIComponent(version) + '/unlock'); await loadVersions(name); }
+    try { await api('POST', '/api/apps/' + encodeURIComponent(name, true) + '/versions/' + encodeURIComponent(version) + '/unlock'); await loadVersions(name); }
     catch(e) { alert('解锁失败：' + ((e&&e.detail)||e)); }
   }
 
   async function apkDelete(name, rel) {
     if (!confirm('删除文件 ' + rel + '？')) return;
-    try { await api('POST', '/api/storage/delete', { paths: [rel] }); await loadVersions(name); }
+    try { await api('POST', '/api/storage/delete', { paths: [rel] }, true); await loadVersions(name); }
     catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
   }
 
   async function setQuota(name) {
     const mb = parseInt(document.getElementById('q_' + name).value) || 0;
-    try { await api('POST', '/api/apps/' + encodeURIComponent(name) + '/quota', { mb }); await storageTab(); }
+    try { await api('POST', '/api/apps/' + encodeURIComponent(name, true) + '/quota', { mb }); await storageTab(); }
     catch(e){ alert('设置失败：' + ((e&&e.detail)||e)); }
   }
 
   async function setTotalQuota() {
     const mb = parseInt(document.getElementById('totalQuota').value) || 0;
-    try { await api('POST', '/api/storage/quota', { total_mb: mb }); await storageTab(); }
+    try { await api('POST', '/api/storage/quota', { total_mb: mb }, true); await storageTab(); }
     catch(e){ alert('设置失败：' + ((e&&e.detail)||e)); }
   }
 
