@@ -464,7 +464,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     ],
     go: go,
     open: function (s) { go(s || 'apps'); },
-    appsTab, addApp, saveApp, editApp, appDelete, appsCaddy,
+    appsTab, addApp, saveApp, editApp, appDelete, appsCaddy, modalClose,
     toggleSslMode, toggleSslType, checkDomain,
     usersTab, userCreate, userDelete, userSsh, sshAdd, sshRemove,
     storageTab, loadVersions, lockVer, unlockVer, apkDelete,
