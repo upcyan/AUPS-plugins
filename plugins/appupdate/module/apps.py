@@ -167,15 +167,28 @@ def get_deploy(name):
     return get_app(name).get("deploy", "")
 
 
-def validate_domain(domain, workdir):
-    """校验域名是否指向本机：在工作目录写入随机文件，通过 HTTP 访问验证。"""
+def validate_domain(domain, workdir=""):
+    """校验域名是否指向本机：在工作目录写入随机文件，通过 HTTP 访问验证。
+    无工作目录时只验证域名解析。
+    """
     import random
     import string
     import urllib.request
     import urllib.error
+    import socket
 
-    if not domain or not workdir:
-        return {"ok": False, "message": "域名和工作目录不能为空"}
+    if not domain:
+        return {"ok": False, "message": "域名不能为空"}
+
+    # 检查域名解析到本机 IP
+    try:
+        ip = socket.gethostbyname(domain)
+    except socket.gaierror:
+        return {"ok": False, "message": f"域名 {domain} 无法解析"}
+
+    # 如果没有工作目录，只检查域名解析
+    if not workdir:
+        return {"ok": True, "message": f"域名 {domain} 解析到 {ip}（未指定工作目录，跳过文件验证）"}
 
     real_dir = os.path.realpath(workdir)
     if not os.path.isdir(real_dir):
@@ -198,11 +211,11 @@ def validate_domain(domain, workdir):
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     body = resp.read().decode()
                     if test_content in body:
-                        return {"ok": True, "message": f"域名 {domain} 已验证指向本机"}
+                        return {"ok": True, "message": f"域名 {domain} 已验证指向本机（{ip}）"}
             except (urllib.error.URLError, OSError):
                 continue
 
-        return {"ok": False, "message": f"域名 {domain} 未指向本机（HTTP 访问失败）"}
+        return {"ok": False, "message": f"域名 {domain} 解析到 {ip}，但 HTTP 访问未通过（请检查反代配置）"}
     finally:
         try:
             os.remove(test_file)
