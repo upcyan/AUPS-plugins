@@ -11,7 +11,7 @@ from . import downloads as D
 router = APIRouter()
 
 
-# ---------- 应用管理 ----------
+# ---------- 应用管理（参数化路由必须在静态路由之前）----------
 @router.get("/apps")
 def apps_list(auth=Depends(require_auth)):
     return {"apps": A.list_apps(), "total_quota_mb": A.get_total_quota()}
@@ -55,17 +55,6 @@ def app_quota_set(name: str, body: dict = None, auth=Depends(require_auth)):
     return A.set_quota(name, (body or {}).get("mb", 0))
 
 
-@router.post("/apps/caddy")
-def apps_caddy(body: dict = None, auth=Depends(require_auth)):
-    return A.update_proxy_routes(bool((body or {}).get("reload", True)))
-
-
-@router.get("/apps/discover")
-def apps_discover(auth=Depends(require_auth)):
-    return A.discover()
-
-
-# ---------- 部署配置 ----------
 @router.get("/apps/{name}/deploy")
 def deploy_get(name: str, auth=Depends(require_auth)):
     return A.get_deploy(name)
@@ -107,6 +96,17 @@ def deploy_user(name: str, auth=Depends(require_auth)):
 @router.get("/apps/{name}/deploy/sshkey")
 def deploy_sshkey(name: str, auth=Depends(require_auth)):
     return A.request_ssh_key(name)
+
+
+# 静态路由必须在参数化路由之后（FastAPI 按注册顺序匹配）
+@router.post("/apps/caddy")
+def apps_caddy(body: dict = None, auth=Depends(require_auth)):
+    return A.update_proxy_routes(bool((body or {}).get("reload", True)))
+
+
+@router.get("/apps/discover")
+def apps_discover(auth=Depends(require_auth)):
+    return A.discover()
 
 
 # ---------- 存储管理 ----------
