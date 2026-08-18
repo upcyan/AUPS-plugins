@@ -99,9 +99,23 @@ def deploy_get(name: str, auth=Depends(require_auth)):
 @router.post("/apps/{name}/deploy")
 def deploy_set(name: str, body: dict = None, auth=Depends(require_auth)):
     b = body or {}
-    return A.set_deploy(name, **{k: v for k, v in b.items()
-                                  if k in ("domain", "ssl", "port", "workdir", "user",
-                                           "ci_user", "ssh_key", "comment", "proxy")})
+    # workdir 为空时使用应用默认目录
+    if not b.get("workdir"):
+        app = A.get_app(name)
+        b["workdir"] = app.get("dir", "")
+    result = A.set_deploy(name, **{k: v for k, v in b.items()
+                                   if k in ("domain", "ssl", "port", "workdir", "user",
+                                            "ci_user", "ssh_key", "comment", "proxy")})
+    # 保存后自动更新反代站点块
+    try:
+        all_apps = A.list_apps()
+        app_sites = [{"name": a["name"], "domain": (a.get("deploy") or {}).get("domain", ""),
+                      "port": (a.get("deploy") or {}).get("port", 0)} for a in all_apps]
+        from ...modules.caddy.module.caddyfile import update_app_sites
+        update_app_sites(app_sites, reload_=True)
+    except Exception:
+        pass  # 反代更新失败不阻断保存
+    return result
 
 
 @router.get("/apps/{name}/deploy/domain")
