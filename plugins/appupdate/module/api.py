@@ -43,14 +43,14 @@ def proxy_list(auth=Depends(require_auth)):
 
 @router.post("/apps/caddy")
 def apps_caddy(body: dict = None, auth=Depends(require_auth)):
-    """同步反代路由：更新应用站点块 + reload。"""
+    """同步反代路由：更新应用站点块 + reload。通过核心 rproxy 转发，支持任意反代插件。"""
     all_apps = A.list_apps()
     app_sites = [{"name": a["name"], "domain": (a.get("deploy") or {}).get("domain", ""),
                   "port": (a.get("deploy") or {}).get("port", 0)} for a in all_apps]
-    # 写入应用站点块到反代配置文件
+    # 通过核心 rproxy 转发（支持 caddy/nginx 等任意反代插件）
     try:
-        from ...modules.caddy.module.caddyfile import update_app_sites
-        update_app_sites(app_sites, reload_=bool((body or {}).get("reload", True)))
+        from ... import rproxy
+        rproxy.update_app_sites(app_sites, reload=bool((body or {}).get("reload", True)))
     except Exception as e:
         raise AppError(f"同步反代路由失败：{e}")
     return {"ok": True, "message": f"已同步 {len([a for a in app_sites if a['domain']])} 个应用域名到反代"}

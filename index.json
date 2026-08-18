@@ -16,10 +16,10 @@
       ],
       "files": {
         "README.md": "5e710adff23ebd94fb2d0367757e438260899b9067aff70c18278e405415bf93",
-        "frontend.js": "0ae48e2315645a8ac103496bbb495c883c8e6abc4c958b2cae04830019d36c31",
+        "frontend.js": "9cf00ff7df18e87300f7e4fb875bd62d90985fa464a587c25d5462687f7d8cfc",
         "manifest.json": "ab8353d16efb9eeeae93f68d3794b60f19ebf1885fc0005861e4743973cc2aaa",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "a7506b7db189f94f372cc328513062731d047affe430dce5c3029a21ef756bdb",
+        "module/api.py": "c72bba358a5a7092d6dccb7782d349f1fd0ebd5ac3cf17d6c7ec275aff7f6522",
         "module/apps.py": "83521ef8659608f8b9f1796bfc58c3af4637f3a2639f5c03b26001c4f25f957f",
         "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",

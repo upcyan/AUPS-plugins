@@ -453,3 +453,9 @@ def apply(reload=True):
         _reload(warn_only=True)
     return {"backend": NAME, "caddyfile": env.caddy_config_file(),
             "written": True, "reloaded": reload}
+
+
+def update_app_sites(apps, reload_=True):
+    """更新 Caddyfile 中的应用站点块（AUPS APPS SITE 标记区）。"""
+    from ..caddyfile import update_app_sites as _update
+    return _update(apps, reload_=reload_)
