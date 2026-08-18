@@ -302,6 +302,26 @@ def _remove_section(text, begin, end):
     return "\n".join(result)
 
 
+def _replace_section(text, begin, end, snippet):
+    """替换标记区之间的内容（含标记本身），保留标记行。"""
+    lines = text.splitlines()
+    result = []
+    inside = False
+    for line in lines:
+        if begin in line:
+            result.append(line)
+            result.extend(snippet.splitlines())
+            inside = True
+            continue
+        if end in line:
+            result.append(line)
+            inside = False
+            continue
+        if not inside:
+            result.append(line)
+    return "\n".join(result)
+
+
 # ---------- 常用片段预设（参考 caddydash） ----------
 
 PRESETS = [
