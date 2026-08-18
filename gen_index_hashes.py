@@ -16,12 +16,7 @@ def sha256(data: bytes) -> str:
 
 
 def blob_bytes(rel):
-    """取 git 仓库中已提交的内容（LF），与市场下载的 codeload tarball 完全一致。
-
-    Windows 下 core.autocrlf=true 会把工作区文件检出为 CRLF，而 GitHub 提供的
-    tarball 是仓库 blob 原文（LF）。完整性校验按下载内容哈希比对，因此必须用
-    blob 内容计算，不能直接用工作区文件（否则 CRLF 文件哈希全不一致）。
-    """
+    """取 git 仓库中已提交的内容（LF），与市场下载的 codeload tarball 完全一致。"""
     p = subprocess.run(
         ["git", "-C", REPO, "show", "HEAD:plugins/%s/%s" % (NAME, rel)],
         capture_output=True)
