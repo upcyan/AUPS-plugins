@@ -229,6 +229,79 @@ def delete_site(host):
     return {"host": host, "deleted": True}
 
 
+# ---------- 应用站点块（AUPS APPS 管理） ----------
+
+_APPS_SITE_BEGIN = "# >>> AUPS APPS SITE (managed, do not remove) <<<"
+_APPS_SITE_END = "# <<< AUPS APPS SITE >>>"
+
+
+def _gen_app_site_blocks(apps):
+    """根据应用注册表生成站点块列表。apps 为 [{name, domain, port, workdir}]。"""
+    blocks = []
+    for app in apps:
+        domain = (app.get("domain") or "").strip()
+        port = int(app.get("port") or 0)
+        if not domain or not port:
+            continue
+        block = f"""{domain} {{
+    reverse_proxy 127.0.0.1:{port}
+}}"""
+        blocks.append(block)
+    return "\n\n".join(blocks)
+
+
+def update_app_sites(apps, reload_=True):
+    """更新 Caddyfile 中的应用站点块（AUPS APPS SITE 标记区）。
+    apps 为 [{name, domain, port, workdir}] 列表。
+    """
+    d = read()
+    content = d["content"]
+    new_sites = _gen_app_site_blocks(apps)
+
+    if not new_sites:
+        # 无应用站点：移除标记区
+        content = _remove_section(content, _APPS_SITE_BEGIN, _APPS_SITE_END)
+    else:
+        section = f"{_APPS_SITE_BEGIN}\n{new_sites}\n{_APPS_SITE_END}"
+        content = _replace_section(content, _APPS_SITE_BEGIN, _APPS_SITE_END, section)
+
+    write(content, reload_=reload_)
+    return {"updated": True, "sites": len([a for a in apps if a.get("domain") and a.get("port")])}
+
+
+def remove_app_site(domain, reload_=True):
+    """移除指定域名的应用站点块。"""
+    d = read()
+    content = d["content"]
+    # 找到并移除包含该域名的站点块
+    blocks = _site_blocks(content)
+    lines = content.splitlines()
+    for blk in blocks:
+        if blk["host"] == domain:
+            del lines[blk["start"]:blk["end"] + 1]
+            content = "\n".join(lines)
+            break
+    write(content, reload_=reload_)
+    return {"removed": True, "domain": domain}
+
+
+def _remove_section(text, begin, end):
+    """移除标记区之间的内容（含标记本身）。"""
+    lines = text.splitlines()
+    result = []
+    inside = False
+    for line in lines:
+        if begin in line:
+            inside = True
+            continue
+        if end in line:
+            inside = False
+            continue
+        if not inside:
+            result.append(line)
+    return "\n".join(result)
+
+
 # ---------- 常用片段预设（参考 caddydash） ----------
 
 PRESETS = [
