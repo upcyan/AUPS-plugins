@@ -261,6 +261,8 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   async function appsCaddy() {
     try { await api('POST', '/api/apps/caddy', { reload: true }, true); alert('反代路由已更新'); }
     catch(e){ alert('更新失败：' + ((e&&e.detail)||e)); }
+    // 停止所有按钮的流光动画
+    try { window.stopAllFx(); } catch(e) {}
   }
 
   /* ---------- CI 用户 ---------- */
