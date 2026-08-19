@@ -39,10 +39,10 @@
       "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙",
       "files": {
         "README.md": "01ee26eb370e24b0aa106536da809d25214aab79cc96a0552ab8970c2c6b0588",
-        "frontend.js": "e8693dfec68c867ea25cc037c27df7f9e5288e925b7e8076e84882646f2ceadf",
+        "frontend.js": "cba21b033355510bf9444af9e4cf6d8f00307a9c416f1ccbfdc812a3f685498a",
         "manifest.json": "5cf4af5fc6525e313e721bc8812124a1f9a16c72e8da12ca47444dc03a192c6f",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
-        "module/api.py": "d1d9ad66c7e72d687835f7dc3d35dccf88173f820098ae6780a757c0b356bf71",
+        "module/api.py": "0c1f4b608472f87c6315adaa47ecd7f48ed1c2c256630026a7562e735f3777fe",
         "module/caddyfile.py": "c903d04bfec652aeb5e536d623adf92dc53cc5e98da21c3898925a866e3aea98",
         "module/cli.py": "0e62a9275ddab5bba9ba405af8606e0867c1e8e742863a32bd1a9b1ccb2fef44",
         "module/env.py": "907dff90bd5a42eb9a0b17c59efd98f25464739f8044cab70454c6cd70895855",
