@@ -49,13 +49,6 @@ def caddy_instance(action: str, auth=Depends(require_auth)):
     return ENV.instance(action)
 
 
-# 直接 reload 端点（绕过路由参数匹配问题）
-@router.post("/caddy/reload")
-def caddy_reload(auth=Depends(require_auth)):
-    """直接 reload caddy 服务。"""
-    return ENV.instance("reload")
-
-
 # ---------- Caddyfile 管理（全文件 / 站点块）----------
 @router.get("/caddy/caddyfile")
 def caddyfile_get(auth=Depends(require_auth)):

@@ -73,7 +73,7 @@ window.AUPS_PLUGINS['caddy'] = (function () {
       view.innerHTML = navHtml() + errCard(e);
     }
   }
-  async function caddyfileReload() { await api('POST', '/api/caddy/reload'); alert('已重载 Caddy'); await caddyfileTab(); }
+  async function caddyfileReload() { await api('POST', '/api/caddy/instance/reload'); alert('已重载 Caddy'); await caddyfileTab(); }
   async function caddyfileSave() {
     const content = document.getElementById('cfEditor').value;
     try { await api('POST', '/api/caddy/caddyfile', { content, reload: true }); alert('已保存并 reload'); await caddyfileTab(); }
