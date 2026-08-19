@@ -31,6 +31,34 @@ def caddy_env_install(auth=Depends(require_auth)):
 @router.post("/caddy/instance/{action}")
 def caddy_instance(action: str, auth=Depends(require_auth)):
     """stop / restart / reload。reload 前检查服务状态，未运行时自动启动。"""
+    return _do_instance(action)
+
+
+# 直接操作端点（绕过路径参数匹配问题）
+@router.post("/caddy/instance/reload")
+def caddy_reload(auth=Depends(require_auth)):
+    return _do_instance("reload")
+
+
+@router.post("/caddy/instance/stop")
+def caddy_stop(auth=Depends(require_auth)):
+    return _do_instance("stop")
+
+
+@router.post("/caddy/instance/start")
+def caddy_start(auth=Depends(require_auth)):
+    return _do_instance("start")
+
+
+@router.post("/caddy/instance/restart")
+def caddy_restart(auth=Depends(require_auth)):
+    return _do_instance("restart")
+
+
+def _do_instance(action):
+    """统一实例控制逻辑。"""
+    if action not in ("stop", "restart", "reload", "start"):
+        raise HTTPException(status_code=400, detail=f"不支持的操作: {action}")
     if action == "reload" and ENV.deploy_method() != "container":
         import subprocess as _sp
         b = ENV.caddy_binary()

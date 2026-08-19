@@ -73,7 +73,16 @@ window.AUPS_PLUGINS['caddy'] = (function () {
       view.innerHTML = navHtml() + errCard(e);
     }
   }
-  async function caddyfileReload() { await api('POST', '/api/caddy/instance/reload'); alert('已重载 Caddy'); await caddyfileTab(); }
+  async function caddyfileReload() {
+    // 通过面板 api() 函数调用（自动携带会话 token）
+    try {
+      const r = await api('POST', '/api/caddy/instance/reload', {}, true);
+      alert('已重载 Caddy');
+    } catch(e) {
+      alert('重载失败：' + ((e && e.detail) || e));
+    }
+    await caddyfileTab();
+  }
   async function caddyfileSave() {
     const content = document.getElementById('cfEditor').value;
     try { await api('POST', '/api/caddy/caddyfile', { content, reload: true }); alert('已保存并 reload'); await caddyfileTab(); }
