@@ -299,11 +299,8 @@ def start():
 
 
 def instance(action):
-    """实例控制：stop / restart / reload Caddy 服务（兼容容器与实机部署）。
-
-    action ∈ stop/restart/reload。容器方式经运行时管理；实机方式用 systemctl
-    或 caddy 二进制（`caddy reload --config` / `caddy stop`）。
-    """
+    """实例控制：stop / restart / reload Caddy 服务（兼容容器与实机部署）。"""
+    print(f"[caddy] instance(action={action!r})")
     if action not in ("stop", "restart", "reload"):
         raise AppError("action 需为 stop/restart/reload")
     if deploy_method() == "container":

@@ -39,16 +39,21 @@ def caddy_instance(action: str, auth=Depends(require_auth)):
                 status_code=400,
                 detail="Caddy 未安装（未找到 caddy 二进制），无法执行 reload。"
                        + "请先安装 Caddy（aups plugins market install caddy）。")
-        # 检查服务是否运行，未运行则自动启动
         try:
             st = _sp.run(["systemctl", "is-active", "caddy"],
                          capture_output=True, text=True, timeout=5)
             if st.stdout.strip() != "active":
                 return ENV.instance("start")
         except Exception:
-            # is-active 失败也尝试启动
             return ENV.instance("start")
     return ENV.instance(action)
+
+
+# 直接 reload 端点（绕过路由参数匹配问题）
+@router.post("/caddy/reload")
+def caddy_reload(auth=Depends(require_auth)):
+    """直接 reload caddy 服务。"""
+    return ENV.instance("reload")
 
 
 # ---------- Caddyfile 管理（全文件 / 站点块）----------
