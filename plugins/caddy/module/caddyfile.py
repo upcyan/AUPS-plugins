@@ -316,15 +316,19 @@ def _site_addresses(host):
 
 
 def _gen_app_site_blocks(apps, reserved=None):
-    """生成应用站点块；已有自定义站点保留并跳过，避免重复域名。"""
+    """生成应用站点块；已有自定义站点保留并跳过，避免重复域名。
+
+    每个应用对应一个工作目录：站点以 file_server 直接托管该目录下的静态文件
+    （update.json / APK）。port 为对外服务端口（声明/注册用），非内部反代目标。
+    """
     blocks = []
     seen = set(reserved or ())
     skipped = []
     for app in apps:
         name = (app.get("name") or "").strip()
         domain = (app.get("domain") or "").strip()
-        port = int(app.get("port") or 0)
-        if not name or not domain or not port:
+        workdir = (app.get("workdir") or app.get("dir") or "").strip()
+        if not name or not domain or not workdir:
             continue
         addresses = _site_addresses(domain)
         if addresses & seen:
@@ -333,7 +337,8 @@ def _gen_app_site_blocks(apps, reserved=None):
         seen.update(addresses)
         block = f"""{domain} {{
     respond /.well-known/aups-domain-check "aups-domain-verify:{name}" 200
-    reverse_proxy 127.0.0.1:{port}
+    root * {workdir}
+    file_server
 }}"""
         blocks.append(block)
     return "\n\n".join(blocks), skipped
