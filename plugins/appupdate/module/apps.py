@@ -94,6 +94,16 @@ def list_apps():
     ]
 
 
+def public_download_routes():
+    """导出下载路由数据块（契约 v1），供反代插件读取和渲染。"""
+    from ...core import contracts
+    payload = {
+        "apps": [{"name": app["name"], "versions": list_versions(app["name"])}
+                 for app in list_apps()]
+    }
+    return contracts.write_data("appupdate", "download_routes", payload)
+
+
 def get_app(name):
     reg = _registry().get("apps", {})
     meta = reg.get(name)

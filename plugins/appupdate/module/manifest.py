@@ -6,11 +6,28 @@ CLI 命令组在 aups/core/cli.py 中按此清单注册；Web 路由在 aups/web
 MANIFEST = {
     "name": "appupdate",
     "title": "应用更新管理",
-    "version": "2.2.5",
+    "version": "2.3.0",
     "description": "多应用管理：部署配置（域名/SSL/端口/用户）、版本管理、CI 上传、存储配额、下载统计",
     "type": "external",
     "attr": "功能",
     "depends": [{"capability": "proxy"}],
+    "exports": {
+        "version": "1",
+        "api": [{
+            "id": "download_routes", "module": "apps", "function": "public_download_routes",
+            "callers": ["caddy"],
+        }],
+        "data": [{
+            "id": "download_routes", "readers": ["caddy"],
+            "schema": {
+                "type": "object", "required": ["apps"],
+                "properties": {"apps": {"type": "array", "items": {
+                    "type": "object", "required": ["name", "versions"],
+                    "properties": {"name": {"type": "string"}, "versions": {"type": "array"}},
+                }}},
+            },
+        }],
+    },
     "cli_groups": ["app", "storage", "user", "ssh"],
     "api_module": "aups.modules.appupdate.api",
     "api_paths": [

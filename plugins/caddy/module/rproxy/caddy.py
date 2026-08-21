@@ -21,13 +21,16 @@ from ....errors import AppError
 from ....util import has_cmd, run
 
 
-def _apps():
-    """懒加载 appupdate 公共数据模块（仅读应用列表数据，不依赖其内部实现）。"""
+def _download_routes():
+    """读取 appupdate 的公共数据块；首次缺失时调用其声明的公共 API 生成。"""
     try:
-        from ....modules.appupdate import apps as _a
-        return _a
+        from ....core import contracts
+        data = contracts.read_data("caddy", "appupdate", "download_routes")
+        if data is None:
+            data = contracts.call("caddy", "appupdate", "download_routes")
+        return data or {"apps": []}
     except Exception:
-        return None
+        return {"apps": []}
 
 NAME = "caddy"
 
@@ -325,13 +328,11 @@ def _gen_download_routes():
     数据来源与 appupdate 解耦：只读其公开函数，路由语法渲染为本反代职责。
     appupdate 未启用或停用时返回空片段。
     """
-    apps = _apps()
-    if apps is None:
-        return ""
+    data = _download_routes()
     parts = [_APPS_MARK_BEGIN]
-    for app in apps.list_apps():
+    for app in data.get("apps", []):
         host = app["name"]
-        vers = apps.list_versions(host)
+        vers = app.get("versions", [])
         if not vers:
             continue
         parts.append(f"    # -- {host} --")

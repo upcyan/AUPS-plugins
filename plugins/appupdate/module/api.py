@@ -115,8 +115,8 @@ def deploy_set(name: str, body: dict = None, auth=Depends(require_auth)):
         all_apps = A.list_apps()
         app_sites = [{"name": a["name"], "domain": (a.get("deploy") or {}).get("domain", ""),
                       "port": (a.get("deploy") or {}).get("port", 0)} for a in all_apps]
-        from ...modules.caddy.module.caddyfile import update_app_sites
-        update_app_sites(app_sites, reload_=True)
+        from ... import rproxy
+        rproxy.update_app_sites(app_sites, reload=True)
     except Exception:
         pass  # 反代更新失败不阻断保存
     return result
