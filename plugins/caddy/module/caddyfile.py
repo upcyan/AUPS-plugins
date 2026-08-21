@@ -303,12 +303,14 @@ def _remove_section(text, begin, end):
 
 
 def _replace_section(text, begin, end, snippet):
-    """替换标记区之间的内容（含标记本身），保留标记行。"""
+    """替换标记区之间的内容（含标记本身），保留标记行。标记不存在时追加到末尾。"""
     lines = text.splitlines()
     result = []
     inside = False
+    found = False
     for line in lines:
         if begin in line:
+            found = True
             result.append(line)
             result.extend(snippet.splitlines())
             inside = True
@@ -319,6 +321,9 @@ def _replace_section(text, begin, end, snippet):
             continue
         if not inside:
             result.append(line)
+    if not found:
+        result.append("")
+        result.extend(snippet.splitlines())
     return "\n".join(result)
 
 
