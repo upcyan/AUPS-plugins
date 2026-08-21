@@ -9,7 +9,7 @@
 | 系统漏洞 | 待安全更新/补丁数量、全部待更新包数量、是否需要重启系统、自动安全更新是否启用 |
 | 部署的软件漏洞 | nginx / Caddy / certbot / acme.sh / rkhunter / LMD / YARA / fail2ban / OpenSSL / curl / Redis 版本与源仓库候选版本比对 |
 
-每项返回 `{id, group, title, ok, current, expected, advice, critical, fixable, pkg}`。`ok=False 且 fixable=True` 的项前端提供「一键修复」：
+每项返回 `{id, group, title, ok, current, expected, advice, critical, fixable, fix_scope, pkg}`。`ok=False 且 fixable=True` 的项前端按 `fix_scope` 调用正确的修复方式：
 
 - **安全更新**：仅安装安全通道补丁（`apt-get install --only-upgrade` 安全包 / `dnf upgrade --security` / `yum update --security` / `zypper patch`），避免全量升级引入兼容风险；
 - **升级指定软件**：按包管理器升级单个软件（`pkg`）；

@@ -5,6 +5,7 @@
 - 共享数据层（报告读写）委托核心 aups.core.hostsec（save_report/reports/report）。
 """
 
+import re
 import shutil
 
 from ...core import hostsec
@@ -19,7 +20,8 @@ def status():
     """rkhunter 二进制状态（版本探测由核心 bin_version 辅助）。"""
     rk = shutil.which("rkhunter")
     return {"installed": bool(rk), "binary": rk or "",
-            "version": hostsec.bin_version(rk, ["--version"])}
+            "version": hostsec.bin_version(rk, ["--version"]),
+            "report_count": len(reports())}
 
 
 def install():
@@ -58,7 +60,7 @@ def scan(paths=None, quarantine=True):
     for ln in text.splitlines():
         if "Rootkit Hunter" in ln or not ln.strip():
             continue
-        if ln.strip().startswith("Warning:"):
+        if re.search(r"(?:^Warning:|\[\s*Warning\s*\])", ln.strip(), re.IGNORECASE):
             lines.append(ln.strip())
             if "rootkit" in ln.lower():
                 rootkits += 1
@@ -69,6 +71,8 @@ def scan(paths=None, quarantine=True):
         "returncode": r.returncode,
         "suspected": suspected, "rootkits": rootkits,
         "warnings": lines[:100],
+        "error": ((r.stderr or "").strip()[-1000:]
+                  if r.returncode not in (0, 1) else ""),
         "raw": text[-4000:],
     }
     rid = hostsec.save_report(TOOL, result)
@@ -77,12 +81,15 @@ def scan(paths=None, quarantine=True):
 
 def reports():
     """读取共享数据层的扫描报告列表。"""
-    return hostsec.reports()
+    return [item for item in hostsec.reports() if item.get("tool") == TOOL]
 
 
 def report(rid):
     """读取共享数据层的单份报告。"""
-    return hostsec.report(rid)
+    data = hostsec.report(rid)
+    if data.get("tool") != TOOL:
+        raise AppError("报告不属于 rkhunter")
+    return data
 
 
 def post_install():

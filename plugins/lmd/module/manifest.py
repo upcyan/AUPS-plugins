@@ -12,7 +12,7 @@
 MANIFEST = {
     "name": "lmd",
     "title": "LMD",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "LMD (maldet) 恶意软件扫描引擎（依赖插件）：二进制部署与扫描由插件实现，报告/隔离区由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
     "type": "external",
     "attr": "依赖",

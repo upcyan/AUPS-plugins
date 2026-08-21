@@ -2,7 +2,7 @@
 
 属性：依赖
 
-rkhunter 主机入侵检测引擎（依赖插件）。引擎安装/卸载/扫描/报告与数据目录由核心持有（`aups.core.hostsec`），本插件提供能力 `provides: rkhunter`，供核心「安全引擎」页按需调用。
+rkhunter 主机入侵检测引擎（依赖插件）。插件负责安装、扫描和警告解析，报告接口复用核心 `aups.core.hostsec`；通过标准能力 `provides.ids=rkhunter` 供核心发现。
 
 ## 迁移（旧安装 → 插件受管）
 

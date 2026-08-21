@@ -6,6 +6,7 @@
 """
 
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -24,9 +25,10 @@ MALDET_DIR = "/usr/local/maldetect"
 
 def status():
     """LMD 二进制状态。"""
-    maldet = os.path.isfile(MALDET_BIN) or shutil.which("maldet")
-    return {"installed": bool(maldet),
-            "binary": MALDET_BIN if os.path.isfile(MALDET_BIN) else (shutil.which("maldet") or "")}
+    binary = MALDET_BIN if os.path.isfile(MALDET_BIN) else (shutil.which("maldet") or "")
+    return {"installed": bool(binary), "binary": binary,
+            "version": hostsec.bin_version(binary, ["-v"]),
+            "default_paths": _default_paths(), "report_count": len(reports())}
 
 
 def install():
@@ -73,7 +75,7 @@ def _install_lmd():
             with open(tar_path, "wb") as f:
                 f.write(resp.read())
         with tarfile.open(tar_path, "r:gz") as tf:
-            tf.extractall(tmp)
+            _safe_extract(tf, tmp)
         # 包内含 maldetect-<版本>/ 目录与 install.sh（版本号随包变化，做前缀匹配）
         src = None
         for entry in os.listdir(tmp):
@@ -96,30 +98,51 @@ def _install_lmd():
 
 
 def scan(paths=None, quarantine=True):
-    """运行 maldet --scan-all，收集命中文件并支持隔离。"""
+    """逐目录运行 maldet 扫描，再按扫描 ID 获取报告并按需隔离。"""
     if not os.path.isfile(MALDET_BIN):
         raise AppError("未安装 LMD (maldet)，请先安装（install lmd）")
-    targets = paths or _default_paths()
+    targets = ([paths] if isinstance(paths, str) else list(paths or _default_paths()))
     for p in targets:
         if not os.path.exists(p):
             raise AppError(f"扫描路径不存在：{p}")
-    args = [MALDET_BIN, "--scan-all", "--report", "--scan-ove",
-            "--quarantine" if quarantine else "--no-quarantine"]
-    args += list(targets)
-    r = run(args, check=False)
-    text = (r.stdout or "") + "\n" + (r.stderr or "")
-    hits = text.count("FOUND")
-    quarantined = text.count("quarantined") + text.count("Quarantined")
-    # 命中文件行形如：{/path} -> FOUND {/quarantine/location}
-    found = []
-    for ln in text.splitlines():
-        if "FOUND" in ln:
-            found.append(ln.strip())
+    scan_ids, found, raw_parts, errors = [], [], [], []
+    hits = quarantined = files = 0
+    returncode = 0
+    for target in targets:
+        scanned = run([MALDET_BIN, "--scan-all", target], check=False)
+        returncode = max(returncode, int(scanned.returncode or 0))
+        output = ((scanned.stdout or "") + "\n" + (scanned.stderr or "")).strip()
+        raw_parts.append(f"===== {target} =====\n{output}")
+        scan_id = _scan_id(output)
+        if not scan_id:
+            errors.append(f"{target}: 未取得扫描 ID（exit {scanned.returncode}）")
+            continue
+        scan_ids.append(scan_id)
+        reported = run([MALDET_BIN, "--report", scan_id], check=False)
+        report_text = ((reported.stdout or "") + "\n" + (reported.stderr or "")).strip()
+        raw_parts.append(f"===== report {scan_id} =====\n{report_text}")
+        hits += _report_number(report_text, "TOTAL HITS")
+        files += _report_number(report_text, "TOTAL FILES")
+        found.extend(ln.strip() for ln in report_text.splitlines()
+                     if "FOUND" in ln.upper() or "MALWARE" in ln.upper() and "HIT" in ln.upper())
+        if quarantine and _report_number(report_text, "TOTAL HITS") > 0:
+            quarantined_run = run([MALDET_BIN, "--quarantine", scan_id], check=False)
+            qtext = ((quarantined_run.stdout or "") + "\n" +
+                     (quarantined_run.stderr or "")).strip()
+            raw_parts.append(f"===== quarantine {scan_id} =====\n{qtext}")
+            if quarantined_run.returncode == 0:
+                quarantined += _report_number(report_text, "TOTAL HITS")
+            else:
+                errors.append(f"{target}: 隔离失败（exit {quarantined_run.returncode}）")
+    if not scan_ids:
+        raise AppError("LMD 扫描失败：" + ("；".join(errors) or "未生成扫描报告"))
+    text = "\n".join(raw_parts)
     result = {
         "tool": TOOL,
-        "returncode": r.returncode,
-        "hits": hits, "quarantined": quarantined, "files": len(found),
+        "returncode": returncode, "targets": list(targets), "scan_ids": scan_ids,
+        "hits": hits, "quarantined": quarantined, "files": files,
         "found": found[:200],
+        "errors": errors,
         "raw": text[-4000:],
     }
     rid = hostsec.save_report(TOOL, result)
@@ -130,14 +153,42 @@ def _default_paths():
     return [config.PANEL_DATA_DIR, "/tmp", "/var/tmp"]
 
 
+def _safe_extract(tf, dest):
+    """拒绝绝对路径、目录穿越和链接成员，避免安装包写出临时目录。"""
+    base = os.path.realpath(dest)
+    for member in tf.getmembers():
+        target = os.path.realpath(os.path.join(base, member.name))
+        if (not (target == base or target.startswith(base + os.sep))
+                or member.issym() or member.islnk()):
+            raise AppError(f"maldet 安装包包含非法路径：{member.name}")
+    tf.extractall(dest)
+
+
+def _scan_id(text):
+    for pattern in (r"SCAN\s+ID\s*[:=]\s*\{?([\w.-]+)",
+                    r"--report\s+([\w.-]+)"):
+        match = re.search(pattern, text or "", re.IGNORECASE)
+        if match:
+            return match.group(1).rstrip("}")
+    return ""
+
+
+def _report_number(text, label):
+    match = re.search(rf"{re.escape(label)}\s*:\s*(\d+)", text or "", re.IGNORECASE)
+    return int(match.group(1)) if match else 0
+
+
 def reports():
     """读取共享数据层的扫描报告列表。"""
-    return hostsec.reports()
+    return [item for item in hostsec.reports() if item.get("tool") == TOOL]
 
 
 def report(rid):
     """读取共享数据层的单份报告。"""
-    return hostsec.report(rid)
+    data = hostsec.report(rid)
+    if data.get("tool") != TOOL:
+        raise AppError("报告不属于 LMD")
+    return data
 
 
 def quarantine_list():

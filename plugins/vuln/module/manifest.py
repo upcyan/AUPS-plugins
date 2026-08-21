@@ -14,7 +14,7 @@
 MANIFEST = {
     "name": "vuln",
     "title": "漏洞检测",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "系统与部署软件漏洞检测：待安全更新/补丁、部署软件版本比对，检测到漏洞提示解决方案并可一键修复（装补丁/升级）",
     "type": "external",
     "attr": "功能",

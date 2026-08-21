@@ -19,6 +19,7 @@ import subprocess
 from ...core import hostsec
 from ...core import pkg as CORE_PKG
 from ...core.util import has_cmd
+from ...errors import AppError
 
 TOOL = "vuln"
 
@@ -29,9 +30,9 @@ _SOFTWARE = [
     ("certbot", "Certbot", ["certbot", "--version"], "certbot"),
     ("acme.sh", "acme.sh", ["acme.sh", "--version"], None),
     ("rkhunter", "rkhunter", ["rkhunter", "--version"], "rkhunter"),
-    ("maldet", "LMD (maldet)", ["maldet", "--report"], None),
+    ("maldet", "LMD (maldet)", ["maldet", "-v"], None),
     ("yara", "YARA", ["yara", "--version"], "yara"),
-    ("fail2ban", "fail2ban", ["fail2ban-client", "--version"], "fail2ban-client"),
+    ("fail2ban-client", "fail2ban", ["fail2ban-client", "--version"], "fail2ban"),
     ("openssl", "OpenSSL", ["openssl", "version"], "openssl"),
     ("curl", "curl", ["curl", "--version"], "curl"),
     ("redis-server", "Redis", ["redis-server", "--version"], "redis-server"),
@@ -159,6 +160,7 @@ def _sys_security_updates():
                      "apk": "apk upgrade", "zypper": "zypper patch",
                      "pacman": "pacman -Syu --noconfirm"}.get(pm, "对应包管理器安全更新"),
         "fixable": count is not None and count > 0,
+        "fix_scope": "security",
         "pkg": None,
     }
 
@@ -200,6 +202,7 @@ def _sys_all_updates():
         "expected": "定期整体升级保持软件处于最新安全状态",
         "advice": "执行整体升级：apt upgrade / dnf upgrade / apk upgrade 等（或使用本页「全部修复」）",
         "fixable": count is not None and count > 0,
+        "fix_scope": "all",
         "pkg": None,
     }
 
@@ -228,7 +231,8 @@ def _sys_unattended():
     on = False
     detail = ""
     text = _read("/etc/apt/apt.conf.d/20auto-upgrades")
-    if text is not None and "Unattended-Upgrade" in text and "1" in text:
+    if text is not None and re.search(
+            r'APT::Periodic::Unattended-Upgrade\s+"1"', text):
         on = True
         detail = "unattended-upgrades"
     if has_cmd("dnf-automatic"):
@@ -265,7 +269,7 @@ def _sw_check(name, title, ver_args, pkg):
             "current": "已安装（版本不可识别）",
             "expected": "保持最新版本并关注官方安全公告",
             "advice": "版本无法自动识别，请手动核对：" + (f"对应包名 {pkg}" if pkg else ""),
-            "fixable": False, "pkg": pkg,
+            "fixable": False, "fix_scope": None, "pkg": pkg,
         }
     candidate = _pkg_candidate(pkg) if pkg else None
     if candidate is None:
@@ -275,7 +279,7 @@ def _sw_check(name, title, ver_args, pkg):
             "current": f"已安装 {installed}",
             "expected": "保持最新版本并关注官方安全公告",
             "advice": f"非包管理器来源（如脚本安装），请关注官方安全公告并手动升级 {title}",
-            "fixable": False, "pkg": pkg,
+            "fixable": False, "fix_scope": None, "pkg": pkg,
         }
     outdated = False
     try:
@@ -295,6 +299,7 @@ def _sw_check(name, title, ver_args, pkg):
         "expected": f"{title} 为源仓库最新版本（{candidate}）",
         "advice": f"包管理器升级：{CORE_PKG.detect()} 升级 {pkg or name}；如面板环境（nginx/caddy）可在对应插件页重装",
         "fixable": outdated,
+        "fix_scope": "package" if outdated else None,
         "pkg": pkg or name,
     }
 
@@ -339,9 +344,10 @@ def check():
         elif r:
             checks.append(r)
     ok = sum(1 for c in checks if c.get("ok"))
-    fail = sum(1 for c in checks if not c.get("ok"))
+    fail = sum(1 for c in checks if c.get("ok") is False)
     skip = sum(1 for c in checks if c.get("ok") is None)
-    critical = [c["id"] for c in checks if c.get("critical") and not c.get("ok")]
+    critical = [c["id"] for c in checks
+                if c.get("critical") and c.get("ok") is False]
     fixable = [c["id"] for c in checks if c.get("fixable")]
     result = {
         "tool": TOOL, "ok": ok, "fail": fail, "skipped": skip,
@@ -362,12 +368,17 @@ def fix(scope="security", pkg=None):
       - "all": 全部待更新包升级。
     返回 {ok, summary, detail}。
     """
+    scope = (scope or "security").strip().lower()
+    if scope not in ("security", "package", "all"):
+        raise AppError("修复范围需为 security / package / all")
     pm = CORE_PKG.detect()
     if not pm:
-        raise RuntimeError("未检测到受支持的包管理器（apt-get/dnf/yum/apk/zypper/pacman）")
+        raise AppError("未检测到受支持的包管理器（apt-get/dnf/yum/apk/zypper/pacman）")
     if scope == "package":
         if not pkg:
-            raise RuntimeError("缺少要升级的软件包名")
+            raise AppError("缺少要升级的软件包名")
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9+._:-]*", str(pkg)):
+            raise AppError("软件包名格式无效")
         cmd = {
             "apt": ["apt-get", "install", "--only-upgrade", "-y", pkg],
             "dnf": ["dnf", "upgrade", "-y", pkg],
@@ -425,11 +436,14 @@ def fix(scope="security", pkg=None):
 
 
 def reports():
-    return hostsec.reports()
+    return [item for item in hostsec.reports() if item.get("tool") == TOOL]
 
 
 def report(rid):
-    return hostsec.report(rid)
+    data = hostsec.report(rid)
+    if data.get("tool") != TOOL:
+        raise AppError("报告不属于漏洞检测")
+    return data
 
 
 __all__ = ["TOOL", "status", "check", "fix", "reports", "report"]

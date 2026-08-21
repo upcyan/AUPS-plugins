@@ -22,8 +22,12 @@ def vuln_check(auth=Depends(require_auth)):
 
 
 @router.post("/vuln/fix")
-def vuln_fix(scope: str = "security", pkg: str = None, auth=Depends(require_auth)):
-    return SC.fix(scope=scope or "security", pkg=pkg)
+def vuln_fix(body: dict = None, scope: str = None, pkg: str = None,
+             auth=Depends(require_auth)):
+    """JSON body 为主，保留 query 参数兼容旧调用方。"""
+    b = body or {}
+    return SC.fix(scope=b.get("scope") or scope or "security",
+                  pkg=b.get("pkg") or pkg)
 
 
 @router.get("/vuln/reports")
