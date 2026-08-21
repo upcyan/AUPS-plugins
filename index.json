@@ -35,19 +35,19 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙",
       "files": {
         "README.md": "e74375901f60fc65fb46e9b4e6580ad9678eb785ba0f893037d6a204e7c41c9c",
         "frontend.js": "da0bd37023b66d2a43532f68dbb48ba2267a0cf0b93ce964b46bf146b9eeb9f4",
-        "manifest.json": "d2b98ea2749d318de88765b0cca412f3163abdb9218585d385e1401fd8dcce0e",
+        "manifest.json": "de730d2e04f7f16edefe505fde7bd7125d8437cab2da260a30b4cb9ebf61d001",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
         "module/api.py": "7f081b0cc51d3f3769721d453a2f762e3cfd032333d9e4121fe44e78fcbeb9e5",
-        "module/caddyfile.py": "68d4d216a806b5a80cc9ea396c7f8e99a895ed63b43dbec6dd4f7f900b3dd983",
+        "module/caddyfile.py": "8ae45df313b39f1cd5cc0a4e51cdde5c223f1a22f5a2ccf60d1301cf68707d20",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
         "module/env.py": "8acc42bf18efda48fdc74c9a334740f19df44813f818db077a398cbe31fb3029",
-        "module/manifest.py": "9e9b20938e8256ad6ff12525e7fe003ab2a84bcb4642668d609e7c979cbf768c",
-        "module/rproxy/caddy.py": "c0942f66e735210e0f90c6710df77530a669025bf542fb004c32eac99a516eb6"
+        "module/manifest.py": "477b8627278c7273b907aa2e5b2260f0607a1f4f8c48a86749740151d83903db",
+        "module/rproxy/caddy.py": "ac3c39f3a84944e0a022b9a33e835edf90a336bcc2c410e26141152d05a1b187"
       },
       "cards": false,
       "provides": [
