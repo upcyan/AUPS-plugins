@@ -7,6 +7,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from ...web.websec import require_auth
+from ...errors import AppError
 from . import apps as A
 from . import storage as S
 from . import users as U
