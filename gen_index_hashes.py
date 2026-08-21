@@ -55,8 +55,34 @@ def main():
     global NAME
     with open(INDEX, encoding="utf-8") as f:
         data = json.load(f)
+    entries = data.setdefault("plugins", [])
+    known = {p.get("name") for p in entries}
+    for name in sorted(os.listdir(PLUGINS)):
+        pdir = os.path.join(PLUGINS, name)
+        if name in known or not os.path.isdir(pdir):
+            continue
+        outer = os.path.join(pdir, "manifest.json")
+        try:
+            with open(outer, encoding="utf-8") as f:
+                meta = json.load(f)
+        except (OSError, ValueError):
+            print(f"WARN: plugins/{name} 缺少有效 manifest.json，跳过")
+            continue
+        man = read_manifest(name)
+        entry = {
+            "name": name,
+            "title": meta.get("title") or man.get("title") or name,
+            "attr": meta.get("attr") or man.get("attr") or "功能",
+            "version": meta.get("version") or man.get("version") or "0.0.0",
+            "description": meta.get("description") or man.get("description") or "",
+        }
+        if man.get("depends"):
+            entry["depends"] = man["depends"]
+        entries.append(entry)
+        known.add(name)
+        print(f"ADD {name}: 已加入市场索引")
     changed = 0
-    for p in data.get("plugins", []):
+    for p in entries:
         name = p["name"]
         pdir = os.path.join(PLUGINS, name)
         if not os.path.isdir(pdir):

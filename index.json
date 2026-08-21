@@ -248,6 +248,26 @@
       "provides": [
         "vuln"
       ]
+    },
+    {
+      "name": "secgroup",
+      "title": "原生安全组",
+      "attr": "依赖",
+      "version": "1.0.0",
+      "description": "AUPS 原生安全组 provider：使用 nftables 专用链按端口、协议和来源网段管理访问，不依赖 ufw/firewalld，不改写系统已有规则",
+      "files": {
+        "README.md": "618ae27bf653d4602ce7c3af413ef9ed979e1d370aa7838c48ec3c2a08850313",
+        "frontend.js": "bed7c1e9eb5bb1b0a65d88b36b4f08537db80160fa3a005306e5fd365f7c38b9",
+        "manifest.json": "56d833863013d6fc33c2945460d6e66e0e1df59110fa793cccb5217886ed6176",
+        "module/__init__.py": "99c7a869cb61b6328e97f36d304315f2e33aff06b1fc5103a72126eba29c5158",
+        "module/api.py": "be4c1e597521747d06fbf5fb8516175042791aa79bb9cc0b5028cd8bd3dd2238",
+        "module/firewall.py": "8ef4402b3d9e8827014806ef0d2981ad025b4a2c8f3daab70f38f1a87d769d85",
+        "module/manifest.py": "e8e7738c9996050a0c8ffb621d342ba02c10aaa5844c8f4d2807b5339da64a6a"
+      },
+      "cards": false,
+      "provides": [
+        "firewall"
+      ]
     }
   ]
 }
