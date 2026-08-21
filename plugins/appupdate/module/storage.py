@@ -86,13 +86,26 @@ def apks():
 
 def delete_apk(paths):
     base = os.path.realpath(config.BASE_DIR)
+    from . import apps
+    app_bases = [os.path.realpath(a["dir"]) for a in apps.list_apps()]
     removed = []
     for p in paths:
         real = os.path.realpath(p)
-        if not real.startswith(base + os.sep) or not real.endswith(".apk"):
-            raise AppError(f"只允许删除 {base}/ 下的 .apk 文件：{p}")
         if not os.path.isfile(real):
-            continue
+            if not os.path.isabs(p):
+                found = False
+                for ab in app_bases:
+                    candidate = os.path.join(ab, p)
+                    if os.path.isfile(candidate):
+                        real = candidate
+                        found = True
+                        break
+                if not found:
+                    raise AppError(f"文件不存在：{p}")
+            else:
+                raise AppError(f"文件不存在：{p}")
+        if not real.startswith(base + os.sep) or not real.lower().endswith(".apk"):
+            raise AppError(f"只允许删除 {base}/ 下的 .apk 文件：{p}")
         os.remove(real)
         removed.append(real)
     return removed
