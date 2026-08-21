@@ -11,6 +11,7 @@ AUPS 综合性服务器面板的官方插件源。
 | nginx | 环境 | Nginx 反代 |
 | certbot | 依赖 | Let's Encrypt 证书签发（certbot） |
 | acme | 依赖 | acme.sh 证书签发 |
+| secgroup | 依赖 | nftables 原生安全组 |
 
 各插件的详细说明见其自身目录下的 `README.md`（如 `plugins/appupdate/README.md`）。
 
@@ -18,6 +19,7 @@ AUPS 综合性服务器面板的官方插件源。
 
 ```
 index.json                      # 市场清单（插件列表）
+waf-rules.json                  # 公开 WAF 推荐规则订阅源
 plugins/<name>/
     manifest.json               # 插件元数据（name/title/attr/version/...）
     module/                     # Python 包 → 安装到 aups/modules/<name>/

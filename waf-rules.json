@@ -1,0 +1,89 @@
+{
+  "name": "OWASP CRS 精选（Lucky CorazaWAF 同源）",
+  "homepage": "https://github.com/coreruleset/coreruleset",
+  "rules": [
+    {
+      "kind": "path_regex",
+      "pattern": "(?i)(union\\s+(all\\s+)?select|select\\s+.{1,50}?\\s+from|insert\\s+into|update\\s+\\w+\\s+set|delete\\s+from|drop\\s+table|\\bsleep\\s*\\(|benchmark\\s*\\()",
+      "name": "SQL 注入"
+    },
+    {
+      "kind": "path_regex",
+      "pattern": "(?i)(<\\s*script|javascript:|vbscript:|onerror\\s*=|onload\\s*=|onclick\\s*=|onfocus\\s*=|document\\.cookie|alert\\s*\\(|prompt\\s*\\()",
+      "name": "XSS 脚本注入"
+    },
+    {
+      "kind": "path_regex",
+      "pattern": "(?i)(\\.\\./|\\.\\.\\\\|%2e%2e%2f|%252e%252e|/etc/passwd|/etc/shadow|boot\\.ini|cmd\\.exe|/proc/self|/proc/environ)",
+      "name": "目录穿越 / 敏感文件"
+    },
+    {
+      "kind": "path_regex",
+      "pattern": "(?i)(;\\s*(ls|cat|id|whoami|uname|wget|curl|bash|sh|nc|rm)\\b|\\$\\{|`|%00|\\|\\s*(ls|cat|id|sh)\\b)",
+      "name": "命令注入"
+    },
+    {
+      "kind": "path_regex",
+      "pattern": "(?i)(\\.git/config|\\.git/HEAD|\\.svn/entries|\\.env\\b|\\.htaccess|phpinfo\\.php|phpunit|\\.sql\\b|\\.bak\\b|\\.swp\\b|\\.log\\b)",
+      "name": "源码 / 备份泄露"
+    },
+    {
+      "kind": "path_regex",
+      "pattern": "(?i)(system\\s*\\(|exec\\s*\\(|passthru\\s*\\(|shell_exec\\s*\\(|\\beval\\s*\\(|assert\\s*\\(|\\$_(GET|POST|REQUEST|COOKIE)\\b)",
+      "name": "危险函数 / 变量"
+    },
+    {
+      "kind": "path_regex",
+      "pattern": "(?i)(file://|php://|data://|expect://|zip://|gopher://|dict://)",
+      "name": "LFI / 伪协议"
+    },
+    {
+      "kind": "path_regex",
+      "pattern": "(?i)(\\{?\\{.{0,80}?\\}\\}?|\\$\\{\\{|\\#\\{.{0,80}?\\})",
+      "name": "模板注入 SSTI"
+    },
+    {
+      "kind": "path_regex",
+      "pattern": "(?i)(/wp-admin|/wp-login\\.php|/administrator|/admin/|/cgi-bin|/\\.git|/\\.svn|/shell\\.php|/cmd\\.php|/backup|/db\\.php)",
+      "name": "常见攻击路径"
+    },
+    {
+      "kind": "user_agent",
+      "pattern": "(?i)(sqlmap|nikto|nmap|masscan|acunetix|nessus|openvas|gobuster|dirbuster|wpscan|joomscan|zgrab|hydra|libwww-perl|python-requests|curl/|wget/|httpx|feroxbuster|ffuf|sqliv)",
+      "name": "常见扫描器 / 工具 UA"
+    },
+    {
+      "kind": "user_agent",
+      "pattern": "(?i)(MJ12bot|SemrushBot|AhrefsBot|DotBot|Bytespider|PetalBot|AdsBot|YisouSpider|CensysInspect|masscan)",
+      "name": "恶意 / 垃圾爬虫 UA"
+    },
+    {
+      "kind": "user_agent",
+      "pattern": "(?i)(\\bmozilla/5\\.0\\s*\\(\\s*\\)|^\\s*$|java/|okhttp|Go-http-client|ZmEu|Morfeus|^\\)$)",
+      "name": "伪装 / 空 UA"
+    },
+    {
+      "kind": "header",
+      "field": "X-Forwarded-For",
+      "pattern": "(?i)(union select|\\.\\./|<\\s*script|\\bselect\\b.+\\bfrom\\b|;)\\s*$",
+      "name": "XFF 注入"
+    },
+    {
+      "kind": "header",
+      "field": "X-Forwarded-Host",
+      "pattern": "(?i)(union select|<\\s*script|\\.\\./)",
+      "name": "XFH 注入"
+    },
+    {
+      "kind": "header",
+      "field": "Referer",
+      "pattern": "(?i)(union select|\\<\\s*script|shell_exec|eval\\s*\\()",
+      "name": "Referer 注入"
+    },
+    {
+      "kind": "method",
+      "pattern": "TRACE",
+      "name": "禁用 TRACE"
+    }
+  ]
+}
