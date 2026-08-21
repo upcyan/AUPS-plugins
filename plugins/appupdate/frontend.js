@@ -8,6 +8,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   let appsCache = [];
   let usersCache = [];
   let proxyCache = [];
+  let appsBaseDir = '/var/www/html';
 
   function navHtml() {
     return `<div class="secnav">
@@ -54,10 +55,19 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     const ssl = d.ssl || {};
     const isNew = !name;
     // 已注册域名列表（排除当前应用）
-    const domains = appsCache.filter(a => a.deploy && a.deploy.domain && a.name !== name)
-      .map(a => a.deploy.domain);
+    const domainMap = new Map();
+    appsCache.filter(a => a.deploy && a.deploy.domain && a.name !== name).forEach(a => {
+      const domain = String(a.deploy.domain).trim().replace(/\.$/, '');
+      if (domain && !domainMap.has(domain.toLowerCase())) domainMap.set(domain.toLowerCase(), domain);
+    });
+    const domains = [...domainMap.values()];
     const domainListHtml = domains.length
       ? `<div class="mut" style="font-size:11px;margin-top:4px">已有域名：${domains.map(dom => `<span style="cursor:pointer;color:var(--acc);margin:0 4px" onclick="document.getElementById('${isNew?'n':'e'}Domain').value='${esc(dom)}'">${esc(dom)}</span>`).join('')}</div>`
+      : '';
+    const ports = [...new Set(appsCache.filter(a => a.deploy && a.deploy.port && a.name !== name)
+      .map(a => Number(a.deploy.port)).filter(Boolean))].sort((a, b) => a - b);
+    const portListHtml = ports.length
+      ? `<div class="mut" style="font-size:11px;margin-top:4px">已注册端口：${ports.map(port => `<span style="margin:0 4px">${port}</span>`).join('')}</div>`
       : '';
     // CI 用户下拉
     const userOpts = usersCache.map(u =>
@@ -97,7 +107,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     return `
       <h2>${isNew ? '新增应用' : '编辑部署配置 · ' + esc(name)}</h2>
       ${isNew ? `<div class="blk"><span class="mut">应用名称 *</span>
-        <input id="nName" placeholder="myapp（字母数字._-）"></div>` : ''}
+        <input id="nName" placeholder="myapp（字母数字._-）" oninput="${P}updateDefaultWorkdir()"></div>` : ''}
       <div class="blk"><span class="mut">域名</span>
         <input id="${prefix}Domain" value="${esc(d.domain || '')}" placeholder="example.com">
         ${domainListHtml}
@@ -118,9 +128,12 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
         </select></div>
       <div id="sslSubOptions">${sslSubHtml}</div>
       <div class="blk"><span class="mut">服务端口</span>
-        <input id="${prefix}Port" type="number" value="${d.port || ''}" placeholder="8080"></div>
+        <input id="${prefix}Port" type="number" value="${d.port || ''}" placeholder="8080">
+        ${portListHtml}</div>
       <div class="blk"><span class="mut">工作目录</span>
-        <input id="${prefix}Workdir" value="${esc(d.workdir || '')}" placeholder="${esc(d.dir || '')}"></div>
+        <input id="${prefix}Workdir" value="${esc(d.workdir || (!isNew ? d.dir || '' : ''))}"
+          placeholder="${esc(isNew ? appsBaseDir.replace(/\/$/, '') + '/<应用名称>' : d.dir || '')}"
+          ${isNew ? `data-auto="1" oninput="this.dataset.auto='0'"` : ''}></div>
       <div class="blk"><span class="mut">CI 用户</span>
         <select id="${prefix}CiUser">
           <option value="">-- 不指定 --</option>${userOpts}
@@ -143,6 +156,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
         api('GET', '/api/apps/proxy-list').catch(() => ({proxies:[]})),
       ]);
       appsCache = d.apps || [];
+      appsBaseDir = d.base_dir || '/var/www/html';
       usersCache = ud.users || [];
       proxyCache = pd.proxies || [];
       const rows = appsCache.map(a => {
@@ -211,11 +225,6 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       }
       const body = { domain, ssl, port, workdir, ci_user: ciUser, proxy: proxy || undefined };
       await api('POST', '/api/apps/' + encodeURIComponent(appName) + '/deploy', body, true);
-      // 自动授权 CI 用户目录
-      if (ciUser && workdir) {
-        try { await api('POST', '/api/users/' + encodeURIComponent(ciUser, true) + '/dirs', { path: workdir }); }
-        catch(e) { /* 授权失败不阻断 */ }
-      }
       modalClose(); await appsTab();
     } catch(e) { alert((isNew ? '新增' : '保存') + '失败：' + ((e&&e.detail)||e)); }
   }
@@ -225,6 +234,14 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       const app = await api('GET', '/api/apps/' + encodeURIComponent(name));
       modal(appModalHtml(name, app));
     } catch(e) { alert('加载失败：' + ((e&&e.detail)||e)); }
+  }
+
+  function updateDefaultWorkdir() {
+    const nameEl = document.getElementById('nName');
+    const dirEl = document.getElementById('nWorkdir');
+    if (!nameEl || !dirEl || dirEl.dataset.auto === '0') return;
+    const name = nameEl.value.trim().toLowerCase();
+    dirEl.value = name ? appsBaseDir.replace(/\/$/, '') + '/' + name : '';
   }
 
   function toggleSslMode() {
@@ -471,7 +488,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     go: go,
     open: function (s) { go(s || 'apps'); },
     appsTab, addApp, saveApp, editApp, appDelete, appsCaddy, modalClose,
-    toggleSslMode, toggleSslType, checkDomain,
+    toggleSslMode, toggleSslType, checkDomain, updateDefaultWorkdir,
     usersTab, userCreate, userDelete, userSsh, sshAdd, sshRemove,
     storageTab, loadVersions, lockVer, unlockVer, apkDelete,
     setQuota, setTotalQuota, enforceQuota,

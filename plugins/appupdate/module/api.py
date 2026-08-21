@@ -21,7 +21,9 @@ router = APIRouter()
 # ---------- 应用管理 ----------
 @router.get("/apps")
 def apps_list(auth=Depends(require_auth)):
-    return {"apps": A.list_apps(), "total_quota_mb": A.get_total_quota()}
+    from ... import config
+    return {"apps": A.list_apps(), "total_quota_mb": A.get_total_quota(),
+            "base_dir": config.BASE_DIR}
 
 
 @router.post("/apps")
@@ -108,9 +110,22 @@ def deploy_set(name: str, body: dict = None, auth=Depends(require_auth)):
     if not b.get("workdir"):
         app = A.get_app(name)
         b["workdir"] = app.get("dir", "")
+    ci_user = (b.get("ci_user") or "").strip()
+    workdir = (b.get("workdir") or "").strip()
+    apk_dir = None
+    if ci_user and workdir:
+        import os
+        workdir = U.ensure_dir(workdir)
+        apk_dir = U.ensure_dir(os.path.join(workdir, "apk"))
+        b["workdir"] = workdir
     result = A.set_deploy(name, **{k: v for k, v in b.items()
                                    if k in ("domain", "ssl", "port", "workdir", "user",
                                             "ci_user", "ssh_key", "comment", "proxy")})
+    # CI 用户目录授权由后端统一完成，确保默认工作目录和 apk 子目录均存在且有 ACL。
+    if ci_user and workdir:
+        U.grant_dir(ci_user, workdir)
+        U.grant_dir(ci_user, apk_dir)
+        result["acl_dirs"] = [workdir, apk_dir]
     # 保存后自动更新反代站点块
     try:
         all_apps = A.list_apps()

@@ -20,11 +20,23 @@ def _ensure_acl():
         raise AppError("ACL 工具(setfacl)不可用")
 
 
-def _validate_dir(path):
+def _safe_dir(path):
     base = os.path.realpath(config.BASE_DIR)
     real = os.path.realpath(path)
     if real == base or not real.startswith(base + os.sep):
         raise AppError(f"只能授权 {base}/ 下的目录：{path}")
+    return real
+
+
+def ensure_dir(path):
+    """校验目录位于应用根目录下并创建，避免以 root 在任意路径落盘。"""
+    real = _safe_dir(path)
+    os.makedirs(real, exist_ok=True)
+    return real
+
+
+def _validate_dir(path):
+    real = _safe_dir(path)
     if not os.path.isdir(real):
         raise AppError(f"目录不存在：{path}")
     return real

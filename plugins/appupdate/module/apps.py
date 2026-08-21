@@ -77,6 +77,10 @@ def _deploy(meta):
     return meta.get("deploy", {})
 
 
+def _norm_domain(domain):
+    return (domain or "").strip().lower().rstrip(".")
+
+
 # -------------------- 应用 CRUD --------------------
 
 def list_apps():
@@ -157,6 +161,11 @@ def set_deploy(name, **kwargs):
     meta = reg.get("apps", {}).get(name)
     if not meta:
         raise AppError(f"应用未注册：{name}")
+    if kwargs.get("domain"):
+        wanted = _norm_domain(kwargs["domain"])
+        for other_name, other_meta in reg.get("apps", {}).items():
+            if other_name != name and _norm_domain(_deploy(other_meta).get("domain")) == wanted:
+                raise AppError(f"域名 {kwargs['domain']} 已被应用 {other_name} 使用")
     deploy = meta.setdefault("deploy", {})
     for k in ("domain", "port", "workdir", "user", "ci_user", "ssh_key", "comment", "proxy"):
         if k in kwargs and kwargs[k] is not None:
@@ -177,7 +186,8 @@ def get_deploy(name):
 
 
 def validate_domain(domain, workdir="", app_name=""):
-    """通过反代托管的专用端点校验域名是否指向当前应用。"""
+    """新域名先做 DNS 预检；已同步域名再校验反代应用标识。"""
+    import socket
     import urllib.request
     import urllib.error
 
@@ -187,6 +197,16 @@ def validate_domain(domain, workdir="", app_name=""):
         return {"ok": False, "message": "域名不能为空"}
     if not app_name:
         return {"ok": False, "message": "缺少应用名称，无法校验反代归属"}
+    saved_domain = ""
+    if app_exists(app_name):
+        saved_domain = _norm_domain(get_deploy(app_name).get("domain"))
+    if saved_domain != _norm_domain(domain):
+        try:
+            addresses = sorted({item[4][0] for item in socket.getaddrinfo(domain, 80)})
+        except (socket.gaierror, OSError):
+            return {"ok": False, "message": f"域名 {domain} DNS 解析失败"}
+        return {"ok": True, "preflight": True, "addresses": addresses,
+                "message": f"域名 {domain} DNS 解析正常；保存后将自动同步并确认反代归属"}
     expected = f"aups-domain-verify:{app_name}"
     for scheme in ("https", "http"):
         url = f"{scheme}://{domain}/.well-known/aups-domain-check"
