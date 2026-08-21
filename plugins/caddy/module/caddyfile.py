@@ -235,19 +235,36 @@ _APPS_SITE_BEGIN = "# >>> AUPS APPS SITE (managed, do not remove) <<<"
 _APPS_SITE_END = "# <<< AUPS APPS SITE >>>"
 
 
-def _gen_app_site_blocks(apps):
-    """根据应用注册表生成站点块列表。apps 为 [{name, domain, port, workdir}]。"""
+def _site_addresses(host):
+    """把站点标签归一化为地址集合，供重复域名检测。"""
+    out = set()
+    for value in re.split(r"[\s,]+", host or ""):
+        value = re.sub(r"^https?://", "", value.strip().lower()).rstrip("/.")
+        if value:
+            out.add(value)
+    return out
+
+
+def _gen_app_site_blocks(apps, reserved=None):
+    """生成应用站点块；已有自定义站点保留并跳过，避免重复域名。"""
     blocks = []
+    seen = set(reserved or ())
+    skipped = []
     for app in apps:
         domain = (app.get("domain") or "").strip()
         port = int(app.get("port") or 0)
         if not domain or not port:
             continue
+        addresses = _site_addresses(domain)
+        if addresses & seen:
+            skipped.append(domain)
+            continue
+        seen.update(addresses)
         block = f"""{domain} {{
     reverse_proxy 127.0.0.1:{port}
 }}"""
         blocks.append(block)
-    return "\n\n".join(blocks)
+    return "\n\n".join(blocks), skipped
 
 
 def update_app_sites(apps, reload_=True):
@@ -255,18 +272,20 @@ def update_app_sites(apps, reload_=True):
     apps 为 [{name, domain, port, workdir}] 列表。
     """
     d = read()
-    content = d["content"]
-    new_sites = _gen_app_site_blocks(apps)
+    # 旧版替换逻辑可能生成嵌套标记；先完整清除，再生成唯一托管区。
+    content = _remove_section(d["content"], _APPS_SITE_BEGIN, _APPS_SITE_END)
+    reserved = set()
+    for blk in _site_blocks(content):
+        reserved.update(_site_addresses(blk["host"]))
+    new_sites, skipped = _gen_app_site_blocks(apps, reserved)
 
-    if not new_sites:
-        # 无应用站点：移除标记区
-        content = _remove_section(content, _APPS_SITE_BEGIN, _APPS_SITE_END)
-    else:
+    if new_sites:
         section = f"{_APPS_SITE_BEGIN}\n{new_sites}\n{_APPS_SITE_END}"
-        content = _replace_section(content, _APPS_SITE_BEGIN, _APPS_SITE_END, section)
+        content = content.rstrip() + "\n\n" + section + "\n"
 
     write(content, reload_=reload_)
-    return {"updated": True, "sites": len([a for a in apps if a.get("domain") and a.get("port")])}
+    return {"updated": True, "sites": len(_site_blocks(new_sites)),
+            "skipped_existing": skipped}
 
 
 def remove_app_site(domain, reload_=True):
@@ -286,45 +305,26 @@ def remove_app_site(domain, reload_=True):
 
 
 def _remove_section(text, begin, end):
-    """移除标记区之间的内容（含标记本身）。"""
+    """移除所有标记区（含旧版错误产生的嵌套标记）。"""
     lines = text.splitlines()
     result = []
-    inside = False
+    depth = 0
     for line in lines:
         if begin in line:
-            inside = True
+            depth += 1
             continue
         if end in line:
-            inside = False
+            depth = max(0, depth - 1)
             continue
-        if not inside:
+        if depth == 0:
             result.append(line)
     return "\n".join(result)
 
 
 def _replace_section(text, begin, end, snippet):
-    """替换标记区之间的内容（含标记本身），保留标记行。标记不存在时追加到末尾。"""
-    lines = text.splitlines()
-    result = []
-    inside = False
-    found = False
-    for line in lines:
-        if begin in line:
-            found = True
-            result.append(line)
-            result.extend(snippet.splitlines())
-            inside = True
-            continue
-        if end in line:
-            result.append(line)
-            inside = False
-            continue
-        if not inside:
-            result.append(line)
-    if not found:
-        result.append("")
-        result.extend(snippet.splitlines())
-    return "\n".join(result)
+    """替换完整标记区；snippet 自身应包含 begin/end。"""
+    clean = _remove_section(text, begin, end).rstrip()
+    return (clean + "\n\n" if clean else "") + snippet.strip() + "\n"
 
 
 # ---------- 常用片段预设（参考 caddydash） ----------
