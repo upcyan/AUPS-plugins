@@ -16,7 +16,7 @@ v1.4.0：补全容器部署生命周期、host 网络反代兼容、持久化挂
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.4.3",
+    "version": "1.4.4",
     "description": "Caddy 反代：实机/容器部署、Caddyfile 管理、实例控制、access 日志、防火墙",
     "type": "external",
     "attr": "依赖",

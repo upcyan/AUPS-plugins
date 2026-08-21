@@ -293,12 +293,15 @@ WantedBy=multi-user.target
     new = content.replace(sys_bin, runtime_bin).replace("/etc/caddy/Caddyfile", panel_caddyfile)
     # 注入 HOME/XDG 数据目录，保证证书/ACME 状态持久化
     data_dir = os.path.join(config.plugin_dir("caddy", "data"), "caddydata")
-    if "XDG_DATA_HOME" not in new and "Environment=" in new:
+    if "XDG_DATA_HOME" not in new:
         os.makedirs(data_dir, exist_ok=True)
         env_lines = (f"Environment=HOME={data_dir}\n"
                      f"Environment=XDG_DATA_HOME={data_dir}\n"
                      f"Environment=XDG_CONFIG_HOME={data_dir}\n")
-        new = new.replace("[Service]\n", "[Service]\n" + env_lines, 1)
+        if "[Service]\n" in new:
+            new = new.replace("[Service]\n", "[Service]\n" + env_lines, 1)
+        else:
+            new += env_lines
     if new == content:
         return
     # 备份原单元，供 remove() 还原
