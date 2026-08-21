@@ -173,16 +173,16 @@
       "name": "rkhunter",
       "title": "rkhunter",
       "attr": "依赖",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "description": "rkhunter 主机入侵检测引擎（依赖插件）：二进制部署与扫描由插件实现，报告由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
       "files": {
-        "README.md": "4e44cfc20567b9f9cbac409234ad9c4df4b129019813a7964fda8ad2a2ab7ad2",
-        "frontend.js": "50b8aca4ff809132970b4aa920d039c4b7415ae6ed7a655f8927df11307d733b",
-        "manifest.json": "a720bd4162ac0d9b13313186774c48cd3b552ca1a4d9733cf9b6124b7a73016c",
+        "README.md": "bee30e79a63065b59efdfda89cbccb1e31041316f846ef7220336f1addde4fe1",
+        "frontend.js": "af7ef08efca99b08cdbac3c041eecb46fb08ca42d72eb6af5c4ae7f34fb0c937",
+        "manifest.json": "091f4c398834a41e2b9f558c29e41358f6824274961786b522b5e0ca0aaef202",
         "module/__init__.py": "446bc3c7a08d03b37b0e5254b1cd73bc8727472bb714c149670d0339fbcd080e",
         "module/api.py": "0294fce5112ebb8a08dd151c427f060834a0eb8165d704aa0e652cf860ddf66f",
-        "module/manifest.py": "8188c4146f9e6a8142d27af60ebf7df754de59d2255eb1d029ba942de70ff81f",
-        "module/scanner.py": "4726d84896b110d34704b2b88f416282ee9f4601965830544e799761e342e7bd"
+        "module/manifest.py": "df3070542a4a6e670cb6ddf6cdb4589a85d0ca697be90f14969c5db890ada8d1",
+        "module/scanner.py": "b4cdd9a892add84112760b3669a60331f29a22b2bfc6db7af65d4abac55778a7"
       },
       "cards": false,
       "provides": [
@@ -193,16 +193,16 @@
       "name": "lmd",
       "title": "LMD",
       "attr": "依赖",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "description": "LMD (maldet) 恶意软件扫描引擎（依赖插件）：二进制部署与扫描由插件实现，报告/隔离区由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
       "files": {
-        "README.md": "da8d3ea1601a0f22e15f08f2f933cb5e435eaeb0097b0e1d353059535aba5d39",
-        "frontend.js": "a7e1f16722d9ee257e36e875a81485da82b01ab2cae754654ea2c14d20b6a9f7",
-        "manifest.json": "95288c0aebb47f6e15f5456fbcb92bd1ed04f2daef1edb416e031cf99f154f0e",
+        "README.md": "f506b0a9ee927f3cc5994053ef7b77950c156538a1b17b1a5150162abfff685a",
+        "frontend.js": "6d0c72c6fc57614bf4eb75936ba4b841ec3b40e879f62fdadc7d5a7937a53912",
+        "manifest.json": "098c1550c9a66edb305d1f0e1a51ab8facaae0f0e845369c8153154ea1155510",
         "module/__init__.py": "d616ac336a47a47e3e37c0bed77d4b6b7f990a308b1f2975858cb8660b8f5865",
         "module/api.py": "93202aa79d5513d4286658974c55886094d70c4962d68a3c00e0629b84db1acc",
-        "module/manifest.py": "ca4c415f7f1d4d24cb8e17e183ff2e18f1298202c33513d426b485ee911284f7",
-        "module/scanner.py": "6d1b7172779bb049f42e26dd8634bb29bb3de032eb5dd0da8ddedaba9ff262ad"
+        "module/manifest.py": "3e4ed54431b0e94334aabb90b4583f0e8cc6c7264f83857c2da3f01918bb224c",
+        "module/scanner.py": "4ddd5db4b10e70e73e26df03add567bac3c4c82b390cd4bfdd88d75885fef92d"
       },
       "cards": false,
       "provides": [
@@ -233,16 +233,16 @@
       "name": "vuln",
       "title": "漏洞检测",
       "attr": "功能",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "description": "系统与部署软件漏洞检测：待安全更新/补丁、部署软件版本比对，检测到漏洞提示解决方案并可一键修复（装补丁/升级）",
       "files": {
-        "README.md": "619b0b7ad3aa06ef7f1164357008eccf2ede4e9962d39b907c7b71533a570505",
-        "frontend.js": "b301f59d9fa7c5662546bbf98ee3b20247b0d0207c82ec9325796ff4cad4c5c5",
-        "manifest.json": "39bc9007747eb6c81c74f790ee65ae05cfda3bfb66bf22436353db99dd0d7914",
+        "README.md": "42990fb168fada2a3bbbad558eba6dbc28c0841d80e5eff802cfe158c8eb6806",
+        "frontend.js": "0eebfd129ba45b1b9892125284db3c6e4e33c33a1076b6b04eb6520487616447",
+        "manifest.json": "ecbe196b1d72f76e425c6b5ff374935a84aafc9bbbeab0b7f922965a741d118c",
         "module/__init__.py": "adb4db53f39bc0da7b394d4687a0534553e10b1de61505c8398635087ee81b70",
-        "module/api.py": "56612b0bd3db5a8fbe0a16cf47da6b205154cb88fe6937dfb9c45e5e32865ced",
-        "module/manifest.py": "6af1cc7af9273fdd7dd51e2db4608a5d5cb24c897c98daa5f056da594086c9e7",
-        "module/scanner.py": "9dfe22879be30d1d419b6a98d3b6318d590bb373113ec47c9966ffd4579d6720"
+        "module/api.py": "dff843995a0b83e336eada811b15f511bd75b331d4460a1f89a9b4beba8d87ba",
+        "module/manifest.py": "6708a85ab32bcd0fffc79998c62d540f8b1a6ac8d23462784a5a67b2946c7d57",
+        "module/scanner.py": "2ef2d655bb47d73b2e87b0edef89af2b2252ba06cf4f53508a8c426e03f21592"
       },
       "cards": false,
       "provides": [
