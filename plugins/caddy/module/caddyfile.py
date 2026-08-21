@@ -44,9 +44,16 @@ def _validate(content):
             rt = env.container_runtime()
             if not rt:
                 return "未检测到容器运行时（docker/podman），无法校验"
-            res = env.run([rt, "exec", env.CONTAINER_NAME, "caddy", "validate",
-                           "--config", "/etc/caddy/.validate.Caddyfile",
-                           "--adapter", "caddyfile"])
+            if env.container_status().get("running"):
+                res = env.run([rt, "exec", env.CONTAINER_NAME, "caddy", "validate",
+                               "--config", "/etc/caddy/.validate.Caddyfile",
+                               "--adapter", "caddyfile"])
+            else:
+                # 停止状态用一次性容器校验，配置目录只读挂载，避免必须先启动实例。
+                res = env.run([rt, "run", "--rm", "-v", f"{d}:/etc/caddy:ro",
+                               env.CADDY_IMAGE, "validate",
+                               "--config", "/etc/caddy/.validate.Caddyfile",
+                               "--adapter", "caddyfile"])
         else:
             b = env.caddy_binary()
             if not b:

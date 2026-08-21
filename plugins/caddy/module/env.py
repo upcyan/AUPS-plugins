@@ -22,6 +22,7 @@ _UNIT_FILES = ("/etc/systemd/system/caddy.service", "/lib/systemd/system/caddy.s
 # 容器部署：容器名 / 镜像（caddy 官方镜像，配置目录挂载为 /etc/caddy）
 CONTAINER_NAME = os.environ.get("AUP_CADDY_CONTAINER", "aups-caddy")
 CADDY_IMAGE = os.environ.get("AUP_CADDY_IMAGE", "caddy:2")
+_DEFAULT_CADDYFILE = "{\n    admin 127.0.0.1:2019\n}\n"
 
 
 def deploy_method():
@@ -29,33 +30,63 @@ def deploy_method():
     return config.get_plugin_deploy("caddy")
 
 
-def container_runtime():
-    """探测容器运行时（docker/podman 优先顺序）；无则 None。"""
-    for b in ("docker", "podman"):
-        if has_cmd(b):
-            return b
-    return None
+def _container_runtimes():
+    """返回可用容器运行时；控制实例时优先找到实际持有容器的运行时。"""
+    return [runtime for runtime in ("docker", "podman") if has_cmd(runtime)]
+
+
+def _container_inspect(runtime):
+    return run([runtime, "inspect", CONTAINER_NAME])
+
+
+def container_runtime(prefer_existing=True):
+    """探测 docker/podman；已有容器时优先返回其所属运行时。"""
+    runtimes = _container_runtimes()
+    if prefer_existing:
+        for runtime in runtimes:
+            if _container_inspect(runtime).returncode == 0:
+                return runtime
+    return runtimes[0] if runtimes else None
 
 
 def container_status():
-    """caddy 容器部署状态：{supported, exists, running, runtime, name, image}。"""
+    """caddy 容器部署状态，兼容 docker/podman 与运行时后装场景。"""
     rt = container_runtime()
     if not rt:
         return {"supported": False, "exists": False, "running": False,
                 "runtime": None, "name": CONTAINER_NAME, "image": CADDY_IMAGE}
-    res = run([rt, "inspect", CONTAINER_NAME])
+    res = _container_inspect(rt)
     if res.returncode != 0:
         return {"supported": True, "exists": False, "running": False,
                 "runtime": rt, "name": CONTAINER_NAME, "image": CADDY_IMAGE}
     running = False
+    image = CADDY_IMAGE
+    network = None
     try:
         import json as _json
         data = _json.loads(res.stdout or "[]")
-        running = bool(data and data[0].get("State", {}).get("Running"))
+        info = data[0] if data else {}
+        running = bool(info.get("State", {}).get("Running"))
+        image = info.get("Config", {}).get("Image") or CADDY_IMAGE
+        network = info.get("HostConfig", {}).get("NetworkMode")
     except ValueError:
         running = False
+    version = None
+    if running:
+        ver = run([rt, "exec", CONTAINER_NAME, "caddy", "version"])
+        if ver.returncode == 0 and (ver.stdout or ver.stderr).strip():
+            version = (ver.stdout or ver.stderr).strip().splitlines()[0]
     return {"supported": True, "exists": True, "running": running,
-            "runtime": rt, "name": CONTAINER_NAME, "image": CADDY_IMAGE}
+            "runtime": rt, "name": CONTAINER_NAME, "image": image,
+            "version": version, "network": network}
+
+
+def access_log_file():
+    """返回宿主机可读的 access 日志路径；Caddyfile 内路径保持兼容。"""
+    if deploy_method() == "container":
+        return os.path.join(config.plugin_dir("caddy", "data"), "logs",
+                            os.path.basename(CADDY_LOG_FILE) or "access.log")
+    return CADDY_LOG_FILE
 
 
 def caddy_binary():
@@ -79,7 +110,7 @@ def status():
     deploy = deploy_method()
     if deploy == "container":
         cs = container_status()
-        return {"name": "caddy", "installed": cs["exists"], "version": None,
+        return {"name": "caddy", "installed": cs["exists"], "version": cs.get("version"),
                 "deployed": cs["exists"], "deploy": "container",
                 "container": cs, "binary": None,
                 "config_file": caddy_config_file(),
@@ -99,14 +130,13 @@ def status():
 
 
 def post_install():
-    """市场安装后自动部署 caddy 二进制（实机方式自动 apt install + 复制）。
+    """市场安装后按用户选择自动部署实机二进制或 Caddy 容器。
 
-    容器方式不自动拉镜像（需 docker/podman，且镜像较大），留给用户手动触发。
     即使系统已有 caddy，也执行 _host_install() 保证二进制复制到面板 runtime 目录
     （systemd unit 指向 PANEL_HOME/runtime/caddy/caddy）。
     """
     if deploy_method() == "container":
-        return {"skipped": True, "message": "容器部署需手动安装（拉取镜像较慢）"}
+        return _container_install()
     runtime_bin = os.path.join(config.plugin_dir("caddy", "runtime"), "caddy")
     if os.path.isfile(runtime_bin) and os.access(runtime_bin, os.X_OK):
         return {"skipped": True, "message": f"caddy 已部署: {runtime_bin}"}
@@ -144,7 +174,10 @@ def _host_install():
         else:
             os.makedirs(os.path.dirname(dst_caddyfile), exist_ok=True)
             with open(dst_caddyfile, "w", encoding="utf-8") as f:
-                f.write("{\n    admin off\n}\n")
+                f.write(_DEFAULT_CADDYFILE)
+    # 从容器切换回实机时清理旧实例，避免 host 网络下抢占 80/443。
+    for runtime in _container_runtimes():
+        run([runtime, "rm", "-f", CONTAINER_NAME], check=False)
     # 切换 systemd 单元，让运行中的 caddy 加载面板二进制+配置
     _switch_unit(runtime_bin, caddy_config_file())
     # 确保服务启动并开机自启
@@ -156,33 +189,63 @@ def _host_install():
 
 
 def _container_install():
-    """容器部署：以 caddy 官方镜像运行容器，挂载面板配置/数据目录到容器。"""
+    """容器部署：使用 host 网络保持公共反代数据中的 127.0.0.1 后端语义。"""
     rt = container_runtime()
     if not rt:
         raise AppError("未检测到容器运行时（docker/podman），无法容器部署 caddy")
     config.ensure_panel_dirs("caddy")
     d = config.plugin_paths("caddy")
+    container_config = os.path.join(d["data"], "config")
+    container_logs = os.path.join(d["data"], "logs")
+    os.makedirs(container_config, exist_ok=True)
+    os.makedirs(container_logs, exist_ok=True)
+    os.makedirs(config.BASE_DIR, exist_ok=True)
     # 确保配置目录存在 Caddyfile（容器入口需要）
     dst_caddyfile = os.path.join(d["config"], "Caddyfile")
     if os.path.isfile(CADDYFILE) and not os.path.isfile(dst_caddyfile):
         shutil.copy2(CADDYFILE, dst_caddyfile)
     if not os.path.isfile(dst_caddyfile):
         with open(dst_caddyfile, "w", encoding="utf-8") as f:
-            f.write("{\n    admin off\n}\n")
+            f.write(_DEFAULT_CADDYFILE)
     # 拉取镜像
     pull = run([rt, "pull", CADDY_IMAGE])
     if pull.returncode != 0:
         raise AppError(f"拉取镜像 {CADDY_IMAGE} 失败: {(pull.stderr or '').strip()}")
-    # 移除旧容器后重建（配置目录挂载 /etc/caddy，数据目录挂载 /data）
-    run([rt, "rm", "-f", CONTAINER_NAME], check=False)
+    # host 网络让容器可继续反代宿主机 127.0.0.1:port，与核心公共 API 约定兼容。
+    # 切换前停止实机实例，并清理任一运行时中的同名旧容器，避免端口冲突。
+    host_was_active = False
+    if has_cmd("systemctl"):
+        active = run(["systemctl", "is-active", "caddy"])
+        host_was_active = active.returncode == 0 and active.stdout.strip() == "active"
+        if host_was_active:
+            run(["systemctl", "stop", "caddy"], check=False)
+    if not host_was_active:
+        host_bin = caddy_binary()
+        if host_bin:
+            run([host_bin, "stop"], check=False)
+    for runtime in _container_runtimes():
+        run([runtime, "rm", "-f", CONTAINER_NAME], check=False)
     args = [rt, "run", "-d", "--name", CONTAINER_NAME,
             "--restart", "unless-stopped",
+            "--network", "host",
             "-v", f"{d['config']}:/etc/caddy:ro",
             "-v", f"{d['data']}:/data",
+            "-v", f"{container_config}:/config",
+            "-v", f"{container_logs}:{os.path.dirname(CADDY_LOG_FILE) or '/var/log/caddy'}",
+            "-v", f"{config.BASE_DIR}:{config.BASE_DIR}:ro",
             CADDY_IMAGE]
     res = run(args)
     if res.returncode != 0:
+        if host_was_active:
+            run(["systemctl", "start", "caddy"], check=False)
         raise AppError(f"创建 caddy 容器失败: {(res.stderr or '').strip()}")
+    cs = container_status()
+    if not cs.get("running"):
+        log = run([rt, "logs", "--tail", "50", CONTAINER_NAME])
+        run([rt, "rm", "-f", CONTAINER_NAME], check=False)
+        if host_was_active:
+            run(["systemctl", "start", "caddy"], check=False)
+        raise AppError("caddy 容器启动失败: " + (log.stderr or log.stdout or "未知错误").strip())
     return {"ok": True, "source": "container", "message": "caddy 已部署为容器", **status()}
 
 
@@ -245,9 +308,8 @@ def remove():
     由市场卸载时的 keep_data 决定（keep_data=False 时市场侧会删除 config/data）。
     """
     if deploy_method() == "container":
-        rt = container_runtime()
-        if rt:
-            run([rt, "rm", "-f", CONTAINER_NAME], check=False)
+        for runtime in _container_runtimes():
+            run([runtime, "rm", "-f", CONTAINER_NAME], check=False)
         shutil.rmtree(config.plugin_dir("caddy", "runtime"), ignore_errors=True)
         return {"name": "caddy", "removed": True, "deploy": "container"}
     # 停止面板 caddy（若在运行）
@@ -277,8 +339,11 @@ def stop():
     """停用插件：停止 caddy 服务（容器/ systemd / 二进制），保留配置/数据/二进制。"""
     if deploy_method() == "container":
         rt = container_runtime()
-        if rt:
-            run([rt, "stop", CONTAINER_NAME], check=False)
+        if not rt:
+            raise AppError("未检测到容器运行时，无法停止 caddy 容器")
+        res = run([rt, "stop", CONTAINER_NAME])
+        if res.returncode != 0:
+            raise AppError(f"停止 caddy 容器失败: {(res.stderr or '').strip()}")
         return {"name": "caddy", "stopped": True, "deploy": "container"}
     if has_cmd("systemctl"):
         run(["systemctl", "stop", "caddy"], check=False)
@@ -293,8 +358,11 @@ def start():
     """重新启用插件：启动 caddy 服务（容器/ systemd / 二进制）。"""
     if deploy_method() == "container":
         rt = container_runtime()
-        if rt:
-            run([rt, "start", CONTAINER_NAME], check=False)
+        if not rt:
+            raise AppError("未检测到容器运行时，无法启动 caddy 容器")
+        res = run([rt, "start", CONTAINER_NAME])
+        if res.returncode != 0:
+            raise AppError(f"启动 caddy 容器失败: {(res.stderr or '').strip()}")
         return {"name": "caddy", "started": True, "deploy": "container"}
     if has_cmd("systemctl"):
         run(["systemctl", "start", "caddy"], check=False)
@@ -303,6 +371,29 @@ def start():
     if bin_path:
         run([bin_path, "run"], check=False)
     return {"name": "caddy", "started": True, "deploy": "host"}
+
+
+def logs(lines=100):
+    """读取当前部署实例日志，API 对实机与容器保持同一返回结构。"""
+    lines = max(1, min(int(lines or 100), 500))
+    if deploy_method() == "container":
+        rt = container_runtime()
+        if not rt:
+            return {"lines": [], "error": "未检测到容器运行时", "deploy": "container"}
+        res = run([rt, "logs", "--tail", str(lines), CONTAINER_NAME])
+        raw = "\n".join(part for part in ((res.stdout or "").strip(),
+                                            (res.stderr or "").strip()) if part)
+        if res.returncode != 0:
+            return {"lines": [], "error": raw or "无法读取 caddy 容器日志",
+                    "deploy": "container"}
+        return {"lines": raw.splitlines()[-lines:], "error": None, "deploy": "container"}
+    if not has_cmd("journalctl"):
+        return {"lines": [], "error": "journalctl 不可用", "deploy": "host"}
+    res = run(["journalctl", "-u", "caddy", "-n", str(lines),
+               "--no-pager", "--output=short-iso"])
+    raw = res.stdout.strip()
+    error = (res.stderr or "").strip() if res.returncode != 0 and not raw else None
+    return {"lines": raw.splitlines()[-lines:], "error": error, "deploy": "host"}
 
 
 def instance(action):
@@ -318,10 +409,19 @@ def instance(action):
         if action == "reload":
             if not cs["running"]:
                 raise AppError("caddy 容器未运行，无法 reload")
+            valid = run([rt, "exec", CONTAINER_NAME, "caddy", "validate",
+                         "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"])
+            if valid.returncode != 0:
+                raise AppError(f"Caddyfile 校验失败: {(valid.stderr or valid.stdout).strip()}")
             res = run([rt, "exec", CONTAINER_NAME, "caddy", "reload",
                        "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"])
+            # 兼容旧配置中的 admin off：校验通过后以重启容器应用新配置。
+            if res.returncode != 0:
+                res = run([rt, "restart", CONTAINER_NAME])
         elif action == "stop":
             res = run([rt, "stop", CONTAINER_NAME])
+        elif action == "start":
+            res = run([rt, "start", CONTAINER_NAME])
         else:  # restart
             res = run([rt, "restart", CONTAINER_NAME])
         if res.returncode != 0:

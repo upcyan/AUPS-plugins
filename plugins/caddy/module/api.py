@@ -206,18 +206,5 @@ def stats_accesslog_enable(auth=Depends(require_auth)):
 # ---------- Caddy 运行日志 ----------
 @router.get("/caddy/journal")
 def caddy_journal(lines: int = 100, auth=Depends(require_auth)):
-    """读取 caddy systemd journal 日志（最近 N 行）。"""
-    import subprocess as _sp
-    try:
-        r = _sp.run(["journalctl", "-u", "caddy", "-n", str(min(lines, 500)),
-                      "--no-pager", "--output=short-iso"],
-                     capture_output=True, text=True, timeout=10)
-        raw = r.stdout.strip()
-        if r.returncode != 0 and not raw:
-            return {"lines": [], "error": r.stderr.strip() or "无法读取 caddy 日志"}
-        log_lines = [ln for ln in raw.splitlines() if ln.strip()]
-        return {"lines": log_lines[-lines:], "error": None}
-    except _sp.TimeoutExpired:
-        return {"lines": [], "error": "读取日志超时"}
-    except FileNotFoundError:
-        return {"lines": [], "error": "journalctl 不可用"}
+    """读取当前 Caddy 实例日志（实机 journal / 容器 logs）。"""
+    return ENV.logs(lines)

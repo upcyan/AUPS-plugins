@@ -18,7 +18,7 @@ from .. import env
 from ....core import waf
 from .... import ports
 from ....errors import AppError
-from ....util import has_cmd, run
+from ....util import has_cmd
 
 
 def _download_routes():
@@ -41,12 +41,9 @@ _OLD_WAF_END = "# <<< AUP WAF >>>"
 
 
 def status():
-    ver = None
-    bin_path = env.caddy_binary()
-    if bin_path:
-        r = run([bin_path, "version"])
-        if r.returncode == 0 and (r.stdout or r.stderr).strip():
-            ver = (r.stdout or r.stderr).strip().split()[0]
+    instance_status = env.status()
+    bin_path = instance_status.get("binary")
+    ver = instance_status.get("version")
     caddyfile = env.caddy_config_file()
     deploy = env.deploy_method()
     return {
@@ -166,8 +163,8 @@ def access_log_status():
         pass
     return {
         "enabled": _LOG_MARK_BEGIN in text or "http.log.access" in text,
-        "log_file": env.CADDY_LOG_FILE,
-        "file_exists": os.path.isfile(env.CADDY_LOG_FILE),
+        "log_file": env.access_log_file(),
+        "file_exists": os.path.isfile(env.access_log_file()),
     }
 
 

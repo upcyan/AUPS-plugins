@@ -112,9 +112,7 @@ def grant_dir(user, path):
 
 
 def revoke_dir(user, path):
-    real = os.path.realpath(path)
-    if not os.path.isdir(real):
-        raise AppError(f"目录不存在：{path}")
+    real = _validate_dir(path)
     run(["setfacl", "-R", "-x", f"u:{user}", real])
     run(["setfacl", "-R", "-x", f"d:u:{user}", real])
     return {"user": user, "dir": real, "revoked": True}

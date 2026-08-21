@@ -290,13 +290,19 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   async function usersTab() {
     view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
     try {
-      const d = await api('GET', '/api/users');
+      const [d, ad] = await Promise.all([
+        api('GET', '/api/users'),
+        api('GET', '/api/apps').catch(() => ({apps:[]})),
+      ]);
       usersCache = d.users || [];
+      appsCache = ad.apps || [];
+      appsBaseDir = ad.base_dir || '/var/www/html';
       const rows = usersCache.map(u => `<tr>
         <td><b>${esc(u.name)}</b></td>
         <td class="mut">${esc(u.comment || '')}</td>
         <td class="mut" style="font-size:12px">${(u.dirs||[]).map(esc).join(', ') || '-'}</td>
         <td>
+          <button class="ghost" onclick="${P}userDirAuth('${esc(u.name)}')">添加目录授权</button>
           <button class="ghost" onclick="${P}userSsh('${esc(u.name)}')">SSH 密钥</button>
           <button class="ghost danger" onclick="${P}userDelete('${esc(u.name)}')">删除</button>
         </td></tr>`).join('');
@@ -326,6 +332,46 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     if (!confirm('删除用户 ' + name + '？')) return;
     try { await api('DELETE', '/api/users/' + encodeURIComponent(name, true)); await usersTab(); }
     catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
+  }
+
+  async function userDirAuth(name) {
+    const box = document.getElementById('userSshBox');
+    const user = usersCache.find(u => u.name === name) || {dirs:[]};
+    const suggestions = [...new Set(appsCache.flatMap(a => {
+      const workdir = (a.deploy || {}).workdir || a.dir || '';
+      return [a.dir, workdir, workdir ? workdir.replace(/\/$/, '') + '/apk' : ''];
+    }).filter(Boolean))];
+    const rows = (user.dirs || []).map(dir => `<div class="row" style="margin:5px 0">
+      <code style="font-size:12px;word-break:break-all">${esc(dir)}</code>
+      <button class="ghost danger" onclick="${P}userDirRevoke('${esc(name)}','${encodeURIComponent(dir).replace(/'/g, '%27')}')" style="margin-left:auto">撤销</button>
+    </div>`).join('');
+    box.innerHTML = `<div class="card"><h2>目录授权 · ${esc(name)}</h2>
+      ${rows || '<div class="mut">暂无已登记目录</div>'}
+      <div class="row" style="margin-top:10px">
+        <input id="userDirPath" list="userDirSuggestions" placeholder="${esc(appsBaseDir.replace(/\/$/, '') + '/应用名称')}" style="flex:1;min-width:260px">
+        <datalist id="userDirSuggestions">${suggestions.map(dir => `<option value="${esc(dir)}"></option>`).join('')}</datalist>
+        <button onclick="${P}userDirGrant('${esc(name)}')">添加授权</button>
+      </div>
+      <div class="mut" style="font-size:11px;margin-top:6px">仅允许授权应用默认目录下已存在的目录；授权包含现有文件和后续新建内容。</div>
+    </div>`;
+  }
+
+  async function userDirGrant(name) {
+    const path = (document.getElementById('userDirPath') || {}).value || '';
+    if (!path.trim()) { alert('请输入目录路径'); return; }
+    try {
+      await api('POST', '/api/users/' + encodeURIComponent(name) + '/dirs', {path: path.trim()}, true);
+      await usersTab(); await userDirAuth(name);
+    } catch(e) { alert('授权失败：' + ((e&&e.detail)||e)); }
+  }
+
+  async function userDirRevoke(name, encodedPath) {
+    const path = decodeURIComponent(encodedPath);
+    if (!confirm('撤销目录授权：' + path + '？')) return;
+    try {
+      await api('POST', '/api/users/' + encodeURIComponent(name) + '/dirs/remove', {path}, true);
+      await usersTab(); await userDirAuth(name);
+    } catch(e) { alert('撤销失败：' + ((e&&e.detail)||e)); }
   }
 
   async function userSsh(name) {
@@ -489,7 +535,8 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     open: function (s) { go(s || 'apps'); },
     appsTab, addApp, saveApp, editApp, appDelete, appsCaddy, modalClose,
     toggleSslMode, toggleSslType, checkDomain, updateDefaultWorkdir,
-    usersTab, userCreate, userDelete, userSsh, sshAdd, sshRemove,
+    usersTab, userCreate, userDelete, userDirAuth, userDirGrant, userDirRevoke,
+    userSsh, sshAdd, sshRemove,
     storageTab, loadVersions, lockVer, unlockVer, apkDelete,
     setQuota, setTotalQuota, enforceQuota,
   };

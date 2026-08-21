@@ -10,13 +10,14 @@ v1.1.0：支持容器部署（docker/podman）；新增 Caddyfile 管理（全�
 v1.1.1：移除「Caddy HTTPS 端口」功能；Caddyfile 缺失时优雅返回空内容；
 各页容错渲染，避免加载失败卡在占位页。
 v1.2.0：移除反代配置页；实例控制新增实时状态与日志显示。
+v1.4.0：补全容器部署生命周期、host 网络反代兼容、持久化挂载与容器日志。
 """
 
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.3.8",
-    "description": "Caddy 反代：Caddyfile 管理、实例控制、access 日志、防火墙",
+    "version": "1.4.0",
+    "description": "Caddy 反代：实机/容器部署、Caddyfile 管理、实例控制、access 日志、防火墙",
     "type": "external",
     "attr": "依赖",
     # 反代能力声明：本插件是 proxy 能力提供者
