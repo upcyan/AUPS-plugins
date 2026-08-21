@@ -47,7 +47,10 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
 
   /* ---------- 共享弹窗：新增/编辑应用 ---------- */
   function appModalHtml(name, data) {
-    const d = data || {};
+    // GET /api/apps/{name} 返回应用基础信息，部署字段位于 deploy 子对象。
+    // 弹窗使用扁平字段渲染，编辑时需解包，同时保留顶层 dir/name 等信息。
+    const raw = data || {};
+    const d = Object.assign({}, raw, raw.deploy || {});
     const ssl = d.ssl || {};
     const isNew = !name;
     // 已注册域名列表（排除当前应用）

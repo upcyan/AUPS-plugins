@@ -6,7 +6,7 @@ CLI 命令组在 aups/core/cli.py 中按此清单注册；Web 路由在 aups/web
 MANIFEST = {
     "name": "appupdate",
     "title": "应用更新管理",
-    "version": "2.3.1",
+    "version": "2.3.2",
     "description": "多应用管理：部署配置（域名/SSL/端口/用户）、版本管理、CI 上传、存储配额、下载统计",
     "type": "external",
     "attr": "功能",
