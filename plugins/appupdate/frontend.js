@@ -102,7 +102,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
         <input id="${prefix}Domain" value="${esc(d.domain || '')}" placeholder="example.com">
         ${domainListHtml}
         <div class="row" style="margin-top:4px">
-          <button class="ghost" onclick="${P}checkDomain()" type="button" style="font-size:11px">校验域名</button>
+          <button class="ghost" onclick="${P}checkDomain('${esc(name || '')}')" type="button" style="font-size:11px">校验域名</button>
           <span id="domainCheckResult" class="mut" style="font-size:11px"></span>
         </div>
       </div>
@@ -239,14 +239,15 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     if (pathEl) pathEl.style.display = type === 'path' ? 'block' : 'none';
   }
 
-  async function checkDomain() {
+  async function checkDomain(name) {
     const domain = (document.getElementById('nDomain') || document.getElementById('eDomain') || {}).value || '';
     const workdir = (document.getElementById('nWorkdir') || document.getElementById('eWorkdir') || {}).value || '';
+    const appName = name || ((document.getElementById('nName') || {}).value || '').trim();
     const resultEl = document.getElementById('domainCheckResult');
     if (!domain) { resultEl.innerHTML = '<span class="bad">请输入域名</span>'; return; }
     resultEl.innerHTML = '<span class="mut">校验中...</span>';
     try {
-      const r = await api('POST', '/api/apps/validate-domain', { domain, workdir });
+      const r = await api('POST', '/api/apps/validate-domain', { name: appName, domain, workdir });
       resultEl.innerHTML = r.ok
         ? `<span class="ok">${esc(r.message)}</span>`
         : `<span class="bad">${esc(r.message)}</span>`;

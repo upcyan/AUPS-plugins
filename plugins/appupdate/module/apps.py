@@ -176,49 +176,30 @@ def get_deploy(name):
     return get_app(name).get("deploy", "")
 
 
-def validate_domain(domain, workdir=""):
-    """校验域名是否指向本机：在工作目录写入随机文件，通过 HTTP 访问验证。
-    无工作目录时使用 BASE_DIR 默认目录；目录不存在则自动创建。
-    """
-    import random
-    import string
+def validate_domain(domain, workdir="", app_name=""):
+    """通过反代托管的专用端点校验域名是否指向当前应用。"""
     import urllib.request
     import urllib.error
 
+    domain = (domain or "").strip()
+    app_name = (app_name or "").strip()
     if not domain:
         return {"ok": False, "message": "域名不能为空"}
-
-    # 确定工作目录：优先使用传入值，否则用默认目录
-    real_dir = os.path.realpath(workdir) if workdir else os.path.join(config.BASE_DIR, "_domain_verify")
-    os.makedirs(real_dir, exist_ok=True)
-
-    # 生成随机测试文件
-    rand_name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
-    test_file = os.path.join(real_dir, f".aups_test_{rand_name}.txt")
-    test_content = f"aups-domain-verify-{rand_name}"
-
-    try:
-        with open(test_file, "w") as f:
-            f.write(test_content)
-
-        # 尝试通过域名访问（HTTP 和 HTTPS）
-        for scheme in ("http", "https"):
-            url = f"{scheme}://{domain}/.aups_test_{rand_name}.txt"
-            try:
-                req = urllib.request.Request(url, headers={"User-Agent": "AUPS/1.0"})
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    body = resp.read().decode()
-                    if test_content in body:
-                        return {"ok": True, "message": f"域名 {domain} 已验证指向本机"}
-            except (urllib.error.URLError, OSError):
-                continue
-
-        return {"ok": False, "message": f"域名 {domain} 未指向本机（HTTP 访问失败，请检查反代配置）"}
-    finally:
+    if not app_name:
+        return {"ok": False, "message": "缺少应用名称，无法校验反代归属"}
+    expected = f"aups-domain-verify:{app_name}"
+    for scheme in ("https", "http"):
+        url = f"{scheme}://{domain}/.well-known/aups-domain-check"
         try:
-            os.remove(test_file)
-        except OSError:
-            pass
+            req = urllib.request.Request(url, headers={"User-Agent": "AUPS/1.0"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                body = resp.read(512).decode("utf-8", errors="replace").strip()
+                if body == expected:
+                    return {"ok": True, "message": f"域名 {domain} 已指向本机应用 {app_name}"}
+        except (urllib.error.URLError, OSError):
+            continue
+    return {"ok": False, "message":
+            f"域名 {domain} 未通过反代校验；请先保存配置并同步反代路由"}
 
 
 # -------------------- 版本管理 --------------------

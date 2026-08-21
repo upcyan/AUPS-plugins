@@ -251,9 +251,10 @@ def _gen_app_site_blocks(apps, reserved=None):
     seen = set(reserved or ())
     skipped = []
     for app in apps:
+        name = (app.get("name") or "").strip()
         domain = (app.get("domain") or "").strip()
         port = int(app.get("port") or 0)
-        if not domain or not port:
+        if not name or not domain or not port:
             continue
         addresses = _site_addresses(domain)
         if addresses & seen:
@@ -261,6 +262,7 @@ def _gen_app_site_blocks(apps, reserved=None):
             continue
         seen.update(addresses)
         block = f"""{domain} {{
+    respond /.well-known/aups-domain-check "aups-domain-verify:{name}" 200
     reverse_proxy 127.0.0.1:{port}
 }}"""
         blocks.append(block)

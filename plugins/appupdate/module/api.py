@@ -33,7 +33,7 @@ def apps_create(body: dict = None, auth=Depends(require_auth)):
 @router.post("/apps/validate-domain")
 def validate_domain(body: dict = None, auth=Depends(require_auth)):
     b = body or {}
-    return A.validate_domain(b.get("domain", ""), b.get("workdir", ""))
+    return A.validate_domain(b.get("domain", ""), b.get("workdir", ""), b.get("name", ""))
 
 
 @router.get("/apps/proxy-list")
