@@ -260,6 +260,8 @@ def _switch_unit(runtime_bin, panel_caddyfile):
     if not unit:
         # 无单元文件：创建一个指向面板目录的基本单元
         unit = _UNIT_FILES[0]
+        data_dir = os.path.join(config.plugin_dir("caddy", "data"), "caddydata")
+        os.makedirs(data_dir, exist_ok=True)
         try:
             os.makedirs(os.path.dirname(unit), exist_ok=True)
             with open(unit, "w") as f:
@@ -269,6 +271,9 @@ After=network.target
 
 [Service]
 Type=notify
+Environment=HOME={data_dir}
+Environment=XDG_DATA_HOME={data_dir}
+Environment=XDG_CONFIG_HOME={data_dir}
 ExecStart={runtime_bin} run --config {panel_caddyfile} --adapter caddyfile
 ExecReload=/bin/kill -USR1 $MAINPID
 Restart=on-failure
@@ -286,6 +291,14 @@ WantedBy=multi-user.target
         return
     sys_bin = shutil.which("caddy") or "/usr/bin/caddy"
     new = content.replace(sys_bin, runtime_bin).replace("/etc/caddy/Caddyfile", panel_caddyfile)
+    # 注入 HOME/XDG 数据目录，保证证书/ACME 状态持久化
+    data_dir = os.path.join(config.plugin_dir("caddy", "data"), "caddydata")
+    if "XDG_DATA_HOME" not in new and "Environment=" in new:
+        os.makedirs(data_dir, exist_ok=True)
+        env_lines = (f"Environment=HOME={data_dir}\n"
+                     f"Environment=XDG_DATA_HOME={data_dir}\n"
+                     f"Environment=XDG_CONFIG_HOME={data_dir}\n")
+        new = new.replace("[Service]\n", "[Service]\n" + env_lines, 1)
     if new == content:
         return
     # 备份原单元，供 remove() 还原
