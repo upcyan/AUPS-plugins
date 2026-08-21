@@ -7,7 +7,7 @@
       "name": "appupdate",
       "title": "应用更新管理",
       "attr": "功能",
-      "version": "2.2.5",
+      "version": "2.3.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -17,13 +17,13 @@
       "files": {
         "README.md": "5e710adff23ebd94fb2d0367757e438260899b9067aff70c18278e405415bf93",
         "frontend.js": "b5b73f7a621f4bb9097d70b0f679e24e0b43a6a69dc169b6ec99a17416b1d481",
-        "manifest.json": "3e994f4e46ce751fb900c7a621c71a80a32ebac763badc3a61610c9c2990afae",
+        "manifest.json": "747cdf2330998a8a0365040e9c82bd04c21bb63360d44a13180b108ab34fa59a",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "b39e5c19e1222be4fe8870c48e1d8b5725dc44e51620f378ee358e918cc49c29",
-        "module/apps.py": "625a4549f1ba1b58b9c023fdf41a8544dc49e8e4c01f679b4bbd85e66d9e6a2c",
+        "module/api.py": "8f33cf899e319d0a29af3ba52252133cb02ae7bcc18bdea6da16e82823c14548",
+        "module/apps.py": "705a1011c97950f6ac6c95d7af047076741030e687a6a1394c6c5a27510f8e23",
         "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "52e82a13e060371253d1b60e02b49f2f68361cac62aed3c196e49752f34e686a",
+        "module/manifest.py": "7614124c9fa7bacdc6d5699544f8c5cb59a03da7f9c497af8ef296a928b7d2b2",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "b855d9366992830f314086be420f5088997a696351e359aae96cb3a008044521",
         "module/users.py": "f25182380549fef703e1b023692b6d20cad2b42816f02f534798c3a8eb411483"
@@ -35,19 +35,19 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.2.5",
+      "version": "1.3.0",
       "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙",
       "files": {
         "README.md": "01ee26eb370e24b0aa106536da809d25214aab79cc96a0552ab8970c2c6b0588",
-        "frontend.js": "04974f36c08cc779eb7fdf3e7a63e30b99fb1894ed12f3570a07d3f8ce0a5630",
-        "manifest.json": "f590cd39986790ea1d4b74c0c49d1ebe2495ca8e56ea43f75a63755f2191f082",
+        "frontend.js": "001f9939bec24e3d92b455659787207c071f2078a7e6b1274887382e27fee148",
+        "manifest.json": "4741945a2de6343f7316b9a8b31c04364698b2cb059f955270a260b6dcd4af04",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
         "module/api.py": "afd2343692584122ddf83faca22fd78be71397c4ab71d1e64c4c489f6d0a167e",
         "module/caddyfile.py": "c903d04bfec652aeb5e536d623adf92dc53cc5e98da21c3898925a866e3aea98",
         "module/cli.py": "0e62a9275ddab5bba9ba405af8606e0867c1e8e742863a32bd1a9b1ccb2fef44",
         "module/env.py": "907dff90bd5a42eb9a0b17c59efd98f25464739f8044cab70454c6cd70895855",
-        "module/manifest.py": "36e9c281440261be5330d3ee1747e3cb3fab1b81ed6477dc203f0f0867329b5a",
-        "module/rproxy/caddy.py": "64dba44a6ece8cebb9e6cfeea08f96a0ae57731da3c1cd65ec54960173d97017"
+        "module/manifest.py": "1b9a1025c95359c5b368ff7f8203fea769edac33907c04d60c009ebd4a758caf",
+        "module/rproxy/caddy.py": "889dc23c3563e340406ca0b59361a087910ef9f26a533256ccf19f29452004c0"
       },
       "cards": false,
       "provides": [
