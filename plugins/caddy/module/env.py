@@ -102,12 +102,14 @@ def post_install():
     """市场安装后自动部署 caddy 二进制（实机方式自动 apt install + 复制）。
 
     容器方式不自动拉镜像（需 docker/podman，且镜像较大），留给用户手动触发。
+    即使系统已有 caddy，也执行 _host_install() 保证二进制复制到面板 runtime 目录
+    （systemd unit 指向 PANEL_HOME/runtime/caddy/caddy）。
     """
     if deploy_method() == "container":
         return {"skipped": True, "message": "容器部署需手动安装（拉取镜像较慢）"}
-    bin_path = caddy_binary()
-    if bin_path:
-        return {"skipped": True, "message": f"caddy 已安装: {bin_path}"}
+    runtime_bin = os.path.join(config.plugin_dir("caddy", "runtime"), "caddy")
+    if os.path.isfile(runtime_bin) and os.access(runtime_bin, os.X_OK):
+        return {"skipped": True, "message": f"caddy 已部署: {runtime_bin}"}
     return install()
 
 
