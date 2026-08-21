@@ -7,7 +7,7 @@
       "name": "appupdate",
       "title": "应用更新管理",
       "attr": "功能",
-      "version": "2.4.0",
+      "version": "2.5.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -16,17 +16,17 @@
       ],
       "files": {
         "README.md": "5e710adff23ebd94fb2d0367757e438260899b9067aff70c18278e405415bf93",
-        "frontend.js": "64a340583387f914bc7f254c93a47e5c40327176ffe7ab60aef426cb97fe5f81",
-        "manifest.json": "b4e0f7ac20cd56ed986609e2956f50bc17e4a6c8b0f7d7f327e70538a7c4b49c",
+        "frontend.js": "52273bc6ac5f955d298e29daaa12c65a35776b10e610e7205033f5282a70267d",
+        "manifest.json": "db7e70d6a261d419facd2e89d5d361880850da79a9ab678fe2657acaaee6651c",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
         "module/api.py": "3de8582f97989b4a3baee495e4fbd4f97ca5e2783caa91db20acd6cbc77e16ce",
         "module/apps.py": "c16992ee349b410bf14eeba7d79f01032338159f22a3d69612b9c7183712b663",
         "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "2c8b31f13b885ae13722702e55410249f7ceb2cb9a42478e078088ed3e395bcc",
+        "module/manifest.py": "e119a5d4bb1bf9c187a0f4582140d1a300b39413f8a05d3c6c7067650eb72a4d",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "b855d9366992830f314086be420f5088997a696351e359aae96cb3a008044521",
-        "module/users.py": "25d6ab5a9dff192ef76ceefb4c374d5ad5eb76472179cc2b3bfdbe2032b908ee"
+        "module/users.py": "4b5e5940711222cbf71b5089a6bbbb8764131b70a911a15455bdb842562cf3ce"
       },
       "cards": true,
       "provides": []
@@ -35,19 +35,19 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.3.8",
+      "version": "1.4.0",
       "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙",
       "files": {
-        "README.md": "01ee26eb370e24b0aa106536da809d25214aab79cc96a0552ab8970c2c6b0588",
-        "frontend.js": "04974f36c08cc779eb7fdf3e7a63e30b99fb1894ed12f3570a07d3f8ce0a5630",
-        "manifest.json": "b7f8872ade635bb5dd89caf8317127833466a1b7316103e3e36965edfa0ad77b",
+        "README.md": "e74375901f60fc65fb46e9b4e6580ad9678eb785ba0f893037d6a204e7c41c9c",
+        "frontend.js": "da0bd37023b66d2a43532f68dbb48ba2267a0cf0b93ce964b46bf146b9eeb9f4",
+        "manifest.json": "d2b98ea2749d318de88765b0cca412f3163abdb9218585d385e1401fd8dcce0e",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
-        "module/api.py": "1b803350a03505ac76670675d8b2f5d01bb0861bc66bc090fe236b40a6e5ffcd",
-        "module/caddyfile.py": "a39d6be376368fc98c1aaaee66df59fcdeb64439c32fc9cd3a77c67b4e47064d",
-        "module/cli.py": "0e62a9275ddab5bba9ba405af8606e0867c1e8e742863a32bd1a9b1ccb2fef44",
-        "module/env.py": "5d958e49d40d1cedd474c2df8ecd94aecd11da61d87fe27fa428dbaaa90bb78d",
-        "module/manifest.py": "545f649c10d02007409c254e11cc28a3526529d084eda75401e05d73ee022aa1",
-        "module/rproxy/caddy.py": "889dc23c3563e340406ca0b59361a087910ef9f26a533256ccf19f29452004c0"
+        "module/api.py": "7f081b0cc51d3f3769721d453a2f762e3cfd032333d9e4121fe44e78fcbeb9e5",
+        "module/caddyfile.py": "68d4d216a806b5a80cc9ea396c7f8e99a895ed63b43dbec6dd4f7f900b3dd983",
+        "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
+        "module/env.py": "8acc42bf18efda48fdc74c9a334740f19df44813f818db077a398cbe31fb3029",
+        "module/manifest.py": "9e9b20938e8256ad6ff12525e7fe003ab2a84bcb4642668d609e7c979cbf768c",
+        "module/rproxy/caddy.py": "c0942f66e735210e0f90c6710df77530a669025bf542fb004c32eac99a516eb6"
       },
       "cards": false,
       "provides": [
