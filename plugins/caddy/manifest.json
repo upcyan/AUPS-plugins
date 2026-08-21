@@ -2,7 +2,7 @@
   "name": "caddy",
   "title": "Caddy 依赖",
   "attr": "依赖",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Caddy 反代：实机/容器部署、托管片段、Caddyfile 管理、实例控制、access 日志、防火墙",
   "deploy": {
     "host": true,

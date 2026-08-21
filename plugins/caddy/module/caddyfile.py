@@ -69,9 +69,72 @@ def _validate(content):
             pass
 
 
+def _find_global_block_lines(lines):
+    """返回顶部全局配置块的行索引 (start, end)；无则 None。"""
+    i = 0
+    while i < len(lines):
+        s = lines[i].strip().lstrip("\ufeff")
+        if not s or s.startswith("#"):
+            i += 1
+            continue
+        break
+    if i >= len(lines) or not lines[i].strip().lstrip("\ufeff").startswith("{"):
+        return None
+    depth = 0
+    j = i
+    while j < len(lines):
+        depth += lines[j].count("{") - lines[j].count("}")
+        if depth == 0:
+            return i, j
+        j += 1
+    return i, len(lines) - 1
+
+
+def ensure_global_options(content):
+    """写入前规范化全局块：检测 http/https 端口是否被非 caddy 进程占用。
+
+    站点块使用裸域名时会触发 Caddy 自动 HTTPS，默认绑定 80/443。
+    若某端口已被其他进程监听（如 docker-proxy 占用 80），注入
+    `auto_https disable_redirects` 跳过该端口监听，避免 reload 失败，
+    同时保留 443 自动证书。
+    """
+    content = content or ""
+    http_port, https_port = 80, 443
+    for m in re.finditer(r"^\s*(https_port|http_port)\s+(\d+)\s*$", content, re.MULTILINE):
+        if m.group(1) == "https_port":
+            https_port = int(m.group(2))
+        else:
+            http_port = int(m.group(2))
+    blocked = set()
+    try:
+        from ...core import ports
+        for ent in ports.listening():
+            try:
+                p = int(ent.get("port") or "")
+            except (TypeError, ValueError):
+                continue
+            proc = (ent.get("process") or "").lower()
+            if p in (http_port, https_port) and "caddy" not in proc:
+                blocked.add(p)
+    except BaseException:
+        return content
+    if not blocked:
+        return content
+    if re.search(r"^\s*auto_https\s+\S+", content, re.MULTILINE):
+        return content
+    lines = content.splitlines()
+    g = _find_global_block_lines(lines)
+    if g is None:
+        opts = "{\n    auto_https disable_redirects\n}"
+        return (opts + "\n" + content) if content.strip() else opts
+    lines.insert(g[0] + 1, "    auto_https disable_redirects")
+    return "\n".join(lines)
+
+
 def write(content, reload_=True):
     """保存完整 Caddyfile：校验 → 备份 → 写入 → reload（reload 失败不阻断保存）。"""
     content = (content or "").replace("\r\n", "\n")
+    content = ensure_global_options(content)
     err = _validate(content)
     if err:
         raise AppError(f"Caddyfile 校验失败：\n{err}")

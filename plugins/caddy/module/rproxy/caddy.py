@@ -445,8 +445,11 @@ def apply(reload=True):
            + body.splitlines()
            + [closer]
            + lines[target["end"] + 1:])
+    text = "\n".join(out)
+    from ..caddyfile import ensure_global_options
+    text = ensure_global_options(text)
     with open(env.caddy_config_file(), "w", encoding="utf-8") as f:
-        f.write("\n".join(out))
+        f.write(text)
     if reload:
         _reload(warn_only=True)
     return {"backend": NAME, "caddyfile": env.caddy_config_file(),
