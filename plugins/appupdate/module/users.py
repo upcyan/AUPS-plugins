@@ -36,9 +36,13 @@ def ensure_dir(path):
 
 
 def _validate_dir(path):
+    """校验目录位于应用根目录下，不存在时自动创建。"""
     real = _safe_dir(path)
     if not os.path.isdir(real):
-        raise AppError(f"目录不存在：{path}")
+        try:
+            os.makedirs(real, exist_ok=True)
+        except OSError as e:
+            raise AppError(f"目录创建失败：{path} ({e})")
     return real
 
 
