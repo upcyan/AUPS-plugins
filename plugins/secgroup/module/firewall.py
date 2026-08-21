@@ -20,6 +20,8 @@ TABLE = "aups_secgroup"
 CHAIN = "input"
 COMMENT_PREFIX = "aups-secgroup:"
 RULES_FILE = os.path.join(config.PANEL_CONFIG_DIR, "secgroup", "rules.json")
+BLACKLIST4 = "blacklist4"
+BLACKLIST6 = "blacklist6"
 
 
 def _load_specs():
@@ -85,6 +87,24 @@ def _ensure(pwd=None):
         ], check=True, pwd=pwd)
 
 
+def _ensure_blacklist_sets(pwd=None):
+    """建立 IPv4/IPv6 interval set 及来源阻断规则。"""
+    _ensure(pwd)
+    for name, addr_type in ((BLACKLIST4, "ipv4_addr"), (BLACKLIST6, "ipv6_addr")):
+        current = run(["nft", "list", "set", "inet", TABLE, name], check=False)
+        if current.returncode != 0:
+            run_privileged([
+                "nft", "add", "set", "inet", TABLE, name, "\\{",
+                "type", addr_type, "\\;", "flags", "interval", "\\;", "\\}",
+            ], check=True, pwd=pwd)
+        if not _handles(name):
+            family = "ip6" if name == BLACKLIST6 else "ip"
+            run_privileged([
+                "nft", "add", "rule", "inet", TABLE, CHAIN,
+                family, "saddr", f"@{name}", "drop", "comment", COMMENT_PREFIX + name,
+            ], check=True, pwd=pwd)
+
+
 def _chain_text():
     if not has_cmd("nft"):
         return ""
@@ -124,13 +144,51 @@ def rules():
 def status():
     installed = has_cmd("nft")
     text = _chain_text() if installed else "未安装 nftables"
-    return {
+    result = {
         "kind": "nftables-native", "installed": installed,
         "active": bool(installed and f"table inet {TABLE}" in text),
         "mode": "默认放行 / 显式关闭", "persistent": True,
         "rules": rules() if installed else _load_specs(),
         "status": text or "AUPS 安全组链尚未创建；首次添加规则时自动创建",
     }
+    try:
+        from . import blacklist
+        summary = blacklist.status()
+        result.update({
+            "blacklist_supported": True,
+            "blacklist_count": summary.get("network_count", 0),
+            "blacklist_subscriptions": summary.get("subscription_count", 0),
+        })
+    except BaseException:
+        result["blacklist_supported"] = False
+    return result
+
+
+def sync_blacklist_networks(networks, pwd=None):
+    """原子刷新 nftables 黑名单集合。networks 必须已完成 IP/CIDR 归一化。"""
+    _ensure_blacklist_sets(pwd)
+    ipv4 = [n for n in networks if ":" not in n]
+    ipv6 = [n for n in networks if ":" in n]
+    directory = os.path.dirname(RULES_FILE)
+    os.makedirs(directory, exist_ok=True)
+    fd, script = tempfile.mkstemp(prefix=".blacklist-", suffix=".nft", dir=directory)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as file:
+            file.write(f"flush set inet {TABLE} {BLACKLIST4}\n")
+            file.write(f"flush set inet {TABLE} {BLACKLIST6}\n")
+            for name, items in ((BLACKLIST4, ipv4), (BLACKLIST6, ipv6)):
+                for pos in range(0, len(items), 500):
+                    values = ", ".join(items[pos:pos + 500])
+                    file.write(f"add element inet {TABLE} {name} {{ {values} }}\n")
+        os.chmod(script, 0o600)
+        run_privileged(["nft", "-f", script], check=True, pwd=pwd)
+    finally:
+        try:
+            os.unlink(script)
+        except OSError:
+            pass
+    return {"ok": True, "ipv4": len(ipv4), "ipv6": len(ipv6),
+            "total": len(networks)}
 
 
 def _add_drop(port, protocol, source, pwd=None):
@@ -188,7 +246,13 @@ def start():
                 restored += 1
         except (AppError, OSError, ValueError):
             continue
-    return {"ok": True, "restored": restored}
+    blacklist_count = 0
+    try:
+        from . import blacklist
+        blacklist_count = blacklist.apply_runtime().get("total", 0)
+    except BaseException:
+        pass
+    return {"ok": True, "restored": restored, "blacklist": blacklist_count}
 
 
 def stop():
@@ -200,4 +264,5 @@ def stop():
 remove = stop
 
 
-__all__ = ["status", "rules", "open_port", "close_port", "start", "stop", "remove"]
+__all__ = ["status", "rules", "open_port", "close_port", "sync_blacklist_networks",
+           "start", "stop", "remove"]

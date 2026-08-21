@@ -2,6 +2,6 @@
   "name": "secgroup",
   "title": "原生安全组",
   "attr": "依赖",
-  "version": "1.0.0",
-  "description": "AUPS 原生安全组 provider：使用 nftables 专用链按端口、协议和来源网段管理访问，不依赖 ufw/firewalld，不改写系统已有规则"
+  "version": "1.1.0",
+  "description": "AUPS 原生安全组 provider：使用 nftables 管理端口规则及长亭、CrowdSec、通用 IP 黑名单订阅"
 }
