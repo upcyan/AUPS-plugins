@@ -7,7 +7,7 @@
       "name": "appupdate",
       "title": "应用更新管理",
       "attr": "功能",
-      "version": "2.5.0",
+      "version": "2.5.2",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -17,16 +17,16 @@
       "files": {
         "README.md": "5e710adff23ebd94fb2d0367757e438260899b9067aff70c18278e405415bf93",
         "frontend.js": "52273bc6ac5f955d298e29daaa12c65a35776b10e610e7205033f5282a70267d",
-        "manifest.json": "db7e70d6a261d419facd2e89d5d361880850da79a9ab678fe2657acaaee6651c",
+        "manifest.json": "eecb453f0e328b8cb728e194818c032c33bfb46aac6a3608567a1c09703a12b4",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
         "module/api.py": "3de8582f97989b4a3baee495e4fbd4f97ca5e2783caa91db20acd6cbc77e16ce",
         "module/apps.py": "c16992ee349b410bf14eeba7d79f01032338159f22a3d69612b9c7183712b663",
         "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "e119a5d4bb1bf9c187a0f4582140d1a300b39413f8a05d3c6c7067650eb72a4d",
+        "module/manifest.py": "9aa5cb7fe0b6abf855ff191e0587750e6f9da6ff4e3369de9567ec6cfe192b5c",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "b855d9366992830f314086be420f5088997a696351e359aae96cb3a008044521",
-        "module/users.py": "4b5e5940711222cbf71b5089a6bbbb8764131b70a911a15455bdb842562cf3ce"
+        "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
       },
       "cards": true,
       "provides": []
@@ -264,12 +264,7 @@
         "module/blacklist.py": "c47ba732ff12467c23b6c959417ef8cced469c2ed9809db7dc84412a8ef2dc91",
         "module/cli.py": "01cde60053e342f57a84e9001a1e600c95ee76c155418edb51888178d4ed4029",
         "module/firewall.py": "f93000c1c12ea7c8618214d8e4ecb8fbd4ef70b44d4499ea58c9424fc27d18ae",
-        "module/manifest.py": "5e3f80ca25d6dd12853c4f7a305ef2ff16dbc1e461043e35919acda44f3d44aa",
-        "module/__pycache__/api.cpython-312.pyc": "9bb85b1ca322c92b11c069219c2ac4ef1e67f981e7fd2f52f371e9e013004145",
-        "module/__pycache__/blacklist.cpython-312.pyc": "e272134e42949154f1c049396496b418ba652e99e96aeb221f8cbd7c4c7e1896",
-        "module/__pycache__/cli.cpython-312.pyc": "0729bd83053160a2bbe08550df2f320d27bda15f3b143d4f6da4ef7b8c51489b",
-        "module/__pycache__/firewall.cpython-312.pyc": "9acfdf5e5499eb2a51a64665e908035fad5551b31fb3de550b252501d2ff6799",
-        "module/__pycache__/manifest.cpython-312.pyc": "d918ca0f08589db8fd68d57f93c4116f5912a6c3e01b794eff1ad5e380f93d20"
+        "module/manifest.py": "5e3f80ca25d6dd12853c4f7a305ef2ff16dbc1e461043e35919acda44f3d44aa"
       },
       "cards": false,
       "provides": [

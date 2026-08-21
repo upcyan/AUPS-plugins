@@ -32,8 +32,12 @@ def collect(name):
     files = {}
     for base, _dirs, names in os.walk(root):
         for fn in sorted(names):
+            if fn.endswith('.pyc') or fn == '__pycache__':
+                continue
             full = os.path.join(base, fn)
             rel = os.path.relpath(full, root).replace(os.sep, "/")
+            if '__pycache__' in rel:
+                continue
             files[rel] = sha256(blob_bytes(rel))
     return files
 
