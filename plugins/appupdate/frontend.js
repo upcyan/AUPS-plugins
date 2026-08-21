@@ -129,6 +129,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       <div id="sslSubOptions">${sslSubHtml}</div>
       <div class="blk"><span class="mut">服务端口</span>
         <input id="${prefix}Port" type="number" value="${d.port || ''}" placeholder="8080">
+        <div class="mut" style="font-size:11px;margin-top:2px">对外服务端口（声明用）。站点将直接托管「工作目录」下的静态文件（update.json/APK）。</div>
         ${portListHtml}</div>
       <div class="blk"><span class="mut">工作目录</span>
         <input id="${prefix}Workdir" value="${esc(d.workdir || (!isNew ? d.dir || '' : ''))}"

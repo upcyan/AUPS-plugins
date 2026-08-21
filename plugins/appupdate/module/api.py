@@ -49,7 +49,9 @@ def apps_caddy(body: dict = None, auth=Depends(require_auth)):
     """同步反代路由：更新应用站点块 + reload。通过核心 rproxy 转发，支持任意反代插件。"""
     all_apps = A.list_apps()
     app_sites = [{"name": a["name"], "domain": (a.get("deploy") or {}).get("domain", ""),
-                  "port": (a.get("deploy") or {}).get("port", 0)} for a in all_apps]
+                  "port": (a.get("deploy") or {}).get("port", 0),
+                  "workdir": (a.get("deploy") or {}).get("workdir") or a.get("dir", "")}
+                 for a in all_apps]
     # 通过核心 rproxy 转发（支持 caddy/nginx 等任意反代插件）
     try:
         from ... import rproxy
@@ -130,7 +132,9 @@ def deploy_set(name: str, body: dict = None, auth=Depends(require_auth)):
     try:
         all_apps = A.list_apps()
         app_sites = [{"name": a["name"], "domain": (a.get("deploy") or {}).get("domain", ""),
-                      "port": (a.get("deploy") or {}).get("port", 0)} for a in all_apps]
+                      "port": (a.get("deploy") or {}).get("port", 0),
+                      "workdir": (a.get("deploy") or {}).get("workdir") or a.get("dir", "")}
+                     for a in all_apps]
         from ... import rproxy
         rproxy.update_app_sites(app_sites, reload=True)
     except Exception:
