@@ -15,7 +15,7 @@ v1.2.0：移除反代配置页；实例控制新增实时状态与日志显示�
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.3.2",
+    "version": "1.3.3",
     "description": "Caddy 反代：Caddyfile 管理、实例控制、access 日志、防火墙",
     "type": "external",
     "attr": "依赖",

@@ -64,9 +64,14 @@ def _do_instance(action):
             st = _sp.run(["systemctl", "is-active", "caddy"],
                          capture_output=True, text=True, timeout=5)
             if st.stdout.strip() != "active":
-                return ENV.instance("start")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Caddy 服务未运行（systemctl is-active caddy != active），无法 reload。"
+                           + "请先启动 Caddy（aups caddy start）。")
+        except HTTPException:
+            raise
         except Exception:
-            return ENV.instance("start")
+            pass
     return ENV.instance(action)
 
 
