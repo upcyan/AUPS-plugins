@@ -136,10 +136,15 @@ def _host_install():
     runtime_bin = os.path.join(config.plugin_dir("caddy", "runtime"), "caddy")
     shutil.copy2(sys_bin, runtime_bin)
     os.chmod(runtime_bin, 0o755)
-    # 迁移系统 Caddyfile 到面板配置目录（如存在且尚未迁移）
+    # 确保配置目录存在 Caddyfile（systemd 启动需要）
     dst_caddyfile = os.path.join(config.plugin_dir("caddy", "config"), "Caddyfile")
-    if os.path.isfile(CADDYFILE) and not os.path.isfile(dst_caddyfile):
-        shutil.copy2(CADDYFILE, dst_caddyfile)
+    if not os.path.isfile(dst_caddyfile):
+        if os.path.isfile(CADDYFILE):
+            shutil.copy2(CADDYFILE, dst_caddyfile)
+        else:
+            os.makedirs(os.path.dirname(dst_caddyfile), exist_ok=True)
+            with open(dst_caddyfile, "w", encoding="utf-8") as f:
+                f.write("{\n    admin off\n}\n")
     # 切换 systemd 单元，让运行中的 caddy 加载面板二进制+配置
     _switch_unit(runtime_bin, caddy_config_file())
     # 确保服务启动并开机自启
