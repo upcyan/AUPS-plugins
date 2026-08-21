@@ -28,13 +28,6 @@ def caddy_env_install(auth=Depends(require_auth)):
 
 
 # ---------- 实例控制（stop / restart / reload）----------
-@router.post("/caddy/instance/{action}")
-def caddy_instance(action: str, auth=Depends(require_auth)):
-    """stop / restart / reload。reload 前检查服务状态，未运行时自动启动。"""
-    return _do_instance(action)
-
-
-# 直接操作端点（绕过路径参数匹配问题）
 @router.post("/caddy/instance/reload")
 def caddy_reload(auth=Depends(require_auth)):
     return _do_instance("reload")

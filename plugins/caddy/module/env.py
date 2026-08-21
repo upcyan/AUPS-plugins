@@ -301,8 +301,8 @@ def start():
 def instance(action):
     """实例控制：stop / restart / reload Caddy 服务（兼容容器与实机部署）。"""
     print(f"[caddy] instance(action={action!r})")
-    if action not in ("stop", "restart", "reload"):
-        raise AppError("action 需为 stop/restart/reload")
+    if action not in ("stop", "restart", "reload", "start"):
+        raise AppError("action 需为 stop/restart/reload/start")
     if deploy_method() == "container":
         rt = container_runtime()
         if not rt:
