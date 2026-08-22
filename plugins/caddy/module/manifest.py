@@ -11,12 +11,14 @@ v1.1.1：移除「Caddy HTTPS 端口」功能；Caddyfile 缺失时优雅返回�
 各页容错渲染，避免加载失败卡在占位页。
 v1.2.0：移除反代配置页；实例控制新增实时状态与日志显示。
 v1.4.0：补全容器部署生命周期、host 网络反代兼容、持久化挂载与容器日志。
+v1.5.0：新增 SSL 接入方案（SSL 标签页）：方案 A Flexible（Cloudflare 代理仅 HTTP 回源）
+/ 方案 B DNS-01（Cloudflare API 自动签发 Let's Encrypt 证书，支持 Full Strict）。
 """
 
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.4.4",
+    "version": "1.5.1",
     "description": "Caddy 反代：实机/容器部署、Caddyfile 管理、实例控制、access 日志、防火墙",
     "type": "external",
     "attr": "依赖",
@@ -45,6 +47,11 @@ MANIFEST = {
         "/api/caddy/sites/{host}",
         "/api/caddy/presets",
         "/api/caddy/journal",
+        "/api/caddy/ssl/status",
+        "/api/caddy/ssl/flexible",
+        "/api/caddy/ssl/dns01",
+        "/api/caddy/ssl/disable",
+        "/api/caddy/ssl/caddy-with-cloudflare",
         "/api/caddyconf",               # 保留：供其他插件/核心调用
         "/api/caddyconf/status",
         "/api/caddyconf/waf",           # 兼容旧接口：代理核心 WAF
@@ -57,7 +64,7 @@ MANIFEST = {
         "/api/caddyconf/waf/subscribe/recommended",
         "/api/stats/accesslog",
     ],
-    "frontend_tabs": ["caddyfile", "instance"],
+    "frontend_tabs": ["caddyfile", "instance", "ssl"],
     "entry": [
         {"id": "caddyfile", "title": "Caddyfile 管理"},
         {"id": "instance", "title": "实例控制"},

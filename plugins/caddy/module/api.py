@@ -12,6 +12,7 @@ from ... import rproxy as RP
 from ...core import waf as WAFM
 from . import env as ENV
 from . import caddyfile as CF
+from . import sslmode as SSL
 
 router = APIRouter()
 
@@ -208,3 +209,37 @@ def stats_accesslog_enable(auth=Depends(require_auth)):
 def caddy_journal(lines: int = 100, auth=Depends(require_auth)):
     """读取当前 Caddy 实例日志（实机 journal / 容器 logs）。"""
     return ENV.logs(lines)
+
+
+# ---------- SSL 接入方案 ----------
+@router.get("/caddy/ssl/status")
+def ssl_status(auth=Depends(require_auth)):
+    return SSL.status()
+
+
+@router.post("/caddy/ssl/flexible")
+def ssl_apply_flexible(body: dict = None, auth=Depends(require_auth)):
+    b = body or {}
+    return SSL.apply_flexible(b.get("email", ""))
+
+
+@router.post("/caddy/ssl/dns01")
+def ssl_apply_dns01(body: dict = None, auth=Depends(require_auth)):
+    b = body or {}
+    email = b.get("email", "")
+    token = b.get("api_token", "").strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="需要 Cloudflare API Token")
+    return SSL.apply_dns01(email, token)
+
+
+@router.post("/caddy/ssl/disable")
+def ssl_disable(auth=Depends(require_auth)):
+    return SSL.disable_ssl_mode()
+
+
+@router.get("/caddy/ssl/caddy-with-cloudflare")
+def ssl_download_caddy_with_cloudflare(auth=Depends(require_auth)):
+    """下载并返回带 cloudflare DNS provider 的 caddy 二进制路径（供前端引导用户替换）。"""
+    bin_path = SSL.download_caddy_with_cloudflare()
+    return {"ok": True, "path": bin_path, "message": f"已下载: {bin_path}，请替换面板 runtime 目录下的 caddy 并重启"}

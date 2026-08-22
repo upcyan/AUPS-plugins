@@ -1,19 +1,21 @@
-/* AUPS 插件：caddy — Caddyfile 管理 / 实例控制
+/* AUPS 插件：caddy — Caddyfile 管理 / 实例控制 / SSL 接入
  * 由「插件中心」按需加载并注册到 window.AUPS_PLUGINS。
  * 依赖核心全局：api / esc / fmt / view / alert / confirm。
+ * v1.5.0：新增 SSL 标签页，支持 Flexible / DNS-01 两种 Cloudflare 接入方案。
  */
 window.AUPS_PLUGINS = window.AUPS_PLUGINS || {};
 window.AUPS_PLUGINS['caddy'] = (function () {
   const P = 'AUPS_PLUGINS.caddy.';
-  let section = 'caddyfile';
-  let currentDeploy = 'host';
+let section = 'caddyfile';
+let currentDeploy = 'host';
 
-  function navHtml() {
-    return `<div class="secnav">
-      <button class="${section === 'caddyfile' ? 'on' : ''}" onclick="${P}go('caddyfile')">Caddyfile 管理</button>
-      <button class="${section === 'instance' ? 'on' : ''}" onclick="${P}go('instance')">实例控制</button>
-    </div>`;
-  }
+function navHtml() {
+  return `<div class="secnav">
+    <button class="${section === 'caddyfile' ? 'on' : ''}" onclick="${P}go('caddyfile')">Caddyfile 管理</button>
+    <button class="${section === 'instance' ? 'on' : ''}" onclick="${P}go('instance')">实例控制</button>
+    <button class="${section === 'ssl' ? 'on' : ''}" onclick="${P}go('ssl')">SSL 接入</button>
+  </div>`;
+}
 
   function errCard(e) {
     const msg = (e && e.message) || e || '未知错误';
@@ -26,6 +28,7 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     section = s || 'caddyfile';
     if (section === 'caddyfile') caddyfileTab();
     else if (section === 'instance') instanceTab();
+    else if (section === 'ssl') sslTab();
   }
 
   /* ---------- Caddyfile 管理（参考 caddydash） ---------- */
@@ -250,11 +253,138 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     catch(e){ alert((names[action]||action) + '失败：' + ((e&&e.detail)||e)); }
   }
 
+  /* ---------- SSL 接入方案 ---------- */
+  async function sslTab() {
+    view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
+    try {
+      const st = await api('GET', '/api/caddy/ssl/status');
+      const mode = st.configured_mode || 'none';
+      const hint = st.caddyfile_hint || '未检测到特殊配置';
+      const hasDns = st.binary_supports_dns01;
+      const httpSites = st.http_sites_count;
+
+      const modeBadge = mode === 'flexible' ? '<span style="color:var(--ok)">Flexible (HTTP 80)</span>'
+        : mode === 'dns01' ? '<span style="color:var(--accent)">DNS-01 (Full Strict)</span>'
+        : '<span class="mut">默认自动 HTTPS</span>';
+
+      const dnsStatus = hasDns ? '<span style="color:var(--ok)">✓ 支持</span>' : '<span style="color:var(--bad)">✗ 不支持（需自定义构建）</span>';
+
+      view.innerHTML = navHtml() + `
+      <div class="card"><h2>SSL 接入方案（Cloudflare 场景）</h2>
+        <div class="blk"><span class="mut">当前方案</span><strong>${modeBadge}</strong></div>
+        <div class="blk"><span class="mut">配置提示</span><span class="mut">${esc(hint)}</span></div>
+        <div class="blk"><span class="mut">DNS-01 插件</span>${dnsStatus}</div>
+        <div class="blk"><span class="mut">HTTP 孪生站点</span><span class="mut">${httpSites} 个</span></div>
+      </div>
+
+      <div class="card"><h2>方案 A：Flexible（推荐快速接入）</h2>
+        <div class="mut" style="margin-bottom:8px">
+          适用场景：不想折腾 caddy 编译、域名已走 Cloudflare 代理、可接受源站仅 HTTP。<br>
+          原理：Cloudflare 边缘终结 TLS（Flexible），回源走 HTTP(80)；caddy 仅监听 80 端口服务内容，<br>
+          全局 <code>auto_https disable_redirects</code> 防重定向循环，为每个站点自动生成 <code>http://</code> 孪生块。
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="sslFlexEmail" type="email" placeholder="ACME 邮箱（可选）" value="${esc(st.email || '')}" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button onclick="${P}sslApplyFlexible()">启用 Flexible</button>
+        </div>
+        <details style="margin-top:10px"><summary class="mut">操作步骤（点击展开）</summary>
+          <ol class="mut" style="margin-top:6px;line-height:1.8">
+            <li>Cloudflare 面板 → SSL/TLS → Overview → 设为 <b>Flexible</b></li>
+            <li>点击上方「启用 Flexible」，面板自动：<br>
+              &nbsp;&nbsp;① 写入全局 <code>auto_https disable_redirects</code><br>
+              &nbsp;&nbsp;② 为现有站点生成 <code>http://domain { ... }</code> 孪生块<br>
+              &nbsp;&nbsp;③ reload caddy</li>
+            <li>验证：<code>curl -sk https://your.domain/</code> 应返回内容（走 Cloudflare Flexible 回源 80）</li>
+            <li>如需恢复默认：点击下方「恢复默认」并将 Cloudflare 改回 <b>Full (strict)</b></li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="card"><h2>方案 B：DNS-01（标准 Full Strict，需自定义 caddy）</h2>
+        <div class="mut" style="margin-bottom:8px">
+          适用场景：需要源站真实证书、Cloudflare 保持 <b>Full (strict)</b>、<br>
+          愿意替换 caddy 二进制为带 <code>github.com/caddy-dns/cloudflare</code> 插件的版本。<br>
+          原理：caddy 通过 Cloudflare API 创建 TXT 记录完成 DNS-01 挑战，自动签发 Let's Encrypt 证书，<br>
+          无需公网 80/443 入站可达，证书自动续期。
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="sslDnsEmail" type="email" placeholder="ACME 邮箱" value="${esc(st.email || '')}" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="sslDnsToken" type="password" placeholder="Cloudflare API Token (Zone:DNS:Edit)" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button onclick="${P}sslApplyDns01()" ${hasDns ? '' : 'disabled style="opacity:.5" title="当前 caddy 不支持 DNS-01，请先下载自定义版本"'}>启用 DNS-01</button>
+          <button class="ghost" onclick="${P}sslDownloadCustomCaddy()">下载带 Cloudflare 插件的 Caddy</button>
+        </div>
+        <details style="margin-top:10px"><summary class="mut">操作步骤（点击展开）</summary>
+          <ol class="mut" style="margin-top:6px;line-height:1.8">
+            <li>点击「下载带 Cloudflare 插件的 Caddy」，获取自定义构建的二进制</li>
+            <li>替换面板 caddy：<br>
+              &nbsp;&nbsp;<code>cp /path/to/downloaded/caddy /opt/aups/runtime/caddy/caddy</code><br>
+              &nbsp;&nbsp;<code>chmod +x /opt/aups/runtime/caddy/caddy</code><br>
+              &nbsp;&nbsp;<code>systemctl restart caddy</code></li>
+            <li>Cloudflare 面板 → SSL/TLS → Overview → 设为 <b>Full (strict)</b></li>
+            <li>创建 API Token：My Profile → API Tokens → Create Token → Zone → DNS → Edit</li>
+            <li>填入邮箱与 Token，点击「启用 DNS-01」</li>
+            <li>验证：<code>curl -sk https://your.domain/</code> 应返回 200，且证书为 Let's Encrypt 签发</li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="card"><h2>恢复默认</h2>
+        <div class="mut" style="margin-bottom:8px">移除所有 SSL 特殊配置，恢复 Caddy 默认自动 HTTPS 行为（自动签发、HTTP→HTTPS 重定向）。</div>
+        <button class="danger" onclick="${P}sslDisable()">恢复默认 HTTPS</button>
+      </div>
+      `;
+    } catch (e) {
+      view.innerHTML = navHtml() + errCard(e);
+    }
+  }
+  async function sslApplyFlexible() {
+    const email = document.getElementById('sslFlexEmail').value.trim();
+    try {
+      const r = await api('POST', '/api/caddy/ssl/flexible', { email });
+      alert(r.message || '已启用 Flexible');
+      await sslTab();
+    } catch (e) { alert('启用失败：' + ((e && e.detail) || e)); }
+  }
+  async function sslApplyDns01() {
+    const email = document.getElementById('sslDnsEmail').value.trim();
+    const token = document.getElementById('sslDnsToken').value.trim();
+    if (!token) return alert('请填写 Cloudflare API Token');
+    if (!confirm('确定启用 DNS-01？将把 acme_dns cloudflare 写入 Caddyfile。')) return;
+    try {
+      const r = await api('POST', '/api/caddy/ssl/dns01', { email, api_token: token });
+      alert(r.message || '已启用 DNS-01');
+      await sslTab();
+    } catch (e) { alert('启用失败：' + ((e && e.detail) || e)); }
+  }
+  async function sslDisable() {
+    if (!confirm('确定恢复默认 HTTPS 行为？这会移除 Flexible/DNS-01 所有特殊配置。')) return;
+    try {
+      const r = await api('POST', '/api/caddy/ssl/disable');
+      alert(r.message || '已恢复默认');
+      await sslTab();
+    } catch (e) { alert('恢复失败：' + ((e && e.detail) || e)); }
+  }
+  async function sslDownloadCustomCaddy() {
+    if (!confirm('将从 caddy 官方 API 下载带 cloudflare DNS 插件的 linux/amd64 版本（约 40MB），继续？')) return;
+    try {
+      const r = await api('GET', '/api/caddy/ssl/caddy-with-cloudflare');
+      alert('下载完成: ' + r.path + '\n\n请手动替换：\ncp ' + r.path + ' /opt/aups/runtime/caddy/caddy\nchmod +x /opt/aups/runtime/caddy/caddy\nsystemctl restart caddy');
+      await sslTab();
+    } catch (e) { alert('下载失败：' + ((e && e.detail) || e)); }
+  }
+
   return {
     title: 'Caddy 环境',
     sections: [
       { id: 'caddyfile', title: 'Caddyfile 管理' },
       { id: 'instance', title: '实例控制' },
+      { id: 'ssl', title: 'SSL 接入' },
     ],
     go: go,
     open: function (s) { go(s || 'caddyfile'); },
@@ -263,5 +393,7 @@ window.AUPS_PLUGINS['caddy'] = (function () {
     caddyfileSave: caddyfileSave, caddyfileReload: caddyfileReload,
     cfPresets: cfPresets, cfInsertPreset: cfInsertPreset,
     instanceTab: instanceTab, inst: inst, caddyInstall: caddyInstall, caddyLogs: caddyLogs,
+    sslTab: sslTab, sslApplyFlexible: sslApplyFlexible, sslApplyDns01: sslApplyDns01,
+    sslDisable: sslDisable, sslDownloadCustomCaddy: sslDownloadCustomCaddy,
   };
 })();
