@@ -8,7 +8,7 @@
 MANIFEST = {
     "name": "harness-link",
     "title": "Harness 通信桥",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "与 DeepSeek Harness 客户端建立授权连接：配对令牌接入、双向消息通道、连接管理",
     "type": "external",
     "attr": "功能",
@@ -38,5 +38,9 @@ MANIFEST = {
          "description": "查看已连接的 Harness 客户端，双向收发消息（长轮询实时投递）"},
         {"id": "pairing", "title": "接入授权",
          "description": "配对令牌管理、客户端脚本下载、接入指引"},
+    ],
+    "cards": [
+        {"id": "harness-link.status", "title": "Harness 链接",
+         "min_w": 1, "max_w": 3, "default_w": 2, "min_h": 1, "max_h": 2, "default_h": 1},
     ],
 }
