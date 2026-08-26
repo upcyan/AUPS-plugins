@@ -276,19 +276,19 @@
       "name": "harness-link",
       "title": "Harness 通信桥",
       "attr": "功能",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "与 DeepSeek Harness 客户端建立授权连接：配对令牌接入、双向消息通道、连接管理",
       "files": {
         "README.md": "6b44cf015b68ea272a0af1cd0561312130ea2270bc8e2baade09414634bb4bfc",
         "frontend.js": "9b93d1661ce6e751f12ed57c62059377f6c2d238a81e7ec6991f2f7e2c40209d",
-        "manifest.json": "cd203b6f2af26eeeeec45696434c2b4f424637a091a3e1dbfd4f4db76be458fe",
+        "manifest.json": "aa84bc0a14d057b648f8d457fdd12cbcb25cca34afbba45502d810fdc2a4b46a",
         "module/__init__.py": "33e592ed9eae5ae662922acf5eb585e1e6f97c7e8012fab34df7e6d6d10700cb",
         "module/api.py": "f7a339ee23667975921a51b7b0b6d05ce489928e572dab3d98550c5e16bf15a9",
         "module/client_stub.py": "99f7c598fa55624d740363817ce71610c592c19b54fe66d52c33f92a1d9ad675",
-        "module/manifest.py": "56a92bb01dd0401a2ea410cd509a952ae16787dd07874588815a099c72dd4d78",
+        "module/manifest.py": "f48bbc0d06a9e1c0cf329b809910aef1a05ede21d119a5bcc3cdf5bec3a66c39",
         "module/store.py": "56eda3d33b4d86036d50da57dccec69af6c60d9b525bd7ebfbd2b9412ccc8bc2"
       },
-      "cards": false,
+      "cards": true,
       "provides": []
     }
   ]
