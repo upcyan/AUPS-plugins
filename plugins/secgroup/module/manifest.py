@@ -3,7 +3,7 @@
 MANIFEST = {
     "name": "secgroup",
     "title": "原生安全组",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "AUPS 原生安全组 provider：使用 nftables 管理端口规则及长亭、CrowdSec、通用 IP 黑名单订阅",
     "type": "external",
     "attr": "依赖",

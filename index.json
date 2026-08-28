@@ -170,11 +170,11 @@
       "files": {
         "README.md": "d5edc0e5ed4d1d133c250575e0914f6dee3b2765c94133aa186bd7b2d733041a",
         "frontend.js": "0aaa6512b30cca281ce79c8ff8775c05989d5c3a87707ddb8c480438d712fd0d",
-        "manifest.json": "f8e8b3565d86c1dae653145f44217a5b9b8cd256184fc4aebbe8d3e0a1c0117",
-        "module/__init__.py": "45ab05d575be3294243363c31c0b14d080a96ce0aaf045685c51b6fe675b1b3f",
+        "manifest.json": "f219f068315edf72aa488d671b882ab17ac2d9c2fd19c40ca0f40b8e4ac4fb71",
+        "module/__init__.py": "7af431cad3378f51d813b3523f7645b78e3c1a5dd77c4ab62f00471b041ffe81",
         "module/api.py": "613923efdb4e3e13533ee7ed8ce4faff921e94983dcbfec4cd14df0a66751760",
         "module/firewall.py": "a906e3a36cbead886cd9564e25f2cc410a94b3c62958467996f6c61304fbd7e8",
-        "module/manifest.py": "aa4ddf604d3a351ce4f98f2bb720bd613efbe4f0b0904a28f92c55044150b5a1",
+        "module/manifest.py": "abf5d7e288a2c0248853b3b642ad417fd5122c60cba01b3b2b524ab71b744432",
         "module/security.py": "b16148dc4b4706fdfc94901ae54139c837c63d68477a9dce0d84f326c3f214c6"
       },
       "cards": false,
@@ -286,7 +286,7 @@
       "name": "secgroup",
       "title": "原生安全组",
       "attr": "依赖",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "description": "AUPS 原生安全组 provider：使用 nftables 专用链按端口、协议和来源网段管理访问，不依赖 ufw/firewalld，不改写系统已有规则",
       "files": {
         "README.md": "6cc43e082786f44b184e2dc40c2d043308d9711618c8b8abb5a89c8c3a3f4d94",
@@ -297,7 +297,7 @@
         "module/blacklist.py": "c47ba732ff12467c23b6c959417ef8cced469c2ed9809db7dc84412a8ef2dc91",
         "module/cli.py": "01cde60053e342f57a84e9001a1e600c95ee76c155418edb51888178d4ed4029",
         "module/firewall.py": "f93000c1c12ea7c8618214d8e4ecb8fbd4ef70b44d4499ea58c9424fc27d18ae",
-        "module/manifest.py": "5e3f80ca25d6dd12853c4f7a305ef2ff16dbc1e461043e35919acda44f3d44aa"
+        "module/manifest.py": "463539b66509032d28ff40caafb729171c9489099970b909bfaa482f7f04461c"
       },
       "cards": false,
       "provides": [
@@ -311,14 +311,14 @@
       "version": "0.1.2",
       "description": "与 DeepSeek Harness 客户端建立授权连接：配对令牌接入、双向消息通道、连接管理",
       "files": {
-        "README.md": "6b44cf015b68ea272a0af1cd0561312130ea2270bc8e2baade09414634bb4bfc",
-        "frontend.js": "9b93d1661ce6e751f12ed57c62059377f6c2d238a81e7ec6991f2f7e2c40209d",
-        "manifest.json": "aa84bc0a14d057b648f8d457fdd12cbcb25cca34afbba45502d810fdc2a4b46a",
+        "README.md": "e735b184fca2bf7f2f67f7dc0173e002503d8b6ac830465b73eeaa9e3e913394",
+        "frontend.js": "df2c58f07826d46efa15d6d654d9a10b6ef3ad52e6e25271c2d68b968b425556",
+        "manifest.json": "421676330bd4e4a8b880849ec5039e68ac6b3aee0d11010dbd9eb87856d797cf",
         "module/__init__.py": "33e592ed9eae5ae662922acf5eb585e1e6f97c7e8012fab34df7e6d6d10700cb",
-        "module/api.py": "f7a339ee23667975921a51b7b0b6d05ce489928e572dab3d98550c5e16bf15a9",
-        "module/client_stub.py": "99f7c598fa55624d740363817ce71610c592c19b54fe66d52c33f92a1d9ad675",
-        "module/manifest.py": "f48bbc0d06a9e1c0cf329b809910aef1a05ede21d119a5bcc3cdf5bec3a66c39",
-        "module/store.py": "56eda3d33b4d86036d50da57dccec69af6c60d9b525bd7ebfbd2b9412ccc8bc2"
+        "module/api.py": "ebafb4ad54bfbed39f539a6cba3c929714f3f2e041115a5cafaf36148e372355",
+        "module/client_stub.py": "58edf21e8e61c5013637883daa172b0e5f38b9a7d04a298e904686afcdc70feb",
+        "module/manifest.py": "2d43a5eb11f28eb75f5e86c9e97af6cfc9383852a4d8bdfd75cd77d757966b47",
+        "module/store.py": "febecf2f443058204c3efdb06b8e8a473c1f38d60275a0653090cc45c6412763"
       },
       "cards": true,
       "provides": []
