@@ -136,7 +136,7 @@ window.AUPS_PLUGINS['harness-link'] = (function () {
         <h2>配对令牌</h2>
         <div class="row" style="align-items:center;gap:8px">
           <code id="hlToken" style="flex:1;background:rgba(127,127,127,.12);padding:8px 10px;border-radius:8px;user-select:all">••••••••••••••••••••••••</code>
-          <button class="ghost" onclick="${NS}revealToken()">显示</button>
+          <button class="ghost" onclick="${NS}revealToken(this)">显示</button>
           <button class="ghost" onclick="${NS}copyToken()">复制</button>
           <button onclick="${NS}rotateToken()">轮换令牌</button>
         </div>
@@ -176,11 +176,10 @@ window.AUPS_PLUGINS['harness-link'] = (function () {
     el.textContent = tokenShown ? (window.__hlToken || '') : '•'.repeat(24);
   }
 
-  async function revealToken() {
+  async function revealToken(button) {
     tokenShown = !tokenShown;
     if (tokenShown && !window.__hlToken) await loadPairing(); else showTokenBox();
-    const b = event && event.target;
-    if (b) b.textContent = tokenShown ? '隐藏' : '显示';
+    if (button) button.textContent = tokenShown ? '隐藏' : '显示';
   }
 
   async function copyToken() {

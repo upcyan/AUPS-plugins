@@ -1,32 +1,48 @@
-"""cyansecengine（青·擎）模块清单（v3.0.0）：占位壳。
-
-v1 时代的安全加固能力已并入面板核心：
-- rkhunter / LMD 扫描 → 核心主机安全（安全管理页「主机安全」子页）
-- fanotify 实时防护 → 核心实时防护（安全管理页「实时防护」子页）
-- YARA 引擎 → 独立依赖插件（市场 plugins/yara），规则数据由核心持有
-- CLI `aups sec ...` → 已并入核心 `aups hostsec / aups rtguard`
-
-本插件保留为空壳（无 api_module / modules / cli_groups），
-前端提供迁移提示页。为兼容历史安装，仍保留 name/attr 字段。
-
-部署方式：实机（host）。
-"""
+"""青·擎统一安全编排模块清单。"""
 
 MANIFEST = {
     "name": "cyansecengine",
     "title": "青·擎",
-    "version": "3.0.0",
-    "description": "青·擎（原安全加固）。主机安全（rkhunter/LMD）、实时防护与 YARA 引擎已并入面板核心与 yara 依赖插件，本插件为保留占位壳",
+    "version": "3.1.0",
+    "description": "青·擎统一安全编排：防火墙、WAF、漏洞检测、主机安全和实时防护的统一状态与操作入口",
     "type": "external",
-    "attr": "功能",
+    "attr": ["安全", "网络"],
     "deploy": {"host": True},
     "config_dir": "cyansecengine",
     "data_dir": "cyansecengine",
+    "depends": [
+        {"name": "secgroup"},
+        {"name": "vuln", "optional": True},
+        {"name": "rkhunter", "optional": True},
+        {"name": "lmd", "optional": True},
+        {"name": "yara", "optional": True},
+    ],
+    "api_module": "aups.modules.cyansecengine.api",
+    "api_paths": [
+        "/api/cyansecengine/status",
+        "/api/cyansecengine/check",
+        "/api/cyansecengine/waf",
+        "/api/cyansecengine/realtime",
+        "/api/cyansecengine/firewall/open",
+        "/api/cyansecengine/firewall/close",
+    ],
+    "modules": ["api", "firewall", "security"],
+    "provides": {"firewall": "cyansecengine"},
+    "priority": 100,
+    "exports": {
+        "version": "1",
+        "api": [
+            {"id": "status", "module": "security", "function": "status"},
+            {"id": "check", "module": "security", "function": "check"},
+            {"id": "waf_update", "module": "security", "function": "waf_update"},
+            {"id": "realtime_update", "module": "security", "function": "realtime_update"},
+        ],
+    },
     "entry": [
-        {"id": "migrated", "title": "迁移指引"},
+        {"id": "overview", "title": "安全总览"},
     ],
     "plugins": [
-        {"id": "migrated", "title": "青·擎",
-         "description": "功能已迁移至核心，本页为迁移指引"},
+        {"id": "overview", "title": "安全总览",
+         "description": "统一查看并进入防火墙、WAF、漏洞检测、主机安全和实时防护"},
     ],
 }

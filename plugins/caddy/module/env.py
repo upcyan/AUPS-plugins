@@ -143,6 +143,18 @@ def post_install():
     return install()
 
 
+def deploy_switch(old_method, new_method):
+    """切换实机/容器时复用同一 Caddyfile 与 data 目录。"""
+    if new_method not in ("host", "container"):
+        raise AppError("部署方式需为 host / container")
+    if old_method == new_method:
+        return {"changed": False, "deploy": new_method}
+    # install() 根据 config 中的新方式部署，并清理旧实例；配置目录不搬迁。
+    result = install()
+    return {"changed": True, "deploy": new_method, "config_preserved": True,
+            "data_preserved": True, **(result or {})}
+
+
 def install():
     """部署 caddy：容器方式（deploy=container）或实机方式（host）。"""
     if deploy_method() == "container":

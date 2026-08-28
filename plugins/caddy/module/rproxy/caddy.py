@@ -34,6 +34,27 @@ def _download_routes():
 
 NAME = "caddy"
 
+
+def list_sites():
+    """统一站点管理适配：Caddyfile 解析由 caddyfile 模块负责。"""
+    from .. import caddyfile
+    return caddyfile.list_sites()
+
+
+def create_site(host, mode="reverse_proxy", target="", extra=""):
+    from .. import caddyfile
+    return caddyfile.create_site(host, mode, target, extra)
+
+
+def update_site(host, mode=None, target=None, extra=None):
+    from .. import caddyfile
+    return caddyfile.update_site(host, mode, target, extra)
+
+
+def delete_site(host):
+    from .. import caddyfile
+    return caddyfile.delete_site(host)
+
 _WAF_BEGIN = "# >>> AUPS WAF (managed, do not remove) <<<"
 _OLD_WAF_BEGIN = "# >>> AUP WAF (managed, do not remove) <<<"
 _WAF_END = "# <<< AUPS WAF >>>"

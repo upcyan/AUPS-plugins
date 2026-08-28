@@ -51,8 +51,9 @@ async def hlink_status(auth=Depends(require_auth)):
         ST.STORE.ensure_loaded()
         conns = [ST.STORE.conn_view(c) for c in
                  sorted(ST.STORE.connections.values(), key=lambda c: c["registered_at"])]
+        counts = ST.STORE.counts()
     return {"plugin": ST.PLUGIN, "online_window": ST.ONLINE_WINDOW,
-            "connections": conns, **ST.STORE.counts()}
+            "connections": conns, **counts}
 
 
 @router.get("/hlink/pairing")

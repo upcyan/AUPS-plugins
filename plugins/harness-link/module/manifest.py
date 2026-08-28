@@ -8,7 +8,7 @@
 MANIFEST = {
     "name": "harness-link",
     "title": "Harness 通信桥",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "与 DeepSeek Harness 客户端建立授权连接：配对令牌接入、双向消息通道、连接管理",
     "type": "external",
     "attr": "功能",

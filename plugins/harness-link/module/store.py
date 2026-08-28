@@ -20,6 +20,7 @@
 
 import asyncio
 import json
+import logging
 import os
 import secrets
 import time
@@ -37,6 +38,7 @@ MAX_OUTBOX = 200                       # 单连接待投递队列深度上限
 MAX_RECENT = 500                       # 内存保留的最近消息条数
 MAX_TRANSCRIPT_BYTES = 2 * 1024 * 1024 # 历史文件轮转阈值
 MAX_META_BYTES = 4 * 1024              # 客户端元数据上限
+LOG = logging.getLogger(__name__)
 
 
 def now():
@@ -106,15 +108,16 @@ class Store:
                 self.connections[cid] = {
                     "id": cid,
                     "name": _clean_name(c.get("name")),
-                    "meta": c.get("meta") or {},
-                    "session_key": c.get("session_key", ""),
+                    "meta": _clean_meta(c.get("meta")),
+                    "session_key": c.get("session_key") if isinstance(c.get("session_key"), str) else "",
                     "registered_at": int(c.get("registered_at", 0)),
                     "last_seen": int(c.get("last_seen", 0)),
                     "outbox": box,
                     "sent": int(c.get("sent", 0)),
                     "recv": int(c.get("recv", 0)),
                 }
-        except (OSError, ValueError, TypeError, AttributeError):
+        except (OSError, ValueError, TypeError, AttributeError) as exc:
+            LOG.warning("harness-link state load failed; starting with empty state: %s", exc)
             pass
         try:
             lines = []
@@ -152,6 +155,10 @@ class Store:
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
         os.replace(tmp, path)
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
 
     def _append_transcript(self, msg):
         try:
@@ -197,6 +204,10 @@ class Store:
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(d, f)
         os.replace(tmp, path)
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
         return d
 
     async def rotate_pairing(self):
@@ -207,6 +218,10 @@ class Store:
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(d, f)
             os.replace(tmp, self.pairing_path())
+            try:
+                os.chmod(self.pairing_path(), 0o600)
+            except OSError:
+                pass
         return d
 
     def check_pairing(self, token):

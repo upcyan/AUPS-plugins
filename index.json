@@ -6,7 +6,10 @@
     {
       "name": "appupdate",
       "title": "应用更新管理",
-      "attr": "功能",
+      "attr": [
+        "安全",
+        "网络"
+      ],
       "version": "2.5.6",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
@@ -35,20 +38,20 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.5.1",
-      "description": "Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、access 日志、Caddy 端口与防火墙",
+      "version": "1.5.2",
+      "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、access 日志、防火墙",
       "files": {
         "README.md": "e74375901f60fc65fb46e9b4e6580ad9678eb785ba0f893037d6a204e7c41c9c",
         "frontend.js": "42aac3316e48613b1fd697b16a2ed56db8c39a5b2d1619a8d2659da827a82775",
-        "manifest.json": "58bd825a7b1a685ad962817bdb4a2190a3cad906ec9e00c3285aae25193ed59e",
+        "manifest.json": "668fd1d4233767789959f7e181402bb847400ab9a098c9a09cc8edaa675e464a",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
         "module/api.py": "292414d31f7afc0572f8672ae3e6675b00e339a8ae67a635050e6dbc549fd4a4",
         "module/caddyfile.py": "63e9b0147bc164fdb8af24fa87444b948301fca0cd56c54b1378fbe0442ebefc",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
-        "module/env.py": "8c009ac69196a7c5cec5c221ec4947e8bd681658c079c49fdd26957fe25afa6d",
-        "module/manifest.py": "51975f8edfb9b24873c6dda9e038edbcf9645d5c71221114075a129104a066f7",
+        "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
+        "module/manifest.py": "1a5a48c6636094cf930be77e5f1c44f38feaccea8fb3d4c2e700263c08a579eb",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
-        "module/rproxy/caddy.py": "ac3c39f3a84944e0a022b9a33e835edf90a336bcc2c410e26141152d05a1b187"
+        "module/rproxy/caddy.py": "44cd26304c78d0ef459ac7afe848941e94e8980503972529b0980efced7c8535"
       },
       "cards": false,
       "provides": [
@@ -137,18 +140,47 @@
     {
       "name": "cyansecengine",
       "title": "青·擎",
-      "attr": "功能",
-      "version": "3.0.0",
-      "description": "青·擎（原安全加固）。主机安全（rkhunter/LMD）、实时防护与 YARA 引擎已并入面板核心与 yara 依赖插件，本插件为保留占位壳",
+      "attr": [
+        "安全",
+        "网络"
+      ],
+      "version": "3.1.0",
+      "description": "青·擎统一安全编排：防火墙、WAF、漏洞检测、主机安全和实时防护的统一状态与操作入口",
+      "depends": [
+        {
+          "name": "secgroup"
+        },
+        {
+          "name": "vuln",
+          "optional": true
+        },
+        {
+          "name": "rkhunter",
+          "optional": true
+        },
+        {
+          "name": "lmd",
+          "optional": true
+        },
+        {
+          "name": "yara",
+          "optional": true
+        }
+      ],
       "files": {
-        "README.md": "112047b9715062fd5f25341a2ed0060ed8688a63692f38d9d4df39ef5e5208bd",
-        "frontend.js": "351bcc3cd4b10d0012d2b73660c2e8d86437e742cea392a65df3b58923bb208b",
-        "manifest.json": "d64e89502f4f42449b80402d45a4cee5101e17a52bfb9d4913ae6c17ff01e9b0",
-        "module/__init__.py": "77b33ed03591734d016788a7d8dbf50410606057ace5c44cb9e2da576a892d04",
-        "module/manifest.py": "e43d5895b0ce04144acf4dbd24a3396b71d06af78deda4a58741f91db1b5aa4d"
+        "README.md": "d5edc0e5ed4d1d133c250575e0914f6dee3b2765c94133aa186bd7b2d733041a",
+        "frontend.js": "0aaa6512b30cca281ce79c8ff8775c05989d5c3a87707ddb8c480438d712fd0d",
+        "manifest.json": "f8e8b3565d86c1dae653145f44217a5b9b8cd256184fc4aebbe8d3e0a1c0117",
+        "module/__init__.py": "45ab05d575be3294243363c31c0b14d080a96ce0aaf045685c51b6fe675b1b3f",
+        "module/api.py": "613923efdb4e3e13533ee7ed8ce4faff921e94983dcbfec4cd14df0a66751760",
+        "module/firewall.py": "a906e3a36cbead886cd9564e25f2cc410a94b3c62958467996f6c61304fbd7e8",
+        "module/manifest.py": "aa4ddf604d3a351ce4f98f2bb720bd613efbe4f0b0904a28f92c55044150b5a1",
+        "module/security.py": "b16148dc4b4706fdfc94901ae54139c837c63d68477a9dce0d84f326c3f214c6"
       },
       "cards": false,
-      "provides": []
+      "provides": [
+        "firewall"
+      ]
     },
     {
       "name": "yara",
@@ -276,7 +308,7 @@
       "name": "harness-link",
       "title": "Harness 通信桥",
       "attr": "功能",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "description": "与 DeepSeek Harness 客户端建立授权连接：配对令牌接入、双向消息通道、连接管理",
       "files": {
         "README.md": "6b44cf015b68ea272a0af1cd0561312130ea2270bc8e2baade09414634bb4bfc",

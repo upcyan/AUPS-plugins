@@ -77,10 +77,17 @@ def cmd_register(a):
              {"name": a.name, "meta": meta}, key=a.token)
     state = {"server": _base(a.server), "conn_id": d["conn_id"],
              "session_key": d["session_key"]}
+    parent = os.path.dirname(os.path.abspath(a.state))
+    if parent:
+        os.makedirs(parent, mode=0o700, exist_ok=True)
     tmp = a.state + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
     os.replace(tmp, a.state)
+    try:
+        os.chmod(a.state, 0o600)
+    except OSError:
+        pass
     print("[hlink] 已连接：%s（凭证已存 %s）" % (d["conn_id"], a.state))
 
 

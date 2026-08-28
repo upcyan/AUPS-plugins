@@ -13,13 +13,14 @@ v1.2.0：移除反代配置页；实例控制新增实时状态与日志显示�
 v1.4.0：补全容器部署生命周期、host 网络反代兼容、持久化挂载与容器日志。
 v1.5.0：新增 SSL 接入方案（SSL 标签页）：方案 A Flexible（Cloudflare 代理仅 HTTP 回源）
 / 方案 B DNS-01（Cloudflare API 自动签发 Let's Encrypt 证书，支持 Full Strict）。
+v1.5.2：新增统一站点管理能力与实机/容器部署方式无损切换。
 """
 
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.5.1",
-    "description": "Caddy 反代：实机/容器部署、Caddyfile 管理、实例控制、access 日志、防火墙",
+    "version": "1.5.2",
+    "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、access 日志、防火墙",
     "type": "external",
     "attr": "依赖",
     # 反代能力声明：本插件是 proxy 能力提供者
@@ -28,7 +29,7 @@ MANIFEST = {
     "rproxy_module": "aups.modules.caddy.rproxy.caddy",
     # 反代能力集（rproxy 能力协商用）：声明本反代支持哪些能力
     "capabilities": ["status", "show", "preview", "apply", "reload",
-                     "waf", "download_route", "access_log"],
+                     "waf", "download_route", "access_log", "sites"],
     # 部署方式：实机 + 容器（docker/podman）
     "deploy": {"host": True, "container": {"kinds": ["docker", "podman"]}},
     "config_dir": "caddy",
