@@ -3,7 +3,7 @@
 MANIFEST = {
     "name": "certbot",
     "title": "Certbot",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录。提供 ssl 能力，供核心 Web 正式证书签发",
     "type": "external",
     "attr": "依赖",

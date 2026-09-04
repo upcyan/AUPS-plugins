@@ -3,7 +3,7 @@
 MANIFEST = {
     "name": "acme",
     "title": "acme.sh",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录。提供 ssl 能力，供核心 Web 正式证书签发",
     "type": "external",
     "attr": "依赖",

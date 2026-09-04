@@ -126,6 +126,22 @@ def renew():
     return {"ok": True, "message": "续期完成", "data_dir": data}
 
 
+def list_certs():
+    data = config.plugin_dir("acme", "data")
+    out = []
+    for domain in sorted(os.listdir(data)) if os.path.isdir(data) else []:
+        cert, key = os.path.join(data, domain, "fullchain.cer"), os.path.join(data, domain, f"{domain}.key")
+        if os.path.isfile(cert) and os.path.isfile(key): out.append({"domain": domain, "cert": cert, "key": key, "provider": "acme"})
+    return out
+
+
+def delete_cert(domain):
+    domain = (domain or "").strip().lower()
+    if not domain or "/" in domain or ".." in domain: raise AppError("域名无效")
+    run([_acme_bin(), "--remove", "-d", domain, "--home", config.plugin_dir("acme", "data")], check=True)
+    return {"ok": True, "domain": domain, "deleted": True}
+
+
 def remove():
     """卸载：删除续期 cron（保留 config/data 证书/配置，由市场 keep_data 决定）。"""
     for cron in ("/etc/cron.d/aups-acme-renew",):

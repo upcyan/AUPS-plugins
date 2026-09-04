@@ -99,16 +99,16 @@
       "name": "certbot",
       "title": "Certbot",
       "attr": "依赖",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "description": "Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录",
       "files": {
         "README.md": "24ebee3899d0f44153443f9ec58ba0982e15dd541a59fd38cf6277c44ba196f7",
         "frontend.js": "f3a7037ced423e9c75822764a57a4f90b38e6741d09f7ce8a1be89647665ff11",
-        "manifest.json": "2b77c490a645e1845d246233a0070021dea2b831363cb338849a406213aa6c69",
+        "manifest.json": "1607ddf8285a157c255658e24e827f91a4449c1f3961da16d613e4c3117ee02e",
         "module/__init__.py": "80c35c8af1068f969d1b091017f9445b8ba586ae8c1393f5bdf26f709e71a7a3",
-        "module/api.py": "9b21727c60f761d144de89b0244bd5aaeea36c68f8645bdcc13999a94f7eee86",
+        "module/api.py": "3c13fb2017060531316e585271a78a84a5f76f3ab4904783924dd4bf5e23344e",
         "module/cli.py": "3e307a0d1cd3ede85aac8bedc8c9d0b4181399ef71146618be6597680b8d02e3",
-        "module/manifest.py": "1492914b04e4dd0988bfb8a286f0487c28876a9e1f8422406872ecd39b2bf54a",
+        "module/manifest.py": "cf53a14970c06a6e4c2c74d882e19d578701d1139dcd786eef503da52dd7a634",
         "module/webapi.py": "60fc107157d91b5c9e76d920ea5655d3ef9e0a9d32f15f1cbf977c3f08bd754a"
       },
       "cards": false,
@@ -120,16 +120,16 @@
       "name": "acme",
       "title": "acme.sh",
       "attr": "依赖",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "description": "acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录",
       "files": {
         "README.md": "9f3085a722daa6ad75594aae190c74e4bc7a1f38f7d880c5f53976ed300da099",
         "frontend.js": "1211c35d79ad22e857ce4cf13cdd36ab1eca3994eb2ea1c3597b951885d889f6",
-        "manifest.json": "5bda46a88d87ca730b8fddd1c1c008f689c3ff6a28d2d718d967e9b7fb2676e8",
+        "manifest.json": "80ef7ed06f8c7aeb2b19f8d34a1f0cec512df3c203e8974278e1bba94c82c99c",
         "module/__init__.py": "57eb64d0b44feb6604e575eb19fec5df7bb0f0e565d0105ca50033158034af50",
-        "module/api.py": "53911da2dd267992a94bb25f3a45fd092bfa839cfcfad3ce3520c5dc16c6a28c",
+        "module/api.py": "f96012ed60e4de28cb22b5c1f574d07d5a940068410d1c9bb0d132cded0998e2",
         "module/cli.py": "21b9c1581e97d9cc66f1db7f5b24ea4d99c337dcc40a3e4fddbb3687bc44cbf7",
-        "module/manifest.py": "50775328da541cf61864a4ad07ae2d8eefd3f925384f607941c3ea49289d916a",
+        "module/manifest.py": "ba4d5a3be99b5be589e08ba9f704650a9e5e8f90539ec8c3a56b8546efc4d131",
         "module/webapi.py": "b1d34df98f6f2f790c627ea7c79c1555eac17a9a26b451dd6d6a6aeda2f28a1c"
       },
       "cards": false,
@@ -322,6 +322,32 @@
       },
       "cards": true,
       "provides": []
+    },
+    {
+      "name": "domainproxy", "title": "域名代理", "attr": ["功能", "网络"], "version": "1.1.0",
+      "description": "由反代插件安全暴露的 GitHub 与 Docker Registry 白名单代理",
+      "files": {
+        "frontend.js": "8a01364f3a82171fd07e075df30a0e2fb185761f5d7a552fca0b654ef6a87a56",
+        "manifest.json": "94f30aab9c7455b1419d529f639b2c17bc91b2569d8bc009269564a6b1a72682",
+        "module/__init__.py": "c2cbfcad27f52f96ff930faa8873cb9c1b834dd3713dcab2b2566a8894c8252f",
+        "module/manifest.py": "189b7ac5e955707cf16e56afae1053d1df6248a253e966b27bb0b2ea7894a8c4",
+        "module/proxy.py": "43051fc552b8f5c43e7438cea46515a60809195082cb7ae43ec6ecbc2a9b310e",
+        "module/server.py": "ad30619e30c2df56ced367c2fdf94d943f66a83d7f681df10e9ca9e602f36dad",
+        "module/service.py": "e2d4c31ca655f0a89d68cb847f84827ef6379023f67b06023ce24e1143a351eb",
+        "module/webapi.py": "d643e3ae874022a561936b9c18399e8590a7aa78a8400b8f8de4e4cb1fa52973"
+      }, "cards": false, "provides": []
+    },
+    {
+      "name": "certmanager", "title": "SSL 证书管理", "attr": ["功能", "依赖"], "version": "1.0.0",
+      "description": "统一管理 SSL provider 申请的证书、续期、删除和更新",
+      "files": {
+        "frontend.js": "5cbcf17fa873696b188d70e3f68d4c0f905f276945c746ceab386e7a93a20669",
+        "manifest.json": "7955fed180d9b0efb2557f52383e9311b54b1c092fad0ecb9d4f22bf455f15c3",
+        "module/__init__.py": "e1be488e4116b629190eb17136d2e8cb041b841174501cf507902ae9c04e1468",
+        "module/api.py": "b46674eedf63fe583b18c197dc3993e047b502026c8e7d70a6040ab3c8a28d7d",
+        "module/manifest.py": "d1f4ffdeabd0f78629587e76c0f86f194f11d1fa1807eb9dc1d057b7773e52b3",
+        "module/webapi.py": "06806988c12a12fc3390066c39af5c69a0435ec62bd6d2b0b123795e69061f1d"
+      }, "cards": false, "provides": ["ssl"]
     }
   ]
 }
