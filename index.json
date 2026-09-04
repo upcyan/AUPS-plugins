@@ -43,15 +43,15 @@
       "files": {
         "README.md": "e74375901f60fc65fb46e9b4e6580ad9678eb785ba0f893037d6a204e7c41c9c",
         "frontend.js": "42aac3316e48613b1fd697b16a2ed56db8c39a5b2d1619a8d2659da827a82775",
-        "manifest.json": "18e20a3b29b1a1109bf87a66952ab8b1d434545bb42339d1b39152ed1ecc1154",
-        "module/__init__.py": "7da098dedbe8612e211b60c2198fc89b58ca28317877ab9854710c8dd70118ce",
-        "module/api.py": "9b3aeeb5c7e97e80ba2bcff4926d22075926699a7c2e930b9e1902e59ad78f31",
-        "module/caddyfile.py": "94173041d98efa142b1e9ccef63a5a95c7a23ce7375a8cc5761ce2090c086d85",
-        "module/cli.py": "853f4e59a9f1386ca2c3bc8966b7b3ce6abd7e17c3daa4cf2178eb33dd645bf6",
-        "module/env.py": "072c290deb7640626063daa23bff81cf77f922a78d233f05b6b128f88e11b945",
-        "module/manifest.py": "d2ce3a56211729084945bf15deff68e3013a4919d9e56498520312130cc082c1",
+        "manifest.json": "a5dc406835d0bb7d485c86593f57a80fa13812f0dd02ab6e16b312154f72943f",
+        "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
+        "module/api.py": "292414d31f7afc0572f8672ae3e6675b00e339a8ae67a635050e6dbc549fd4a4",
+        "module/caddyfile.py": "123d69c15dfc6714f1c37df839886e9b4c89c28a0ab9697cabefe996a300692a",
+        "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
+        "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
+        "module/manifest.py": "1e8286f9fbaf4b5a04ea1f968aa0921f51de9594cf0c2ba5154dc45bdd8f6e18",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
-        "module/rproxy/caddy.py": "9276344e8f783134b0f264a7ae8c6e538d7a956a9309bdce1377ddd72d8062d9"
+        "module/rproxy/caddy.py": "011a4df91494ef72b9d8b2a58229a704ed68e1001508240a4bbaa5b881b1c27c"
       },
       "cards": false,
       "provides": [
@@ -71,7 +71,7 @@
       "name": "nginx",
       "title": "Nginx 依赖",
       "attr": "依赖",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "description": "Nginx 反代：站点、证书、WebSocket、上游池、配置校验回滚与日志",
       "install_params": [
         {
@@ -85,30 +85,33 @@
       "files": {
         "README.md": "2fb9ae81f2777414715c19fe852ce24d5c9e9c5221333f85fca3b74b39082f4f",
         "frontend.js": "54bbdbc14770f21ac51c546c2d993cb9d15293645faa0b357a58277d3cdc50d4",
-        "manifest.json": "884b5332d4c850d9836f645bdbafa8c572510f28094ea20db3ef2b6feb5b7980",
+        "manifest.json": "afa5be7272c5bc1fc23b56631ee8638d1ebf89e09cf7a151561ea703410347b0",
         "module/__init__.py": "4dad3b5e3fd946cbd24fb74eff88dab5c3574b2707419a88676cccdedf4f7c55",
-        "module/api.py": "8448b3460d25fc05791933332762f1a2b299beb7f483e0cd702e9aef1e0b65d7",
+        "module/api.py": "82a308c3ee534c3d3750e68c32c86a611ae7283cb8a5b6f9587403459eeed435",
         "module/cli.py": "a1889b0da989611aee38d7426b1544fd435f3ef246f3fdc5d15403d473ae94e3",
-        "module/manifest.py": "58323abef1b40da87bd54ec5ff859f2bfaf7ab85f25e7a1eb78b382e05b6fb89",
-        "module/webapi.py": "ea63c8f326d2517a9f07ba74c9759a4a19d968f368a6b32a874cdb05d4480901"
+        "module/manifest.py": "ceea6be4409e9239cf4f7c71cfda1d852d39ef59c803c74e2d8f97503cf53a1a",
+        "module/webapi.py": "528745c08312026cced55ca0f02a5b60b0d10e6fa67e678dd9b0e2307ac4c4c8"
       },
       "cards": false,
-      "provides": []
+      "provides": [
+        "proxy",
+        "waf"
+      ]
     },
     {
       "name": "certbot",
       "title": "Certbot",
       "attr": "依赖",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "description": "Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录",
       "files": {
         "README.md": "24ebee3899d0f44153443f9ec58ba0982e15dd541a59fd38cf6277c44ba196f7",
         "frontend.js": "f3a7037ced423e9c75822764a57a4f90b38e6741d09f7ce8a1be89647665ff11",
-        "manifest.json": "1607ddf8285a157c255658e24e827f91a4449c1f3961da16d613e4c3117ee02e",
+        "manifest.json": "7cb709f59b18c8ac8ec4c48eb3b6e2d151066c3ad4f39fc6aaaae4e34ceb543e",
         "module/__init__.py": "80c35c8af1068f969d1b091017f9445b8ba586ae8c1393f5bdf26f709e71a7a3",
-        "module/api.py": "3c13fb2017060531316e585271a78a84a5f76f3ab4904783924dd4bf5e23344e",
+        "module/api.py": "f33a99021c410077724fb19fc1af3fa8fd48cfa9bad4af997c462143a05ec133",
         "module/cli.py": "3e307a0d1cd3ede85aac8bedc8c9d0b4181399ef71146618be6597680b8d02e3",
-        "module/manifest.py": "cf53a14970c06a6e4c2c74d882e19d578701d1139dcd786eef503da52dd7a634",
+        "module/manifest.py": "86a4d37940c73ee99e196f59417c86459d9dda34159b83cf31d7a35a3db15ab2",
         "module/webapi.py": "60fc107157d91b5c9e76d920ea5655d3ef9e0a9d32f15f1cbf977c3f08bd754a"
       },
       "cards": false,
@@ -120,16 +123,16 @@
       "name": "acme",
       "title": "acme.sh",
       "attr": "依赖",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "description": "acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录",
       "files": {
         "README.md": "9f3085a722daa6ad75594aae190c74e4bc7a1f38f7d880c5f53976ed300da099",
         "frontend.js": "1211c35d79ad22e857ce4cf13cdd36ab1eca3994eb2ea1c3597b951885d889f6",
-        "manifest.json": "80ef7ed06f8c7aeb2b19f8d34a1f0cec512df3c203e8974278e1bba94c82c99c",
+        "manifest.json": "dd96e28dd5f9c80da336fc76adf5834fb3e5f9f65d4bb92fc78389599388f609",
         "module/__init__.py": "57eb64d0b44feb6604e575eb19fec5df7bb0f0e565d0105ca50033158034af50",
-        "module/api.py": "f96012ed60e4de28cb22b5c1f574d07d5a940068410d1c9bb0d132cded0998e2",
+        "module/api.py": "67e6e05191d5a6f0ccbef639e376d5197ac5a57403472079168612d86d1d978d",
         "module/cli.py": "21b9c1581e97d9cc66f1db7f5b24ea4d99c337dcc40a3e4fddbb3687bc44cbf7",
-        "module/manifest.py": "ba4d5a3be99b5be589e08ba9f704650a9e5e8f90539ec8c3a56b8546efc4d131",
+        "module/manifest.py": "a152f0833e9086e36397921d28fd946bf7805135445d463ab258f8e35100731c",
         "module/webapi.py": "b1d34df98f6f2f790c627ea7c79c1555eac17a9a26b451dd6d6a6aeda2f28a1c"
       },
       "cards": false,
@@ -291,13 +294,13 @@
       "files": {
         "README.md": "6cc43e082786f44b184e2dc40c2d043308d9711618c8b8abb5a89c8c3a3f4d94",
         "frontend.js": "bd2243ff504925f9a15c8c949e811a8e945e26fc4baa470d36517f2e184a7470",
-        "manifest.json": "bac1820197bb84584b4fef7ac5e67f3556312760992a287af189fd9383e9b988",
+        "manifest.json": "c28c5f9e0801449b2ca2b3d69f50b66857239543d4da90c1635f057dc956f585",
         "module/__init__.py": "99c7a869cb61b6328e97f36d304315f2e33aff06b1fc5103a72126eba29c5158",
         "module/api.py": "453dbab4288243c00916155027e075b080313bd9fa0fbda5d3f9446926a8b738",
         "module/blacklist.py": "c47ba732ff12467c23b6c959417ef8cced469c2ed9809db7dc84412a8ef2dc91",
         "module/cli.py": "01cde60053e342f57a84e9001a1e600c95ee76c155418edb51888178d4ed4029",
         "module/firewall.py": "f93000c1c12ea7c8618214d8e4ecb8fbd4ef70b44d4499ea58c9424fc27d18ae",
-        "module/manifest.py": "463539b66509032d28ff40caafb729171c9489099970b909bfaa482f7f04461c"
+        "module/manifest.py": "804a34678c9b65c3caebdc1003743af947fa18815fc53657e85dc798f86f73b3"
       },
       "cards": false,
       "provides": [
@@ -321,60 +324,111 @@
         "module/store.py": "febecf2f443058204c3efdb06b8e8a473c1f38d60275a0653090cc45c6412763"
       },
       "cards": true,
-      "provides": ["proxy"]
+      "provides": []
     },
     {
-      "name": "traefik", "title": "Traefik", "attr": ["依赖", "网络"], "version": "1.0.0",
+      "name": "traefik",
+      "title": "Traefik",
+      "attr": [
+        "依赖",
+        "网络"
+      ],
+      "version": "1.1.0",
       "description": "容器原生反代：服务发现、动态路由、TLS、负载均衡和健康检查",
       "files": {
         "README.md": "5278aa83c79cb24bdb55add6121a9b75c5199e5675de0fd8a550bbaaae8957f5",
         "frontend.js": "65c8aed4fcfc5b31b637e5902734ed8fe139bfc18ab546ed49a4bb1c8d9e82ab",
-        "manifest.json": "8bb9aac9fa42f9737df1931b02264ac4b937b69e90fcfd2527db94ccd644e3f3",
+        "manifest.json": "e95aa8120b59223f972d86d68b6584dee963d77e542b235428eff8063526f750",
         "module/__init__.py": "52264794f4d38928325b2242b3b69db7eee5875b84c26fce407fa72aa17478c6",
-        "module/api.py": "a35b06cfad8246536046669a1a728fa807cb5de71c5ce3bec9e7541cae1490e0",
-        "module/manifest.py": "6af73e5a75fec7925a43990aa2d9f00f4325db051b9959519f34801a1e71694d",
+        "module/api.py": "740ea3f283fc51e446c7ac51b1573cb7bcab3b939845c272616de2e260718206",
+        "module/manifest.py": "5638663c16ea6f262b6a9473a56eb41764da521a8728f58b7df8faa435797d4b",
         "module/webapi.py": "43331f9b35d40dc47b2c3fadaf19f83ecf5a9c6972f706b040dc0574c418a7b0"
-      }, "cards": false, "provides": ["proxy"], "deploy": {"container":{"kinds":["docker","podman"]}}
+      },
+      "cards": false,
+      "provides": [
+        "proxy",
+        "waf"
+      ],
+      "deploy": {
+        "container": {
+          "kinds": [
+            "docker",
+            "podman"
+          ]
+        }
+      }
     },
     {
-      "name": "haproxy", "title": "HAProxy", "attr": ["依赖", "网络"], "version": "1.0.0",
+      "name": "haproxy",
+      "title": "HAProxy",
+      "attr": [
+        "依赖",
+        "网络"
+      ],
+      "version": "1.1.0",
       "description": "HTTP/TCP 反代与负载均衡：健康检查、TLS、日志和配置回滚",
       "files": {
         "README.md": "d4f6ae35f161c60e2a9b4fe5b1584c3032d403eea7081778e9be7c74a61912ab",
         "frontend.js": "67ec7f0ba7149c24d0d752d627a00ed7bb6d31182ca0880ab95ec9f0e982dab9",
-        "manifest.json": "ee296c9a7db854556c0d4aca138e86ffb938383e166f5cdeb1efed9892175298",
+        "manifest.json": "22d5531e72f9f076390281fb9630f367ced9b914be8eb4487a0b1e3e4d0b58f3",
         "module/__init__.py": "c88d72f9db808e6c2736514ded980e29b18b1abe2d654a0eac08d3946d84d82b",
-        "module/api.py": "d3a0e50a82d5b6e1b6e8029faee71b10ad5067e32a207bedc8eea0a6589afd36",
+        "module/api.py": "b65fb38496b1b77b70fcaed4cc0f25ca0fa0da9e809dc52458e16d735ed7c117",
         "module/cli.py": "83bc9f0df3e722eea5ce29c2c4de70d18b60c6fff1c6102027809dccf52742a0",
-        "module/manifest.py": "bec0fcdd8a072ec3caca4ff7e7fab6c8e8f906988629365358abf169fedb3b97",
+        "module/manifest.py": "d025e52ebad8895becef8162c467c480182d818d6a5de9b2872c7b7977da3c3f",
         "module/webapi.py": "6f20528ce56a0621ba622675b55912bdd39624986d1d0bd530ee355443a5019a"
-      }, "cards": false, "provides": ["proxy"], "deploy": {"host": true}
+      },
+      "cards": false,
+      "provides": [
+        "proxy",
+        "waf"
+      ],
+      "deploy": {
+        "host": true
+      }
     },
     {
-      "name": "domainproxy", "title": "域名代理", "attr": ["功能", "网络"], "version": "1.1.0",
+      "name": "domainproxy",
+      "title": "域名代理",
+      "attr": [
+        "功能",
+        "网络"
+      ],
+      "version": "1.2.0",
       "description": "由反代插件安全暴露的 GitHub 与 Docker Registry 白名单代理",
       "files": {
-        "frontend.js": "8a01364f3a82171fd07e075df30a0e2fb185761f5d7a552fca0b654ef6a87a56",
-        "manifest.json": "94f30aab9c7455b1419d529f639b2c17bc91b2569d8bc009269564a6b1a72682",
+        "frontend.js": "c3de02c0408119a851981af623f38f56cbfa89fc6affe077cbcadcc5c9077567",
+        "manifest.json": "706cd14520ae054b8b715454e4c34237ac899f9937cb86d4e2d8967a0f70f7a5",
         "module/__init__.py": "c2cbfcad27f52f96ff930faa8873cb9c1b834dd3713dcab2b2566a8894c8252f",
-        "module/manifest.py": "189b7ac5e955707cf16e56afae1053d1df6248a253e966b27bb0b2ea7894a8c4",
+        "module/manifest.py": "0bca12ef276b4a9592c09a97411b4229b685ce713355bcb9a3fc97176a6a9996",
         "module/proxy.py": "43051fc552b8f5c43e7438cea46515a60809195082cb7ae43ec6ecbc2a9b310e",
         "module/server.py": "ad30619e30c2df56ced367c2fdf94d943f66a83d7f681df10e9ca9e602f36dad",
-        "module/service.py": "e2d4c31ca655f0a89d68cb847f84827ef6379023f67b06023ce24e1143a351eb",
+        "module/service.py": "7a10197b0cabfe3ce187ae7055f2850cde60bb770bbe589fad47dbd47b5b8395",
         "module/webapi.py": "d643e3ae874022a561936b9c18399e8590a7aa78a8400b8f8de4e4cb1fa52973"
-      }, "cards": false, "provides": []
+      },
+      "cards": false,
+      "provides": []
     },
     {
-      "name": "certmanager", "title": "SSL 证书管理", "attr": ["功能", "依赖"], "version": "1.0.0",
+      "name": "certmanager",
+      "title": "SSL 证书管理",
+      "attr": [
+        "功能",
+        "依赖"
+      ],
+      "version": "1.1.0",
       "description": "统一管理 SSL provider 申请的证书、续期、删除和更新",
       "files": {
-        "frontend.js": "5cbcf17fa873696b188d70e3f68d4c0f905f276945c746ceab386e7a93a20669",
-        "manifest.json": "7955fed180d9b0efb2557f52383e9311b54b1c092fad0ecb9d4f22bf455f15c3",
+        "frontend.js": "533a9d4d852c33383de50d576997cf55ebe3d162002047e29bf99329db71a46e",
+        "manifest.json": "d6bb7b9a71c4bae71bbb9f3b0e668ae8452a31cbf6955526eaf3ee4e4a701329",
         "module/__init__.py": "e1be488e4116b629190eb17136d2e8cb041b841174501cf507902ae9c04e1468",
-        "module/api.py": "b46674eedf63fe583b18c197dc3993e047b502026c8e7d70a6040ab3c8a28d7d",
-        "module/manifest.py": "d1f4ffdeabd0f78629587e76c0f86f194f11d1fa1807eb9dc1d057b7773e52b3",
-        "module/webapi.py": "06806988c12a12fc3390066c39af5c69a0435ec62bd6d2b0b123795e69061f1d"
-      }, "cards": false, "provides": ["ssl"]
+        "module/api.py": "47a59cd016057482b78ed5c12a8bec3a7c17a9d451e9d2a8c9284ecb76631b8e",
+        "module/manifest.py": "a6e671cc63647ed5a48578f15c2704b89942a41d5a5fa3f9bfb43da3934e5912",
+        "module/webapi.py": "0615bf54c606edc600d549671b209c37a3dd73baf485d5c7aa83e3b645c6a18b"
+      },
+      "cards": false,
+      "provides": [
+        "ssl"
+      ]
     }
   ]
 }
