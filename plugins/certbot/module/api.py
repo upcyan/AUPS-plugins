@@ -108,6 +108,15 @@ def renew():
     return {"ok": True, "message": "续期完成", "data_dir": data}
 
 
+def renew_cert(domain):
+    domain=(domain or "").strip().lower()
+    if not domain or "/" in domain or ".." in domain: raise AppError("域名无效")
+    data=config.plugin_dir("certbot","data")
+    run(["certbot","renew","--cert-name",domain,"--force-renewal","--config-dir",data,"--work-dir",data,"--logs-dir",data],check=True)
+    cert,key=find_cert(domain)
+    return {"ok":True,"domain":domain,"cert":cert,"key":key,"renewed":True}
+
+
 def list_certs():
     data = config.plugin_dir("certbot", "data")
     live = os.path.join(data, "live")

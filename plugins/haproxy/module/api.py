@@ -3,6 +3,7 @@ from pathlib import Path
 from ... import config, pkg
 from ...errors import AppError
 from ...util import has_cmd, run
+from ...core import waf
 
 UNIT="/etc/systemd/system/aups-haproxy.service"
 def _bin(): return os.path.join(config.plugin_dir("haproxy","runtime"),"haproxy")
@@ -32,9 +33,20 @@ def _render(sites):
  lines=["global","    daemon","defaults","    mode http","    option httplog","    timeout connect 5s","    timeout client 60s","    timeout server 60s"]
  http=[x for x in sites if x.get("mode")!="tcp"]
  if http:
+  wc=waf.render_config()
   tls=[_pem(x) for x in http if ((x.get("options") or {}).get("tls") or {}).get("cert")]
   lines += ["frontend aups_http","    bind *:80"]
   if tls: lines.append("    bind *:443 ssl crt "+" crt ".join(tls))
+  if wc.get("enabled"):
+   for i,ip in enumerate(wc.get("blacklist_ips") or []): lines += [f"    acl waf_deny_ip_{i} src {ip}",f"    http-request deny if waf_deny_ip_{i}"]
+   if wc.get("whitelist_ips"):
+    lines.append("    acl waf_allow_ip src "+" ".join(wc["whitelist_ips"])); lines.append("    http-request deny unless waf_allow_ip")
+   for i,r in enumerate(wc.get("rules") or []):
+    kind,pat,field=r.get("kind"),str(r.get("pattern","")).replace(" ","\\ "),r.get("field")
+    expr={"path_regex":f"path_reg {pat}","user_agent":f"hdr_reg(User-Agent) {pat}","method":f"method_reg {pat}"}.get(kind)
+    if kind=="header" and field and re.fullmatch(r"[A-Za-z0-9-]+",field): expr=f"hdr_reg({field}) {pat}"
+    if kind=="query" and field and re.fullmatch(r"[A-Za-z0-9_]+",field): expr=f"urlp_reg({field}) {pat}"
+    if expr: lines += [f"    acl waf_rule_{i} {expr}",f"    http-request deny if waf_rule_{i}"]
   for i,s in enumerate(http): lines += [f"    acl host_{i} hdr(host) -i {s['host']}",f"    use_backend web_{i} if host_{i}"]
   for i,s in enumerate(http):
    lines += [f"backend web_{i}","    mode http","    option httpchk GET /",f"    http-request set-header X-Forwarded-Proto https if {{ ssl_fc }}"]
@@ -49,6 +61,7 @@ def _render(sites):
   for n,u in enumerate(ups):
    if u.get("target"): lines.append(f"    server srv{n} {u['target']} weight {max(1,int(u.get('weight',1)))} check")
  return "\n".join(lines)+"\n"
+def apply_waf(cfg=None): return _save(_load())
 def validate():
  r=run([_bin(),"-c","-f",_cfg()]);
  if r.returncode: raise AppError((r.stderr or r.stdout or "HAProxy 配置无效").strip())

@@ -8,10 +8,11 @@ def certificates(auth=Depends(require_auth)): return {"providers":api.providers(
 def issue(body:dict=None,auth=Depends(require_auth)):
  b=body or {}; return api.request_cert(b.get('domain',''),b.get('email'),b.get('provider'))
 @router.post('/certmanager/renew')
-def renew(body:dict=None,auth=Depends(require_auth)): return api.renew((body or {}).get('provider'))
+def renew(body:dict=None,auth=Depends(require_auth)):
+ b=body or {}; return api.renew(b.get('provider'),b.get('domain'))
 @router.post('/certmanager/delete')
 def delete(body:dict=None,auth=Depends(require_auth)):
  b=body or {}; return api.delete_cert(b.get('provider',''),b.get('domain',''))
 @router.post('/certmanager/update')
 def update(body:dict=None,auth=Depends(require_auth)):
- b=body or {}; return api.request_cert(b.get('domain',''),b.get('email'),b.get('provider'))
+ b=body or {}; return api.update_cert(b.get('provider',''),b.get('domain',''),b.get('email'))

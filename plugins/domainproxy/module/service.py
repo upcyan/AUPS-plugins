@@ -14,7 +14,10 @@ def status():
     if os.path.exists("/run/systemd/system"):
         running = subprocess.run(["systemctl","is-active","aups-domainproxy"], capture_output=True).returncode == 0
     base = "https://" + c["domain"] + "/" if c.get("domain") else ""
-    return {**c, "running":running, "url":base + ((c.get("prefix", "").strip("/") + "/") if c.get("prefix") else "") + "https://github.com/"}
+    available=[]
+    for item in rproxy.backend_list():
+        if "sites" in (item.get("capabilities") or []): available.append({"name":item["name"],"title":item.get("title") or item["name"]})
+    return {**c, "running":running, "backends":available, "url":base + ((c.get("prefix", "").strip("/") + "/") if c.get("prefix") else "") + "https://github.com/"}
 def configure(domain="", prefix="proxy", port=18765, backend="caddy"):
     domain = domain.strip().lower(); prefix = prefix.strip().strip("/"); port = int(port)
     if not re.fullmatch(r"[a-z0-9.-]+", domain): raise AppError("域名格式无效")
@@ -22,7 +25,7 @@ def configure(domain="", prefix="proxy", port=18765, backend="caddy"):
     if not 1024 <= port <= 65535: raise AppError("内部端口需为 1024-65535")
     old = read_config(); data = {"domain":domain,"prefix":prefix,"port":port,"backend":backend}
     try:
-        if old.get("domain") == domain: rproxy.site_update(backend, domain, mode="reverse_proxy", target=f"127.0.0.1:{port}")
+        if old.get("domain") == domain and old.get("backend") == backend: rproxy.site_update(backend, domain, mode="reverse_proxy", target=f"127.0.0.1:{port}")
         else:
             rproxy.site_create(backend, domain, mode="reverse_proxy", target=f"127.0.0.1:{port}")
             if old.get("domain"):
@@ -40,4 +43,9 @@ def start():
 def stop():
     subprocess.run(["systemctl","disable","--now","aups-domainproxy"], check=False)
     return {**read_config(), "running":False}
-def remove(): return stop()
+def remove():
+    old=read_config(); result=stop()
+    if old.get("domain") and old.get("backend"):
+        try: rproxy.site_delete(old["backend"],old["domain"])
+        except Exception: pass
+    return result

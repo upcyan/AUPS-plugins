@@ -3,6 +3,7 @@ from pathlib import Path
 from ... import config
 from ...errors import AppError
 from ...util import has_cmd, run
+from ...core import waf
 
 IMAGE="traefik:v3.3"; NAME="aups-traefik"
 def _dir(): return Path(config.plugin_dir("traefik","config"))
@@ -48,10 +49,11 @@ def _static(sites=None):
   text+=f"  tcp{i}:\n    address: :{port}\n"
  return text+"providers:\n  file:\n    filename: /etc/traefik/dynamic.yml\n    watch: true\n  docker:\n    endpoint: unix://"+socket+"\n    exposedByDefault: false\napi:\n  dashboard: false\nlog:\n  level: INFO\naccessLog: {}\n"
 def _dynamic(sites):
- lines=["http:","  routers:"]; services=[]; certs=[]; tcp=[]
+ wc=waf.render_config(); waf_on=bool(wc.get("enabled")); lines=["http:","  routers:"]; services=[]; certs=[]; tcp=[]
  for i,s in enumerate(x for x in sites if x.get("mode")!="tcp"):
   o=s.get("options") or {}; tls=o.get("tls") or {}; name=f"site{i}"
   lines += [f"    {name}:",f"      rule: Host(`{s['host']}`)","      entryPoints:","        - websecure" if tls else "        - web",f"      service: {name}"]
+  if waf_on and ((wc.get("whitelist_ips") or []) or (wc.get("rate_limit") or {}).get("enabled")): lines += ["      middlewares:","        - aups-waf"]
   if tls: lines.append("      tls: {}")
   ups=o.get("upstreams") or [{"target":s.get("target")}]
   services += [f"    {name}:","      loadBalancer:","        healthCheck:",f"          path: {_q(o.get('health_path','/'))}",f"          interval: {_q(str(o.get('health_interval',10))+'s')}","        servers:"]
@@ -61,6 +63,14 @@ def _dynamic(sites):
   pair=_certs(s["host"],tls)
   if pair: certs += ["    - certFile: "+_q(pair[0]),"      keyFile: "+_q(pair[1])]
  lines += ["  services:"] + services
+ if waf_on and ((wc.get("whitelist_ips") or []) or (wc.get("rate_limit") or {}).get("enabled")):
+  lines += ["  middlewares:","    aups-waf:","      chain:","        middlewares:"]
+  if wc.get("whitelist_ips"): lines.append("          - aups-waf-allow")
+  if (wc.get("rate_limit") or {}).get("enabled"): lines.append("          - aups-waf-rate")
+  if wc.get("whitelist_ips"):
+   lines += ["    aups-waf-allow:","      ipAllowList:","        sourceRange:"]+[f"          - {_q(ip)}" for ip in wc["whitelist_ips"]]
+  if (wc.get("rate_limit") or {}).get("enabled"):
+   rl=wc["rate_limit"]; lines += ["    aups-waf-rate:","      rateLimit:",f"        average: {max(1,int(rl.get('requests',60)))}",f"        burst: {max(1,int(rl.get('requests',60)))}"]
  if certs: lines += ["tls:","  certificates:"]+certs
  for i,s in enumerate(x for x in sites if x.get("mode")=="tcp"):
   port=int((s.get("options") or {}).get("listen_port",0)); tcp.append((i,s,port))
@@ -70,6 +80,7 @@ def _dynamic(sites):
   lines += ["  services:"]
   for i,s,p in tcp: lines += [f"    tcp{i}:","      loadBalancer:","        servers:",f"          - address: {_q(_target(s['target']))}"]
  return "\n".join(lines)+"\n"
+def apply_waf(cfg=None): return _save(_load())
 def _write_base(sites=None):
  sites=sites if sites is not None else _load(); _dir().mkdir(parents=True,exist_ok=True); _data().mkdir(parents=True,exist_ok=True); (_dir()/"traefik.yml").write_text(_static(sites),encoding="utf-8")
  if not (_dir()/"dynamic.yml").exists(): (_dir()/"dynamic.yml").write_text(_dynamic(sites),encoding="utf-8")

@@ -21,8 +21,15 @@ def find_cert(domain=None):
     for item in list_certs():
         if not domain or item["domain"]==domain: return item["cert"],item["key"]
     return None,None
-def renew(provider=None):
+def renew(provider=None,domain=None):
     names=[provider] if provider else providers()
-    return {"ok":True,"results":[_provider(n).renew() for n in names]}
+    results=[]
+    for n in names:
+        mod=_provider(n); fn=getattr(mod,"renew_cert",None) if domain else None
+        results.append(fn(domain) if callable(fn) else mod.renew())
+    return {"ok":True,"results":results}
+def update_cert(provider,domain,email=None):
+    mod=_provider(provider); fn=getattr(mod,"renew_cert",None)
+    return fn(domain) if callable(fn) else mod.request_cert(domain,email)
 def delete_cert(provider,domain): return _provider(provider).delete_cert(domain)
 def status(): return {"installed":bool(providers()),"providers":providers(),"certificates":len(list_certs())}

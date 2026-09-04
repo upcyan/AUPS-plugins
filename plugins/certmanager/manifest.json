@@ -1,1 +1,1 @@
-{"name":"certmanager","title":"SSL 证书管理","attr":["功能","依赖"],"version":"1.0.0","description":"统一管理 SSL provider 申请的证书、续期、删除和更新"}
+{"name":"certmanager","title":"SSL 证书管理","attr":["功能","依赖"],"version":"1.1.0","description":"统一管理 SSL provider 申请的证书、续期、删除和更新"}

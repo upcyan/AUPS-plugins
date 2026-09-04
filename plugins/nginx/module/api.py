@@ -14,6 +14,7 @@ from ... import config
 from ... import pkg
 from ...errors import AppError
 from ...util import has_cmd, run
+from ...core import waf
 
 
 def _bin():
@@ -50,7 +51,12 @@ def _domain(host):
 
 
 def _render_sites(sites):
+    wc = waf.render_config()
     out = ["# AUPS managed sites"]
+    if wc.get("enabled") and (wc.get("rate_limit") or {}).get("enabled"):
+        rl=wc["rate_limit"]; window=str(rl.get("window","10s")); requests=max(1,int(rl.get("requests",60)))
+        seconds=max(1, int(window[:-1]) * ({"m":60,"h":3600,"d":86400}.get(window[-1],1))) if window[-1].isalpha() else max(1,int(window))
+        out.append(f"limit_req_zone $binary_remote_addr zone=aups_waf:10m rate={max(1,requests//seconds)}r/s;")
     for s in sites:
         o=s.get("options") or {}; tls=o.get("tls") or {}; upstreams=o.get("upstreams") or []
         if upstreams:
@@ -63,6 +69,19 @@ def _render_sites(sites):
         else: target=s.get("target","")
         listen="443 ssl" if tls.get("cert") and tls.get("key") else "80"
         out.extend(["server {",f"    listen {listen};",f"    server_name {s['host']};"])
+        if wc.get("enabled"):
+            for ip in wc.get("whitelist_ips") or []: out.append(f"    allow {ip};")
+            if wc.get("whitelist_ips"): out.append("    deny all;")
+            else:
+                for ip in wc.get("blacklist_ips") or []: out.append(f"    deny {ip};")
+            if (wc.get("rate_limit") or {}).get("enabled"): out.append("    limit_req zone=aups_waf burst=20 nodelay;")
+            for rule in wc.get("rules") or []:
+                kind,pattern,field=rule.get("kind"),str(rule.get("pattern","")).replace('"','\\"'),rule.get("field")
+                if kind=="user_agent": out.append(f'    if ($http_user_agent ~* "{pattern}") {{ return 403; }}')
+                elif kind=="method": out.append(f'    if ($request_method ~* "{pattern}") {{ return 403; }}')
+                elif kind=="path_regex": out.append(f'    if ($request_uri ~* "{pattern}") {{ return 403; }}')
+                elif kind=="query" and field and re.fullmatch(r"[A-Za-z0-9_]+",field): out.append(f'    if ($arg_{field} ~* "{pattern}") {{ return 403; }}')
+                elif kind=="header" and field and re.fullmatch(r"[A-Za-z0-9-]+",field): out.append(f'    if ($http_{field.lower().replace("-","_")} ~* "{pattern}") {{ return 403; }}')
         if "ssl" in listen: out.extend([f"    ssl_certificate {tls['cert']};",f"    ssl_certificate_key {tls['key']};"])
         if s.get("mode")=="file_server": out.extend([f"    root {target};","    index index.html;"])
         else:
@@ -73,6 +92,10 @@ def _render_sites(sites):
             if line.strip(): out.append("    "+line.strip())
         out.append("}")
     return "\n".join(out)+"\n"
+
+
+def apply_waf(cfg=None):
+    return _save_sites(_load_sites())
 
 
 def _ensure_include():
