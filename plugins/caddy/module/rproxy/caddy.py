@@ -41,14 +41,27 @@ def list_sites():
     return caddyfile.list_sites()
 
 
-def create_site(host, mode="reverse_proxy", target="", extra=""):
+def create_site(host, mode="reverse_proxy", target="", extra="", options=None):
     from .. import caddyfile
-    return caddyfile.create_site(host, mode, target, extra)
+    return caddyfile.create_site(host, mode, target, extra, options)
 
 
-def update_site(host, mode=None, target=None, extra=None):
+def update_site(host, mode=None, target=None, extra=None, options=None):
     from .. import caddyfile
-    return caddyfile.update_site(host, mode, target, extra)
+    return caddyfile.update_site(host, mode, target, extra, options)
+
+def validate():
+    from .. import caddyfile
+    err=caddyfile._validate(caddyfile.read()["content"])
+    if err: raise AppError(err)
+    return {"ok":True,"message":"Caddyfile 配置有效"}
+
+def logs(kind="access",limit=200):
+    path=env.access_log_file()
+    try:
+        with open(path,encoding="utf-8",errors="replace") as f: lines=f.readlines()[-max(1,min(int(limit),2000)):]
+    except OSError: lines=[]
+    return {"kind":kind,"path":path,"lines":[x.rstrip("\n") for x in lines]}
 
 
 def delete_site(host):

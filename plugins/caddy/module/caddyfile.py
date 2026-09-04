@@ -9,6 +9,7 @@
 import os
 import re
 import shutil
+import json
 
 from ...errors import AppError
 from . import env
@@ -16,6 +17,18 @@ from . import env
 
 def _config_file():
     return env.caddy_config_file()
+
+
+def _options_file(): return os.path.join(os.path.dirname(_config_file()), "site-options.json")
+def _read_options():
+    try:
+        with open(_options_file(), encoding="utf-8") as f: d=json.load(f)
+        return d if isinstance(d,dict) else {}
+    except (OSError,ValueError): return {}
+def _write_options(data):
+    p=_options_file(); tmp=p+".tmp"
+    with open(tmp,"w",encoding="utf-8") as f: json.dump(data,f,ensure_ascii=False,indent=2)
+    os.replace(tmp,p)
 
 
 def read():
@@ -139,7 +152,9 @@ def write(content, reload_=True):
     if err:
         raise AppError(f"Caddyfile 校验失败：\n{err}")
     p = _config_file()
+    old = None
     if os.path.isfile(p):
+        with open(p, encoding="utf-8") as f: old=f.read()
         shutil.copy2(p, p + ".bak")
     with open(p, "w", encoding="utf-8") as f:
         f.write(content)
@@ -148,7 +163,11 @@ def write(content, reload_=True):
         try:
             env.instance("reload")
         except AppError as e:
-            reloaded, reload_error = False, str(e)
+            if old is not None:
+                with open(p,"w",encoding="utf-8") as f: f.write(old)
+                try: env.instance("reload")
+                except AppError: pass
+            raise AppError("Caddy reload 失败，已恢复旧配置：" + str(e))
     return {"path": p, "lines": content.count("\n") + 1,
             "reloaded": reloaded, "reload_error": reload_error}
 
@@ -195,7 +214,7 @@ def _site_info(body):
         if s.startswith("reverse_proxy"):
             mode = "reverse_proxy"
             t = s.split(None, 1)
-            target = t[1].strip() if len(t) > 1 else ""
+            target = t[1].strip().removesuffix("{").strip() if len(t) > 1 else ""
         elif s.startswith("file_server"):
             mode = "file_server"
         elif s.startswith("root"):
@@ -212,9 +231,10 @@ def list_sites():
     """列出 Caddyfile 中的站点块。返回 {sites, path}。"""
     d = read()
     sites = []
+    options=_read_options()
     for blk in _site_blocks(d["content"]):
         mode, target = _site_info(blk["body"])
-        sites.append({"host": blk["host"], "mode": mode, "target": target,
+        sites.append({"host": blk["host"], "mode": mode, "target": target, "options":options.get(blk["host"],{}),
                       "body": blk["body"], "start": blk["start"], "end": blk["end"]})
     return {"sites": sites, "path": d["path"]}
 
@@ -227,12 +247,18 @@ def get_site(host):
     raise AppError(f"站点 {host} 不存在")
 
 
-def _render_site(host, mode, target, extra=""):
+def _render_site(host, mode, target, extra="", options=None):
+    options=options or {}; tls=options.get("tls") or {}; upstreams=options.get("upstreams") or []
     lines = [f"{host} {{"]
     if mode == "reverse_proxy":
-        if not target:
+        if not target and not upstreams:
             raise AppError("反向代理需填写目标地址（如 localhost:8080）")
-        lines.append(f"    reverse_proxy {target}")
+        targets=" ".join(str(x.get("target")) for x in upstreams if x.get("target")) or target
+        lines.append(f"    reverse_proxy {targets} {{")
+        lines.append(f"        lb_policy {options.get('lb_policy','round_robin')}")
+        if options.get("health_path"): lines.append(f"        health_uri {options['health_path']}")
+        if options.get("health_interval"): lines.append(f"        health_interval {int(options['health_interval'])}s")
+        lines.append("    }")
     else:
         if not target:
             raise AppError("文件服务需填写站点根目录（root）")
@@ -243,11 +269,12 @@ def _render_site(host, mode, target, extra=""):
             ln = ln.strip()
             if ln:
                 lines.append("    " + ln)
+    if tls.get("cert") and tls.get("key"): lines.append(f"    tls {tls['cert']} {tls['key']}")
     lines.append("}")
     return "\n".join(lines)
 
 
-def create_site(host, mode="reverse_proxy", target="", extra=""):
+def create_site(host, mode="reverse_proxy", target="", extra="", options=None):
     """新增站点块（reverse_proxy / file_server 两种模式）。"""
     host = (host or "").strip()
     if not host:
@@ -258,13 +285,13 @@ def create_site(host, mode="reverse_proxy", target="", extra=""):
     for blk in _site_blocks(d["content"]):
         if blk["host"] == host:
             raise AppError(f"站点 {host} 已存在")
-    block = _render_site(host, mode, target, extra)
+    block = _render_site(host, mode, target, extra, options)
     new = (d["content"].rstrip("\n") + "\n\n" + block + "\n") if d["content"] else block + "\n"
-    write(new)
-    return {"host": host, "mode": mode, "target": target}
+    write(new); opts=_read_options(); opts[host]=options or {}; _write_options(opts)
+    return {"host": host, "mode": mode, "target": target, "options":options or {}}
 
 
-def update_site(host, mode=None, target=None, extra=None):
+def update_site(host, mode=None, target=None, extra=None, options=None):
     """更新站点块：mode/target/extra 提供则覆盖，否则保留原值。"""
     host = (host or "").strip()
     d = read()
@@ -278,13 +305,14 @@ def update_site(host, mode=None, target=None, extra=None):
     if extra is None:
         # 保留原 body 中非 reverse_proxy/root/file_server 的自定义行
         kept = [ln for ln in blk["body"].splitlines()
-                if not any(ln.strip().startswith(x)
-                           for x in ("reverse_proxy", "root", "file_server"))]
+                if ln.strip() not in ("{", "}") and not any(ln.strip().startswith(x)
+                           for x in ("reverse_proxy", "root", "file_server", "lb_policy", "health_uri", "health_interval", "tls"))]
         extra = "\n".join(kept)
-    block = _render_site(host, mode, target, extra)
+    opts=_read_options(); options=options if options is not None else opts.get(host,{})
+    block = _render_site(host, mode, target, extra, options)
     lines[blk["start"]:blk["end"] + 1] = block.splitlines()
-    write("\n".join(lines))
-    return {"host": host, "mode": mode, "target": target}
+    write("\n".join(lines)); opts[host]=options; _write_options(opts)
+    return {"host": host, "mode": mode, "target": target, "options":options}
 
 
 def delete_site(host):
@@ -296,6 +324,7 @@ def delete_site(host):
         raise AppError(f"站点 {host} 不存在")
     del lines[blk["start"]:blk["end"] + 1]
     write("\n".join(lines))
+    opts=_read_options(); opts.pop(host,None); _write_options(opts)
     return {"host": host, "deleted": True}
 
 

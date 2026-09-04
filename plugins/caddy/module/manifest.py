@@ -19,7 +19,7 @@ v1.5.2：新增统一站点管理能力与实机/容器部署方式无损切换�
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.5.2",
+    "version": "1.6.0",
     "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、access 日志、防火墙",
     "type": "external",
     "attr": "依赖",
@@ -29,7 +29,8 @@ MANIFEST = {
     "rproxy_module": "aups.modules.caddy.rproxy.caddy",
     # 反代能力集（rproxy 能力协商用）：声明本反代支持哪些能力
     "capabilities": ["status", "show", "preview", "apply", "reload",
-                     "waf", "download_route", "access_log", "sites"],
+                     "waf", "download_route", "access_log", "sites", "validate", "logs",
+                     "upstreams", "tls", "websocket", "health_check", "deploy_switch"],
     # 部署方式：实机 + 容器（docker/podman）
     "deploy": {"host": True, "container": {"kinds": ["docker", "podman"]}},
     "config_dir": "caddy",
