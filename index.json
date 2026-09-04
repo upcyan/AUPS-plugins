@@ -324,6 +324,19 @@
       "provides": ["proxy"]
     },
     {
+      "name": "traefik", "title": "Traefik", "attr": ["依赖", "网络"], "version": "1.0.0",
+      "description": "容器原生反代：服务发现、动态路由、TLS、负载均衡和健康检查",
+      "files": {
+        "README.md": "5278aa83c79cb24bdb55add6121a9b75c5199e5675de0fd8a550bbaaae8957f5",
+        "frontend.js": "65c8aed4fcfc5b31b637e5902734ed8fe139bfc18ab546ed49a4bb1c8d9e82ab",
+        "manifest.json": "8bb9aac9fa42f9737df1931b02264ac4b937b69e90fcfd2527db94ccd644e3f3",
+        "module/__init__.py": "52264794f4d38928325b2242b3b69db7eee5875b84c26fce407fa72aa17478c6",
+        "module/api.py": "a35b06cfad8246536046669a1a728fa807cb5de71c5ce3bec9e7541cae1490e0",
+        "module/manifest.py": "6af73e5a75fec7925a43990aa2d9f00f4325db051b9959519f34801a1e71694d",
+        "module/webapi.py": "43331f9b35d40dc47b2c3fadaf19f83ecf5a9c6972f706b040dc0574c418a7b0"
+      }, "cards": false, "provides": ["proxy"], "deploy": {"container":{"kinds":["docker","podman"]}}
+    },
+    {
       "name": "haproxy", "title": "HAProxy", "attr": ["依赖", "网络"], "version": "1.0.0",
       "description": "HTTP/TCP 反代与负载均衡：健康检查、TLS、日志和配置回滚",
       "files": {
