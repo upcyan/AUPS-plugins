@@ -324,6 +324,20 @@
       "provides": ["proxy"]
     },
     {
+      "name": "haproxy", "title": "HAProxy", "attr": ["依赖", "网络"], "version": "1.0.0",
+      "description": "HTTP/TCP 反代与负载均衡：健康检查、TLS、日志和配置回滚",
+      "files": {
+        "README.md": "d4f6ae35f161c60e2a9b4fe5b1584c3032d403eea7081778e9be7c74a61912ab",
+        "frontend.js": "67ec7f0ba7149c24d0d752d627a00ed7bb6d31182ca0880ab95ec9f0e982dab9",
+        "manifest.json": "ee296c9a7db854556c0d4aca138e86ffb938383e166f5cdeb1efed9892175298",
+        "module/__init__.py": "c88d72f9db808e6c2736514ded980e29b18b1abe2d654a0eac08d3946d84d82b",
+        "module/api.py": "d3a0e50a82d5b6e1b6e8029faee71b10ad5067e32a207bedc8eea0a6589afd36",
+        "module/cli.py": "83bc9f0df3e722eea5ce29c2c4de70d18b60c6fff1c6102027809dccf52742a0",
+        "module/manifest.py": "bec0fcdd8a072ec3caca4ff7e7fab6c8e8f906988629365358abf169fedb3b97",
+        "module/webapi.py": "6f20528ce56a0621ba622675b55912bdd39624986d1d0bd530ee355443a5019a"
+      }, "cards": false, "provides": ["proxy"], "deploy": {"host": true}
+    },
+    {
       "name": "domainproxy", "title": "域名代理", "attr": ["功能", "网络"], "version": "1.1.0",
       "description": "由反代插件安全暴露的 GitHub 与 Docker Registry 白名单代理",
       "files": {
