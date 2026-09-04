@@ -21,3 +21,12 @@ def nginx_install(auth=Depends(require_auth)):
 @router.post("/nginx/remove")
 def nginx_remove(auth=Depends(require_auth)):
     return core.remove()
+
+@router.get("/nginx/config")
+def nginx_config(auth=Depends(require_auth)): return core.show()
+@router.post("/nginx/validate")
+def nginx_validate(auth=Depends(require_auth)): return core.validate()
+@router.post("/nginx/reload")
+def nginx_reload(auth=Depends(require_auth)): return core.reload()
+@router.get("/nginx/logs")
+def nginx_logs(kind: str = "access", limit: int = 200, auth=Depends(require_auth)): return core.logs(kind, limit)

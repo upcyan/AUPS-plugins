@@ -6,6 +6,9 @@
 
 import os
 import shutil
+import json
+import re
+import tempfile
 
 from ... import config
 from ... import pkg
@@ -27,6 +30,83 @@ def _mime():
 
 def _pid():
     return os.path.join(config.plugin_dir("nginx", "data"), "nginx.pid")
+
+
+def _sites_state(): return os.path.join(config.plugin_dir("nginx", "config"), "sites.json")
+def _sites_conf(): return os.path.join(config.plugin_dir("nginx", "config"), "aups-sites.conf")
+
+
+def _load_sites():
+    try:
+        with open(_sites_state(), encoding="utf-8") as f: data = json.load(f)
+        return data if isinstance(data, list) else []
+    except (OSError, ValueError): return []
+
+
+def _domain(host):
+    host = (host or "").strip().lower()
+    if not re.fullmatch(r"(?:\*\.)?[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?", host): raise AppError("站点域名格式无效")
+    return host
+
+
+def _render_sites(sites):
+    out = ["# AUPS managed sites"]
+    for s in sites:
+        o=s.get("options") or {}; tls=o.get("tls") or {}; upstreams=o.get("upstreams") or []
+        if upstreams:
+            name="aups_"+re.sub(r"[^a-z0-9]","_",s["host"])
+            out.append(f"upstream {name} {{")
+            for u in upstreams:
+                target=u.get("target",""); weight=max(1,int(u.get("weight",1)))
+                if target: out.append(f"    server {target} weight={weight} max_fails={max(1,int(u.get('max_fails',3)))} fail_timeout={int(u.get('fail_timeout',10))}s;")
+            out.append("}"); target=name
+        else: target=s.get("target","")
+        listen="443 ssl" if tls.get("cert") and tls.get("key") else "80"
+        out.extend(["server {",f"    listen {listen};",f"    server_name {s['host']};"])
+        if "ssl" in listen: out.extend([f"    ssl_certificate {tls['cert']};",f"    ssl_certificate_key {tls['key']};"])
+        if s.get("mode")=="file_server": out.extend([f"    root {target};","    index index.html;"])
+        else:
+            out.extend(["    location / {",f"        proxy_pass http://{target};","        proxy_set_header Host $host;","        proxy_set_header X-Real-IP $remote_addr;","        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;","        proxy_set_header X-Forwarded-Proto $scheme;"])
+            if o.get("websocket",True): out.extend(["        proxy_http_version 1.1;","        proxy_set_header Upgrade $http_upgrade;","        proxy_set_header Connection \"upgrade\";"])
+            out.append("    }")
+        for line in (s.get("extra") or "").splitlines():
+            if line.strip(): out.append("    "+line.strip())
+        out.append("}")
+    return "\n".join(out)+"\n"
+
+
+def _ensure_include():
+    path=_cfg()
+    with open(path,encoding="utf-8") as f: text=f.read()
+    inc=f"    include {_sites_conf()};"
+    if inc not in text:
+        pos=text.rfind("}")
+        text=text[:pos]+inc+"\n"+text[pos:]
+        with open(path,"w",encoding="utf-8") as f: f.write(text)
+
+
+def _save_sites(sites):
+    os.makedirs(os.path.dirname(_sites_conf()),exist_ok=True); _ensure_include()
+    old_conf=open(_sites_conf(),encoding="utf-8").read() if os.path.isfile(_sites_conf()) else None
+    old_state=open(_sites_state(),encoding="utf-8").read() if os.path.isfile(_sites_state()) else None
+    try:
+        with open(_sites_conf(),"w",encoding="utf-8") as f: f.write(_render_sites(sites))
+        validate()
+        for path,data in ((_sites_state(),json.dumps(sites,ensure_ascii=False,indent=2)),):
+            fd,tmp=tempfile.mkstemp(dir=os.path.dirname(path)); os.close(fd)
+            with open(tmp,"w",encoding="utf-8") as f: f.write(data)
+            os.replace(tmp,path)
+        reload()
+    except BaseException:
+        if old_conf is None:
+            try: os.remove(_sites_conf())
+            except OSError: pass
+        else:
+            with open(_sites_conf(),"w",encoding="utf-8") as f: f.write(old_conf)
+        if old_state is not None:
+            with open(_sites_state(),"w",encoding="utf-8") as f: f.write(old_state)
+        raise
+    return {"sites":sites,"path":_sites_conf()}
 
 
 def _write_config():
@@ -192,3 +272,53 @@ def start():
     if os.path.isfile(_bin()) and os.path.isfile(_cfg()):
         _start()
     return {"name": "nginx", "started": True}
+
+
+def show():
+    try:
+        with open(_cfg(), encoding="utf-8") as f: return {"content":f.read(),"path":_cfg()}
+    except OSError: return {"content":"","path":_cfg()}
+
+
+def validate():
+    if not os.path.isfile(_bin()): raise AppError("nginx 尚未部署")
+    r=run([_bin(),"-t","-c",_cfg()])
+    if r.returncode != 0: raise AppError((r.stderr or r.stdout or "nginx 配置校验失败").strip())
+    return {"ok":True,"message":(r.stderr or r.stdout or "配置有效").strip()}
+
+
+def reload():
+    validate(); run([_bin(),"-c",_cfg(),"-s","reload"],check=True); return {"reloaded":True}
+
+
+def apply(reload=True):
+    result=validate()
+    if reload: result.update(globals()["reload"]())
+    return result
+
+
+def list_sites(): return {"sites":_load_sites(),"path":_sites_conf()}
+def create_site(host,mode="reverse_proxy",target="",extra="",options=None):
+    host=_domain(host); sites=_load_sites()
+    if any(x.get("host")==host for x in sites): raise AppError(f"站点 {host} 已存在")
+    if mode not in ("reverse_proxy","file_server") or not target: raise AppError("站点类型或目标无效")
+    item={"host":host,"mode":mode,"target":target,"extra":extra or "","options":options or {}}
+    sites.append(item); _save_sites(sites); return item
+def update_site(host,mode=None,target=None,extra=None,options=None):
+    host=_domain(host); sites=_load_sites(); item=next((x for x in sites if x.get("host")==host),None)
+    if not item: raise AppError(f"站点 {host} 不存在")
+    if mode is not None: item["mode"]=mode
+    if target is not None: item["target"]=target
+    if extra is not None: item["extra"]=extra
+    if options is not None: item["options"]=options
+    _save_sites(sites); return item
+def delete_site(host):
+    host=_domain(host); sites=_load_sites(); new=[x for x in sites if x.get("host")!=host]
+    if len(new)==len(sites): raise AppError(f"站点 {host} 不存在")
+    _save_sites(new); return {"host":host,"deleted":True}
+def logs(kind="access",limit=200):
+    name="error.log" if kind=="error" else "access.log"; path=os.path.join(config.plugin_dir("nginx","data"),name)
+    try:
+        with open(path,encoding="utf-8",errors="replace") as f: lines=f.readlines()[-max(1,min(int(limit),2000)):]
+    except OSError: lines=[]
+    return {"kind":kind,"path":path,"lines":[x.rstrip("\n") for x in lines]}

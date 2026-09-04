@@ -71,8 +71,8 @@
       "name": "nginx",
       "title": "Nginx 依赖",
       "attr": "依赖",
-      "version": "0.1.0",
-      "description": "Nginx 反代：站点配置、证书（通过 certbot/acme 申请）",
+      "version": "1.0.0",
+      "description": "Nginx 反代：站点、证书、WebSocket、上游池、配置校验回滚与日志",
       "install_params": [
         {
           "key": "port",
@@ -85,12 +85,12 @@
       "files": {
         "README.md": "2fb9ae81f2777414715c19fe852ce24d5c9e9c5221333f85fca3b74b39082f4f",
         "frontend.js": "54bbdbc14770f21ac51c546c2d993cb9d15293645faa0b357a58277d3cdc50d4",
-        "manifest.json": "4cbd130ac058f665dcb1ef17483f62558e5b2d9562f6cd78ad93d5b48b51621f",
+        "manifest.json": "884b5332d4c850d9836f645bdbafa8c572510f28094ea20db3ef2b6feb5b7980",
         "module/__init__.py": "4dad3b5e3fd946cbd24fb74eff88dab5c3574b2707419a88676cccdedf4f7c55",
-        "module/api.py": "4b7207efa9ec19839908c1107db59d7b85d8e9e70e7eb40ba0d77eb7cc3dc4b2",
+        "module/api.py": "8448b3460d25fc05791933332762f1a2b299beb7f483e0cd702e9aef1e0b65d7",
         "module/cli.py": "a1889b0da989611aee38d7426b1544fd435f3ef246f3fdc5d15403d473ae94e3",
-        "module/manifest.py": "80004ce7f5d4bf3328702eecca3852028cd62f5231e44212620af27f90d30ff2",
-        "module/webapi.py": "954d2e9cb88310fa5b1dbcdd65c79dcfa25ee44192b0013c6909c5c94b8b68d6"
+        "module/manifest.py": "58323abef1b40da87bd54ec5ff859f2bfaf7ab85f25e7a1eb78b382e05b6fb89",
+        "module/webapi.py": "ea63c8f326d2517a9f07ba74c9759a4a19d968f368a6b32a874cdb05d4480901"
       },
       "cards": false,
       "provides": []
@@ -321,7 +321,7 @@
         "module/store.py": "febecf2f443058204c3efdb06b8e8a473c1f38d60275a0653090cc45c6412763"
       },
       "cards": true,
-      "provides": []
+      "provides": ["proxy"]
     },
     {
       "name": "domainproxy", "title": "域名代理", "attr": ["功能", "网络"], "version": "1.1.0",
