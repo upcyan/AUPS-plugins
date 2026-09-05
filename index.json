@@ -333,15 +333,15 @@
         "依赖",
         "网络"
       ],
-      "version": "1.1.0",
+      "version": "1.1.1",
       "description": "容器原生反代：服务发现、动态路由、TLS、负载均衡和健康检查",
       "files": {
         "README.md": "5278aa83c79cb24bdb55add6121a9b75c5199e5675de0fd8a550bbaaae8957f5",
         "frontend.js": "65c8aed4fcfc5b31b637e5902734ed8fe139bfc18ab546ed49a4bb1c8d9e82ab",
-        "manifest.json": "e95aa8120b59223f972d86d68b6584dee963d77e542b235428eff8063526f750",
+        "manifest.json": "74bf9f2a58d43511963af4cf7754c6dd7eaa67a5378f03ac87d6b2ca1ac34458",
         "module/__init__.py": "52264794f4d38928325b2242b3b69db7eee5875b84c26fce407fa72aa17478c6",
-        "module/api.py": "740ea3f283fc51e446c7ac51b1573cb7bcab3b939845c272616de2e260718206",
-        "module/manifest.py": "5638663c16ea6f262b6a9473a56eb41764da521a8728f58b7df8faa435797d4b",
+        "module/api.py": "7deced48a9b2b97b7d04a5d82e64da0167219b370ecbe9d8283831dbcf41cd26",
+        "module/manifest.py": "994968c7dcce6f576a48065b72aafe69b0d6543c655f4bada772b57901257d2b",
         "module/webapi.py": "43331f9b35d40dc47b2c3fadaf19f83ecf5a9c6972f706b040dc0574c418a7b0"
       },
       "cards": false,
@@ -393,16 +393,17 @@
         "功能",
         "网络"
       ],
-      "version": "1.2.0",
+      "version": "1.2.1",
       "description": "由反代插件安全暴露的 GitHub 与 Docker Registry 白名单代理",
       "files": {
         "frontend.js": "c3de02c0408119a851981af623f38f56cbfa89fc6affe077cbcadcc5c9077567",
-        "manifest.json": "706cd14520ae054b8b715454e4c34237ac899f9937cb86d4e2d8967a0f70f7a5",
+        "manifest.json": "58a7a0ddad2af896552978c0481e2ab5151d6b63d44a5dfc7c01303d55e29e04",
         "module/__init__.py": "c2cbfcad27f52f96ff930faa8873cb9c1b834dd3713dcab2b2566a8894c8252f",
-        "module/manifest.py": "0bca12ef276b4a9592c09a97411b4229b685ce713355bcb9a3fc97176a6a9996",
+        "module/api.py": "0dc83e51bc8c4528dbd944c4a2d1f3826ea8eab317e918d7cbfb97cdf5cda6d8",
+        "module/manifest.py": "7a0e3324da687c5c26a686872a235c824c9f95d526a70ca3015300b36febafea",
         "module/proxy.py": "43051fc552b8f5c43e7438cea46515a60809195082cb7ae43ec6ecbc2a9b310e",
         "module/server.py": "ad30619e30c2df56ced367c2fdf94d943f66a83d7f681df10e9ca9e602f36dad",
-        "module/service.py": "7a10197b0cabfe3ce187ae7055f2850cde60bb770bbe589fad47dbd47b5b8395",
+        "module/service.py": "b7c5aac7684b45fe2916db888ea730f3c9f21108d14ba6f3e5f482b302da04f9",
         "module/webapi.py": "d643e3ae874022a561936b9c18399e8590a7aa78a8400b8f8de4e4cb1fa52973"
       },
       "cards": false,
