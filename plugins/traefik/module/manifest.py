@@ -1,5 +1,5 @@
 MANIFEST={
- "name":"traefik","title":"Traefik","version":"1.1.0","type":"external","attr":["依赖","网络"],
+ "name":"traefik","title":"Traefik","version":"1.1.1","type":"external","attr":["依赖","网络"],
  "description":"Docker/Podman 原生动态反代 provider","proxy":"traefik","provides":{"proxy":"traefik","waf":"traefik"},
  "rproxy_module":"aups.modules.traefik.api","capabilities":["status","show","apply","reload","sites","validate","logs","upstreams","tls","websocket","health_check","tcp","deploy_switch","waf"],
  "config_dir":"traefik","data_dir":"traefik","deploy":{"container":{"kinds":["docker","podman"]}},

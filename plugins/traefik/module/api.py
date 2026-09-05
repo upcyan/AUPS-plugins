@@ -84,19 +84,81 @@ def apply_waf(cfg=None): return _save(_load())
 def _write_base(sites=None):
  sites=sites if sites is not None else _load(); _dir().mkdir(parents=True,exist_ok=True); _data().mkdir(parents=True,exist_ok=True); (_dir()/"traefik.yml").write_text(_static(sites),encoding="utf-8")
  if not (_dir()/"dynamic.yml").exists(): (_dir()/"dynamic.yml").write_text(_dynamic(sites),encoding="utf-8")
+def _validate_sites(sites):
+    hosts, ports = set(), {80, 443}
+    for site in sites:
+        host = _host(site.get("host"))
+        if host in hosts:
+            raise AppError("站点域名重复")
+        hosts.add(host)
+        mode = site.get("mode", "reverse_proxy")
+        if mode not in ("reverse_proxy", "tcp"):
+            raise AppError("Traefik 支持 reverse_proxy/tcp")
+        options = site.get("options") or {}
+        if mode == "tcp":
+            try:
+                port = int(options.get("listen_port", 0))
+            except (TypeError, ValueError):
+                raise AppError("TCP 监听端口无效")
+            if not 1 <= port <= 65535 or port in ports:
+                raise AppError("TCP 监听端口无效或重复（含 HTTP/HTTPS 端口）")
+            ports.add(port)
+        targets = ([site.get("target")] if mode == "tcp" else
+                   [u.get("target") for u in options.get("upstreams") or []] or [site.get("target")])
+        if not all(isinstance(t, str) and t.strip() and not any(c.isspace() for c in t) for t in targets):
+            raise AppError("请填写有效的上游地址")
+
+
 def validate():
- _write_base(); rt=_runtime(); cmd=[rt,"run","--rm","-v",f"{_dir()}:/etc/traefik:ro",IMAGE,"check-config","--configFile=/etc/traefik/traefik.yml"]
- r=run(cmd)
- if r.returncode: raise AppError((r.stderr or r.stdout or "Traefik 配置无效").strip())
- return {"ok":True,"message":(r.stdout or r.stderr or "配置有效").strip()}
+    # Traefik v3 has no check-config command. Validate managed input without
+    # rewriting either live configuration file or claiming engine validation.
+    _validate_sites(_load())
+    return {"ok": True, "scope": "managed_sites",
+            "message": "托管站点参数检查通过；引擎配置是否加载成功请查看启动日志"}
+
+
+def _atomic_write(path, text):
+    fd, tmp = tempfile.mkstemp(dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            stream.write(text)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+
+
 def _save(sites):
- _write_base(sites); path=_dir()/"dynamic.yml"; old=path.read_text(encoding="utf-8") if path.exists() else None; path.write_text(_dynamic(sites),encoding="utf-8")
- try: validate()
- except BaseException:
-  if old is None: path.unlink(missing_ok=True)
-  else: path.write_text(old,encoding="utf-8")
-  raise
- fd,tmp=tempfile.mkstemp(dir=_dir()); os.close(fd); Path(tmp).write_text(json.dumps(sites,ensure_ascii=False,indent=2),encoding="utf-8"); os.replace(tmp,_state()); start(); return {"sites":sites,"path":str(path)}
+    _validate_sites(sites)
+    _dir().mkdir(parents=True, exist_ok=True)
+    _data().mkdir(parents=True, exist_ok=True)
+    paths = (_dir()/"traefik.yml", _dir()/"dynamic.yml", _state())
+    previous = {path: path.read_text(encoding="utf-8") if path.exists() else None for path in paths}
+    restarting = False
+    try:
+        static, dynamic = _static(sites), _dynamic(sites)
+        for path, text in zip(paths, (static, dynamic, json.dumps(sites, ensure_ascii=False, indent=2))):
+            _atomic_write(path, text)
+        restarting = True
+        start()
+    except BaseException as exc:
+        for path, text in previous.items():
+            if text is None:
+                if path.exists():
+                    path.unlink()
+            else:
+                _atomic_write(path, text)
+        if restarting:
+            try:
+                if previous[paths[0]] is not None:
+                    start()
+                else:
+                    stop()
+            except BaseException as recovery:
+                raise AppError(f"保存失败：{exc}；原配置已恢复，但服务恢复失败：{recovery}") from exc
+        raise
+    return {"sites": sites, "path": str(paths[1])}
+
 def install(): _write_base(); run([_runtime(),"pull",IMAGE],check=True); return start()
 def start():
  rt=_runtime(); stop(); socket="/var/run/docker.sock" if rt=="docker" else "/run/podman/podman.sock"

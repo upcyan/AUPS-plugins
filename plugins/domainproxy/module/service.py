@@ -15,7 +15,7 @@ def status():
         running = subprocess.run(["systemctl","is-active","aups-domainproxy"], capture_output=True).returncode == 0
     base = "https://" + c["domain"] + "/" if c.get("domain") else ""
     available=[]
-    for item in rproxy.backend_list():
+    for item in rproxy.backend_list().get("backends", []):
         if "sites" in (item.get("capabilities") or []): available.append({"name":item["name"],"title":item.get("title") or item["name"]})
     return {**c, "running":running, "backends":available, "url":base + ((c.get("prefix", "").strip("/") + "/") if c.get("prefix") else "") + "https://github.com/"}
 def configure(domain="", prefix="proxy", port=18765, backend="caddy"):

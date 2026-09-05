@@ -1,1 +1,1 @@
-{"name":"traefik","title":"Traefik","attr":["依赖","网络"],"version":"1.1.0","description":"容器原生反代：服务发现、动态路由、TLS、负载均衡和健康检查"}
+{"name":"traefik","title":"Traefik","attr":["依赖","网络"],"version":"1.1.1","description":"容器原生反代：服务发现、动态路由、TLS、负载均衡和健康检查"}
