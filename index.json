@@ -416,14 +416,14 @@
         "功能",
         "依赖"
       ],
-      "version": "1.1.0",
+      "version": "1.1.1",
       "description": "统一管理 SSL provider 申请的证书、续期、删除和更新",
       "files": {
-        "frontend.js": "533a9d4d852c33383de50d576997cf55ebe3d162002047e29bf99329db71a46e",
-        "manifest.json": "d6bb7b9a71c4bae71bbb9f3b0e668ae8452a31cbf6955526eaf3ee4e4a701329",
+        "frontend.js": "1b23b93a0ce98890144764f6aa98cf710f0efaafefedc06dcf18a068fab36b89",
+        "manifest.json": "dca7a6becd015bf12cc6b08b8f11c5404e3ee55a16ef6ffc788ca3337975264f",
         "module/__init__.py": "e1be488e4116b629190eb17136d2e8cb041b841174501cf507902ae9c04e1468",
-        "module/api.py": "47a59cd016057482b78ed5c12a8bec3a7c17a9d451e9d2a8c9284ecb76631b8e",
-        "module/manifest.py": "a6e671cc63647ed5a48578f15c2704b89942a41d5a5fa3f9bfb43da3934e5912",
+        "module/api.py": "977cee17aca29ecebfdb57908e7f6ee8d024a6cdf5195f3b954ccfc68ccf49c5",
+        "module/manifest.py": "5f9a981f65e624b36f2e5c468465b9be4e8d9e0a7c2e9870274e0f75173b4380",
         "module/webapi.py": "0615bf54c606edc600d549671b209c37a3dd73baf485d5c7aa83e3b645c6a18b"
       },
       "cards": false,
