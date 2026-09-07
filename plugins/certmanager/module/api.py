@@ -1,4 +1,6 @@
 from importlib import import_module
+from pathlib import Path
+from ...core import ssl as ssl_core
 from ... import config, registry
 from ...errors import AppError
 
@@ -8,11 +10,24 @@ def _provider(name):
 
 def providers(): return [n for n in registry.capability_providers("ssl") if n != "certmanager"]
 def list_certs():
-    out=[]
+    out, seen = [], set()
     for name in providers():
-        fn=getattr(_provider(name),"list_certs",None)
-        if callable(fn): out.extend(fn())
+        fn = getattr(_provider(name), "list_certs", None)
+        if callable(fn):
+            for cert in fn():
+                marker = str(Path(cert["cert"]).resolve())
+                if marker not in seen:
+                    seen.add(marker)
+                    out.append({**cert, "provider": name, "managed": True})
+    # Filesystem discovery also includes certificates owned by reverse proxies.
+    # Do not delegate mutation of these files to an unrelated SSL provider.
+    for cert in ssl_core.list_certs():
+        marker = str(Path(cert["cert"]).resolve())
+        if marker not in seen:
+            seen.add(marker)
+            out.append({**cert, "provider": None, "managed": False})
     return out
+
 def request_cert(domain,email=None,provider=None):
     names=[provider] if provider else providers()
     if not names: raise AppError("未启用可用 SSL provider")
