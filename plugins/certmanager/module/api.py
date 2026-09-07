@@ -1,5 +1,8 @@
 from importlib import import_module
 from pathlib import Path
+import ssl
+import time
+import math
 from ...core import ssl as ssl_core
 from ... import config, registry
 from ...errors import AppError
@@ -26,6 +29,16 @@ def list_certs():
         if marker not in seen:
             seen.add(marker)
             out.append({**cert, "provider": None, "managed": False})
+    for cert in out:
+        cert.update(issued_at=None, expires_at=None, remaining_days=None)
+        try:
+            metadata = ssl._ssl._test_decode_cert(cert["cert"])
+            issued = ssl.cert_time_to_seconds(metadata["notBefore"])
+            expires = ssl.cert_time_to_seconds(metadata["notAfter"])
+            cert.update(issued_at=issued, expires_at=expires,
+                        remaining_days=math.floor((expires - time.time()) / 86400))
+        except (OSError, ValueError, KeyError, AttributeError):
+            cert["validity_error"] = "无法读取证书有效期"
     return out
 
 def request_cert(domain,email=None,provider=None):
