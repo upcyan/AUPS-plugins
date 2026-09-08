@@ -83,7 +83,7 @@ window.AUPS_PLUGINS.vuln = (function () {
     const box=document.getElementById('vulnOvBox'); if(!box)return;
     box.innerHTML='<div class="mut"><span class="spinner"></span> 正在'+esc(label)+'...</div>';
     try{
-      const r=await api('POST','/api/vuln/fix',{scope,pkg});
+      const r=await api('POST','/api/vuln/fix',{scope,pkg},true);
       if(!r.ok){box.innerHTML='<span class="bad">'+esc(r.summary||'修复失败')+'</span><pre>'+esc(r.detail||'')+'</pre>';return;}
       box.innerHTML='<span class="ok">'+esc(r.summary||'修复完成')+'</span><div class="mut">正在重新检测...</div>';
       await run();
