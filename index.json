@@ -42,17 +42,17 @@
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
         "README.md": "e74375901f60fc65fb46e9b4e6580ad9678eb785ba0f893037d6a204e7c41c9c",
-        "frontend.js": "42aac3316e48613b1fd697b16a2ed56db8c39a5b2d1619a8d2659da827a82775",
-        "manifest.json": "8a17c2dca7bfe2b9ced1f97365c19b7e831f72c38d6f459f195d1f47087ec5d6",
+        "frontend.js": "20a8e78f72890313ecf5e2f7df5007a216704b3369a0ff73af1aa69c279fccdd",
+        "manifest.json": "e056a3b3e432e695ba8c38a161421570cc8c152f0e0ae6b35aa09cf1322a9960",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
-        "module/api.py": "292414d31f7afc0572f8672ae3e6675b00e339a8ae67a635050e6dbc549fd4a4",
+        "module/api.py": "5ab9e5c42c95a8cd208df293a633465da0167c1249bdbdadb5428c60229108bb",
         "module/caddyfile.py": "123d69c15dfc6714f1c37df839886e9b4c89c28a0ab9697cabefe996a300692a",
         "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
         "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
-        "module/manifest.py": "e14dc7be3de09847dc1799bb08f3bf8df426d78d63ac3944a1b45da415188e00",
+        "module/manifest.py": "09aa9bc40fcaa422905d9e3d63c30c01e99c27fc6db642119eb38a6c24af8c57",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
-        "module/rproxy/caddy.py": "011a4df91494ef72b9d8b2a58229a704ed68e1001508240a4bbaa5b881b1c27c"
+        "module/rproxy/caddy.py": "db14428770d1c93b61963e22e2d877132b9ec5f5a71fd881595dee75bb5c500a"
       },
       "cards": false,
       "provides": [
