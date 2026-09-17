@@ -100,6 +100,14 @@ def reload():
     return {"reloaded": True}
 
 
+def apply_waf(cfg=None):
+    """核心 WAF 模板变更时主动重写 Caddyfile 的 WAF 托管段并 reload。
+
+    cfg 与 nginx 后端保持同形签名；渲染时由 _waf_snippet 实时读核心，不入参使用。
+    """
+    return apply(reload=True)
+
+
 _PORT_RE = re.compile(r"^\s*(https_port|http_port)\s+(\d+)\s*$", re.MULTILINE)
 
 

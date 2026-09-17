@@ -19,7 +19,7 @@ v1.5.2：新增统一站点管理能力与实机/容器部署方式无损切换�
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.6.0",
+    "version": "1.6.1",
     "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、access 日志、防火墙",
     "type": "external",
     "attr": "依赖",
