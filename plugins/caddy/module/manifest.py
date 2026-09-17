@@ -20,7 +20,7 @@ v1.7.0：SSL 页展示 Caddy 自动 HTTPS 已签发证书及有效期。
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.7.0",
+    "version": "1.7.1",
     "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、自动 HTTPS 证书、access 日志、防火墙；依赖 SSL 证书管理",
     "type": "external",
     "attr": "依赖",
@@ -74,6 +74,7 @@ MANIFEST = {
     "entry": [
         {"id": "caddyfile", "title": "Caddyfile 管理"},
         {"id": "instance", "title": "实例控制"},
+        {"id": "ssl", "title": "SSL 接入"},
     ],
     "plugins": [
         {"id": "caddyfile", "title": "Caddyfile 管理",
