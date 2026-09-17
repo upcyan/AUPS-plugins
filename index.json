@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "e14c26c6d65620ea6d745b9a2bfee05a30fdac8b",
+  "branch": "a56439804b087bd743a3047d89258c32c89e9f71",
   "plugins": [
     {
       "name": "appupdate",
@@ -38,19 +38,19 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.7.0",
+      "version": "1.7.1",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
         "README.md": "e74375901f60fc65fb46e9b4e6580ad9678eb785ba0f893037d6a204e7c41c9c",
         "frontend.js": "20a8e78f72890313ecf5e2f7df5007a216704b3369a0ff73af1aa69c279fccdd",
-        "manifest.json": "e056a3b3e432e695ba8c38a161421570cc8c152f0e0ae6b35aa09cf1322a9960",
+        "manifest.json": "037d2467c6534a9455a6a9e685a0dcdcd191d6016897b7dd0b5ee6aeb93e970e",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
         "module/api.py": "5ab9e5c42c95a8cd208df293a633465da0167c1249bdbdadb5428c60229108bb",
         "module/caddyfile.py": "123d69c15dfc6714f1c37df839886e9b4c89c28a0ab9697cabefe996a300692a",
         "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
         "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
-        "module/manifest.py": "09aa9bc40fcaa422905d9e3d63c30c01e99c27fc6db642119eb38a6c24af8c57",
+        "module/manifest.py": "01d4a883c4afc2c37477c60a8458b4ca30ec9ea9a1d5f32e6e739d97a36c476f",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
         "module/rproxy/caddy.py": "db14428770d1c93b61963e22e2d877132b9ec5f5a71fd881595dee75bb5c500a"
       },
