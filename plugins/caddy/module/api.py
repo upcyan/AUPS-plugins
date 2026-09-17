@@ -13,6 +13,7 @@ from ...core import waf as WAFM
 from . import env as ENV
 from . import caddyfile as CF
 from . import sslmode as SSL
+from . import certificates as CERTS
 
 router = APIRouter()
 
@@ -215,6 +216,12 @@ def caddy_journal(lines: int = 100, auth=Depends(require_auth)):
 @router.get("/caddy/ssl/status")
 def ssl_status(auth=Depends(require_auth)):
     return SSL.status()
+
+
+@router.get("/caddy/certificates")
+def caddy_certificates(auth=Depends(require_auth)):
+    """读取 Caddy 自动签发并管理的证书元数据。"""
+    return CERTS.status()
 
 
 @router.post("/caddy/ssl/flexible")

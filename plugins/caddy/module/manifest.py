@@ -14,15 +14,18 @@ v1.4.0：补全容器部署生命周期、host 网络反代兼容、持久化挂
 v1.5.0：新增 SSL 接入方案（SSL 标签页）：方案 A Flexible（Cloudflare 代理仅 HTTP 回源）
 / 方案 B DNS-01（Cloudflare API 自动签发 Let's Encrypt 证书，支持 Full Strict）。
 v1.5.2：新增统一站点管理能力与实机/容器部署方式无损切换。
+v1.7.0：SSL 页展示 Caddy 自动 HTTPS 已签发证书及有效期。
 """
 
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.6.1",
-    "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、access 日志、防火墙",
+    "version": "1.7.0",
+    "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、自动 HTTPS 证书、access 日志、防火墙；依赖 SSL 证书管理",
     "type": "external",
     "attr": "依赖",
+    # 证书申请、续期与状态由统一证书管理插件提供。
+    "depends": [{"name": "certmanager"}],
     # 反代能力声明：本插件是 proxy 能力提供者
     "provides": {"proxy": "caddy"},
     "proxy": "caddy",
@@ -50,6 +53,7 @@ MANIFEST = {
         "/api/caddy/presets",
         "/api/caddy/journal",
         "/api/caddy/ssl/status",
+        "/api/caddy/certificates",
         "/api/caddy/ssl/flexible",
         "/api/caddy/ssl/dns01",
         "/api/caddy/ssl/disable",

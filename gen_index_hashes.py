@@ -102,6 +102,10 @@ def main():
         man = read_manifest(name)
         p["cards"] = bool(man.get("cards"))
         p["provides"] = sorted((man.get("provides") or {}).keys())
+        if man.get("depends"):
+            p["depends"] = man["depends"]
+        else:
+            p.pop("depends", None)
         if man.get("version"):
             p["version"] = man["version"]
         if diffs:

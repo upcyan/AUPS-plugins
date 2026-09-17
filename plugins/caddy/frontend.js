@@ -257,7 +257,10 @@ function navHtml() {
   async function sslTab() {
     view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
     try {
-      const st = await api('GET', '/api/caddy/ssl/status');
+      const [st, certData] = await Promise.all([
+        api('GET', '/api/caddy/ssl/status'),
+        api('GET', '/api/caddy/certificates')
+      ]);
       const mode = st.configured_mode || 'none';
       const hint = st.caddyfile_hint || '未检测到特殊配置';
       const hasDns = st.binary_supports_dns01;
@@ -268,6 +271,18 @@ function navHtml() {
         : '<span class="mut">默认自动 HTTPS</span>';
 
       const dnsStatus = hasDns ? '<span style="color:var(--ok)">✓ 支持</span>' : '<span style="color:var(--bad)">✗ 不支持（需自定义构建）</span>';
+      const certificates = certData.certificates || [];
+      const certRows = certificates.map(cert => {
+        const state = cert.status === 'expired' ? '<span class="bad">已过期</span>'
+          : cert.status === 'expiring' ? '<span style="color:#f59e0b">即将到期</span>'
+          : '<span class="ok">有效</span>';
+        const days = cert.remaining_days < 0 ? `已过期 ${Math.abs(cert.remaining_days)} 天`
+          : `剩余 ${cert.remaining_days} 天`;
+        const names = (cert.domains || []).slice(1).join('、');
+        return `<tr><td><b>${esc(cert.domain)}</b>${names ? `<div class="mut" style="font-size:12px">${esc(names)}</div>` : ''}</td>
+          <td>${esc(sslDate(cert.issued_at))}</td><td>${esc(sslDate(cert.expires_at))}<div class="mut" style="font-size:12px">${esc(days)}</div></td>
+          <td>${esc(cert.issuer || '未知')}</td><td>${state}</td></tr>`;
+      }).join('') || '<tr><td colspan="5" class="mut">未发现 Caddy 已签发的证书。创建 HTTPS 站点并完成首次访问后，Caddy 会自动申请证书。</td></tr>';
 
       view.innerHTML = navHtml() + `
       <div class="card"><h2>SSL 接入方案（Cloudflare 场景）</h2>
@@ -334,6 +349,12 @@ function navHtml() {
         </details>
       </div>
 
+      <div class="card"><h2>Caddy 自动 HTTPS 证书</h2>
+        <div class="row" style="margin-bottom:10px"><span class="mut">已发现 ${certData.count || 0} 张证书。Caddy 会在到期前自动续期，无需手动续期。</span>
+          <button class="ghost" onclick="${P}sslTab()" style="margin-left:auto">刷新</button></div>
+        <table><thead><tr><th>域名</th><th>签发时间</th><th>到期时间</th><th>签发方</th><th>状态</th></tr></thead><tbody>${certRows}</tbody></table>
+      </div>
+
       <div class="card"><h2>恢复默认</h2>
         <div class="mut" style="margin-bottom:8px">移除所有 SSL 特殊配置，恢复 Caddy 默认自动 HTTPS 行为（自动签发、HTTP→HTTPS 重定向）。</div>
         <button class="danger" onclick="${P}sslDisable()">恢复默认 HTTPS</button>
@@ -342,6 +363,11 @@ function navHtml() {
     } catch (e) {
       view.innerHTML = navHtml() + errCard(e);
     }
+  }
+  function sslDate(value) {
+    if (!value) return '-';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('zh-CN');
   }
   async function sslApplyFlexible() {
     const email = document.getElementById('sslFlexEmail').value.trim();

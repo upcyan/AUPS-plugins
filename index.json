@@ -38,20 +38,21 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.6.1",
+      "version": "1.7.0",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
         "README.md": "e74375901f60fc65fb46e9b4e6580ad9678eb785ba0f893037d6a204e7c41c9c",
         "frontend.js": "42aac3316e48613b1fd697b16a2ed56db8c39a5b2d1619a8d2659da827a82775",
-        "manifest.json": "dd9bb3542d92fcbaab42aa97328e6907799f9a6ea0e18e28fac2167525fffcc2",
+        "manifest.json": "8a17c2dca7bfe2b9ced1f97365c19b7e831f72c38d6f459f195d1f47087ec5d6",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
         "module/api.py": "292414d31f7afc0572f8672ae3e6675b00e339a8ae67a635050e6dbc549fd4a4",
         "module/caddyfile.py": "123d69c15dfc6714f1c37df839886e9b4c89c28a0ab9697cabefe996a300692a",
+        "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
         "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
-        "module/manifest.py": "9d21bd102582dc7fa47d20f4483dc09a8bea7512d0f0439d604ee8a42b767156",
+        "module/manifest.py": "e14dc7be3de09847dc1799bb08f3bf8df426d78d63ac3944a1b45da415188e00",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
-        "module/rproxy/caddy.py": "db14428770d1c93b61963e22e2d877132b9ec5f5a71fd881595dee75bb5c500a"
+        "module/rproxy/caddy.py": "011a4df91494ef72b9d8b2a58229a704ed68e1001508240a4bbaa5b881b1c27c"
       },
       "cards": false,
       "provides": [
@@ -65,13 +66,18 @@
             "podman"
           ]
         }
-      }
+      },
+      "depends": [
+        {
+          "name": "certmanager"
+        }
+      ]
     },
     {
       "name": "nginx",
       "title": "Nginx 依赖",
       "attr": "依赖",
-      "version": "1.2.0",
+      "version": "1.1.0",
       "description": "Nginx 反代：站点、证书、WebSocket、上游池、配置校验回滚与日志",
       "install_params": [
         {
@@ -407,7 +413,12 @@
         "module/webapi.py": "d643e3ae874022a561936b9c18399e8590a7aa78a8400b8f8de4e4cb1fa52973"
       },
       "cards": false,
-      "provides": []
+      "provides": [],
+      "depends": [
+        {
+          "capability": "proxy"
+        }
+      ]
     },
     {
       "name": "certmanager",
