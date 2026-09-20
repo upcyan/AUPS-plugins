@@ -10,7 +10,7 @@
         "安全",
         "网络"
       ],
-      "version": "2.5.6",
+      "version": "2.6.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -18,15 +18,15 @@
         }
       ],
       "files": {
-        "README.md": "5e710adff23ebd94fb2d0367757e438260899b9067aff70c18278e405415bf93",
+        "README.md": "57414184c35850ac81cfef153e676f032930b1539e9d9d6ef3e18093447294a6",
         "frontend.js": "e56921a23f5877658129b6efae3fbc40132eddadf2c11cb631b87c5aa7806dda",
-        "manifest.json": "a4fac96e8c9f17d8239f21a78e3fff181f1f1096c3dadb8f6a56e9253925accb",
+        "manifest.json": "0e3534410cc1b6a83fbcb81836c457051a0dfa9e53b77dfe900c7f0ddfd1372a",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "0a9df954689c5eb95670e5667b796517fee3ef2f7b710ff9d352d960e7877aee",
-        "module/apps.py": "c16992ee349b410bf14eeba7d79f01032338159f22a3d69612b9c7183712b663",
-        "module/cli.py": "66854aa6ff3b64f4b46bc2b2b6a3af45577b5c560918ea51d231f1c7f4f2d578",
+        "module/api.py": "e990b68f1b22fcb52659d0dc40f52ddd3ba97f71d90502c3e290acc81909351c",
+        "module/apps.py": "4a6fc3c549c94176eeb909420377c61095e4af8e89ec5bd0ee1ae669aab6f6a9",
+        "module/cli.py": "2150def82f8cd5a022b003f13fc5067ec7bdee069c60433f2672d6aff3603f42",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "aeaeb1de2f2de4c73a558b3837991c4319a116bb557fb47bb22801b6af667937",
+        "module/manifest.py": "e060faa36798b4dcea94d122260bd54e302ce69e69faadaeb290a7412b5bdc01",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "0959e83a0fe917acde58316397b27bb123751c6de0a2e0e6b6e046a791670678",
         "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
@@ -38,21 +38,21 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.7.1",
+      "version": "1.8.0",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
-        "README.md": "e74375901f60fc65fb46e9b4e6580ad9678eb785ba0f893037d6a204e7c41c9c",
+        "README.md": "d51aba0a8e2902fd325d2b25c4df5ae18d32c1565dd578a68db808078e2aef66",
         "frontend.js": "20a8e78f72890313ecf5e2f7df5007a216704b3369a0ff73af1aa69c279fccdd",
-        "manifest.json": "037d2467c6534a9455a6a9e685a0dcdcd191d6016897b7dd0b5ee6aeb93e970e",
+        "manifest.json": "73f0a3ba5d3755d3bc9a15ff1e2e4e3a9acc3bb5f66764b150cd13b7c3d21012",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
         "module/api.py": "5ab9e5c42c95a8cd208df293a633465da0167c1249bdbdadb5428c60229108bb",
-        "module/caddyfile.py": "123d69c15dfc6714f1c37df839886e9b4c89c28a0ab9697cabefe996a300692a",
+        "module/caddyfile.py": "b1a0782614adf27ad7811bf2b9719c9d93971d60c01347216010c4bfd5f67ba4",
         "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
         "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
-        "module/manifest.py": "01d4a883c4afc2c37477c60a8458b4ca30ec9ea9a1d5f32e6e739d97a36c476f",
+        "module/manifest.py": "ef94ce5c6b9c4d60c76d654f3a950747e156f5c1a7a0c3848b670612997ecfae",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
-        "module/rproxy/caddy.py": "db14428770d1c93b61963e22e2d877132b9ec5f5a71fd881595dee75bb5c500a"
+        "module/rproxy/caddy.py": "e45b1c30b87a3ef3602cd87dcc19d00aa321c66c90fbc4238fb75cbe53e7c7d6"
       },
       "cards": false,
       "provides": [
