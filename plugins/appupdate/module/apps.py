@@ -634,7 +634,7 @@ def _changelog_file():
 
 
 def _load_changelogs():
-    """{应用名: {版本: 日志文本}}；文件缺失/损坏返回空。"""
+    """面板补写层 {应用名: {版本: 日志文本}}；文件缺失/损坏返回空。"""
     try:
         with open(_changelog_file(), encoding="utf-8") as f:
             d = json.load(f)
@@ -651,36 +651,115 @@ def _save_changelogs(data):
     os.replace(tmp, _changelog_file())
 
 
+def _update_json_changelogs(name):
+    """读取应用目录下 CI 维护的 update.json（dateforshift 等应用的日志事实源）。
+
+    返回 ({versionName: note}, path)；文件缺失/损坏返回 ({}, path)。
+    兼容顶层 note（最新版说明）与 changelogs[] 数组。
+    """
+    path = os.path.join(app_dir(name), "update.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}, path
+    logs = {}
+    if isinstance(data, dict):
+        vn = str(data.get("versionName") or "")
+        note = data.get("note")
+        if vn and note:
+            logs[vn] = str(note)
+        for item in data.get("changelogs") or []:
+            if isinstance(item, dict):
+                ivn = str(item.get("versionName") or "")
+                inote = item.get("note")
+                if ivn and inote:
+                    logs[ivn] = str(inote)
+    return logs, path
+
+
+def _write_update_json_note(name, version, text):
+    """把面板编辑写回 update.json（changelogs[] 与顶层 note 同步）。
+
+    CI 的 merge-update-json.sh 默认保留已有 note（仅 --overwrite-note 才覆盖），
+    因此面板编辑不会被下次发布冲掉。文件不存在/损坏返回 False。
+    """
+    path = os.path.join(app_dir(name), "update.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return False
+    if not isinstance(data, dict):
+        return False
+    hit = False
+    if str(data.get("versionName") or "") == version:
+        data["note"] = text
+        hit = True
+    for item in data.get("changelogs") or []:
+        if isinstance(item, dict) and str(item.get("versionName") or "") == version:
+            item["note"] = text
+            hit = True
+    if not hit:
+        return False
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, path)
+    return True
+
+
 def list_changelogs(name):
-    """某应用的全部更新日志 {版本: 文本}（CI 直传的版本天然无记录）。"""
+    """某应用全部更新日志 {版本: 文本}。
+
+    合并视图：CI 维护的 update.json 为主源，面板补写层（apps-changelog.json）
+    叠加其上（人工编辑优先）；无 update.json 的应用完全使用面板补写层。
+    """
     app_dir(name)
-    logs = _load_changelogs().get(name, {})
-    return {k: v for k, v in logs.items() if isinstance(v, str)}
+    merged = {}
+    logs, _path = _update_json_changelogs(name)
+    merged.update(logs)
+    merged.update({k: v for k, v in _load_changelogs().get(name, {}).items()
+                   if isinstance(v, str) and v})
+    return merged
 
 
 def get_changelog(name, version):
     """读取某应用某版本的更新日志；无记录返回空串。"""
-    logs = list_changelogs(name)
-    return logs.get(str(version), "")
+    return list_changelogs(name).get(str(version), "")
 
 
 def set_changelog(name, version, text):
-    """写入/更新某应用某版本的更新日志；清空文本即删除该条记录。"""
+    """写入/更新某应用某版本的更新日志；清空文本即删除面板补写层记录。
+
+    应用目录存在 update.json 时编辑直接写回（App 端展示的同一来源），
+    否则落到面板补写层 apps-changelog.json。
+    """
     app_dir(name)
     version = str(version or "").strip()
     if not version:
         raise AppError("版本号不能为空")
-    data = _load_changelogs()
-    app_notes = data.setdefault(name, {})
     text = str(text or "").replace("\r\n", "\n").strip()
-    if text:
-        app_notes[version] = text
+    result = {"name": name, "version": version, "changelog": text, "source": "panel"}
+    wrote = False
+    try:
+        wrote = _write_update_json_note(name, version, text)
+    except OSError:
+        wrote = False
+    if wrote:
+        result["source"] = "update.json"
     else:
-        app_notes.pop(version, None)
-        if not app_notes:
-            data.pop(name, None)
-    _save_changelogs(data)
-    return {"name": name, "version": version, "changelog": text}
+        # 面板补写层：清空文本即删除该条（应用段空了连应用键一起清）
+        data = _load_changelogs()
+        app_notes = data.setdefault(name, {})
+        if text:
+            app_notes[version] = text
+        else:
+            app_notes.pop(version, None)
+            if not app_notes:
+                data.pop(name, None)
+        _save_changelogs(data)
+    return result
 
 
 def _delete_apk_safe(path):
