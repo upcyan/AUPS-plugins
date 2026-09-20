@@ -10,7 +10,7 @@
         "安全",
         "网络"
       ],
-      "version": "2.6.0",
+      "version": "2.7.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -18,15 +18,15 @@
         }
       ],
       "files": {
-        "README.md": "57414184c35850ac81cfef153e676f032930b1539e9d9d6ef3e18093447294a6",
-        "frontend.js": "e56921a23f5877658129b6efae3fbc40132eddadf2c11cb631b87c5aa7806dda",
-        "manifest.json": "0e3534410cc1b6a83fbcb81836c457051a0dfa9e53b77dfe900c7f0ddfd1372a",
+        "README.md": "ba5f0d252d229dccd51280e80af66aadbbe8ada5c3d0cd5dd65ac3dd2eb07e7b",
+        "frontend.js": "b9ebca46ce668bea3f115bcd87aa14f48045c07d4480de85aebb78c845b92990",
+        "manifest.json": "e744162ed6f2a8db27b2278cfeadab771f9d8bbd899fc2a7127ec30b69aa7f5b",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "e990b68f1b22fcb52659d0dc40f52ddd3ba97f71d90502c3e290acc81909351c",
-        "module/apps.py": "4a6fc3c549c94176eeb909420377c61095e4af8e89ec5bd0ee1ae669aab6f6a9",
-        "module/cli.py": "2150def82f8cd5a022b003f13fc5067ec7bdee069c60433f2672d6aff3603f42",
+        "module/api.py": "2718783765f0acc73409a357a081803aae6852ff139aff9e0f3559a3000421c0",
+        "module/apps.py": "03594ed9219e5c95855ab0dd320d4baeb054f361dcaca7c80cfe545b7d9048d0",
+        "module/cli.py": "6eee96d5bc6a723adb02bb12ceaae878075602fe7196e5f11f92fecfbb8605fe",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "e060faa36798b4dcea94d122260bd54e302ce69e69faadaeb290a7412b5bdc01",
+        "module/manifest.py": "77e6dccff4c1ae6c0c2acc7d89bdb4f58c127d69f4d5693f8712da5ded13b6c1",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "0959e83a0fe917acde58316397b27bb123751c6de0a2e0e6b6e046a791670678",
         "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
@@ -38,21 +38,21 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.8.0",
+      "version": "1.9.0",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
         "README.md": "d51aba0a8e2902fd325d2b25c4df5ae18d32c1565dd578a68db808078e2aef66",
         "frontend.js": "20a8e78f72890313ecf5e2f7df5007a216704b3369a0ff73af1aa69c279fccdd",
-        "manifest.json": "73f0a3ba5d3755d3bc9a15ff1e2e4e3a9acc3bb5f66764b150cd13b7c3d21012",
+        "manifest.json": "8d65871c2198ec52e22780b1759335269cc584e330ce7031be95e821eca69331",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
         "module/api.py": "5ab9e5c42c95a8cd208df293a633465da0167c1249bdbdadb5428c60229108bb",
         "module/caddyfile.py": "b1a0782614adf27ad7811bf2b9719c9d93971d60c01347216010c4bfd5f67ba4",
         "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
         "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
-        "module/manifest.py": "ef94ce5c6b9c4d60c76d654f3a950747e156f5c1a7a0c3848b670612997ecfae",
+        "module/manifest.py": "3105414d256a3424c0200b8f028f01799f34b9f8f6cc81ae409da2d1dea3ac5b",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
-        "module/rproxy/caddy.py": "e45b1c30b87a3ef3602cd87dcc19d00aa321c66c90fbc4238fb75cbe53e7c7d6"
+        "module/rproxy/caddy.py": "6c1c9d479906f1c8d9b4317ae95d1fefb40eacf06af3d4f0114e18f18eeba6cf"
       },
       "cards": false,
       "provides": [
@@ -77,7 +77,7 @@
       "name": "nginx",
       "title": "Nginx 依赖",
       "attr": "依赖",
-      "version": "1.1.0",
+      "version": "1.3.0",
       "description": "Nginx 反代：站点、证书、WebSocket、上游池、配置校验回滚与日志",
       "install_params": [
         {
@@ -89,14 +89,14 @@
         }
       ],
       "files": {
-        "README.md": "2fb9ae81f2777414715c19fe852ce24d5c9e9c5221333f85fca3b74b39082f4f",
-        "frontend.js": "54bbdbc14770f21ac51c546c2d993cb9d15293645faa0b357a58277d3cdc50d4",
-        "manifest.json": "afa5be7272c5bc1fc23b56631ee8638d1ebf89e09cf7a151561ea703410347b0",
+        "README.md": "55322ed5f3968c69e83f06e5a158eb18b36cbd12675e08f803d1ddbc9baf376b",
+        "frontend.js": "24377947abd9d376050125ea2a0b80739052e22925c7f1d9bfb1ae0048dad952",
+        "manifest.json": "1bc52327013dc769fc5c0b72f57c9e281b4f0c2e69b0c831675e175d40bb6f59",
         "module/__init__.py": "4dad3b5e3fd946cbd24fb74eff88dab5c3574b2707419a88676cccdedf4f7c55",
-        "module/api.py": "82a308c3ee534c3d3750e68c32c86a611ae7283cb8a5b6f9587403459eeed435",
+        "module/api.py": "c05b3a99a9b1ed6ac45b2791bad5bd8d440f0655ceb388d14d862583d0569fd5",
         "module/cli.py": "a1889b0da989611aee38d7426b1544fd435f3ef246f3fdc5d15403d473ae94e3",
-        "module/manifest.py": "ceea6be4409e9239cf4f7c71cfda1d852d39ef59c803c74e2d8f97503cf53a1a",
-        "module/webapi.py": "528745c08312026cced55ca0f02a5b60b0d10e6fa67e678dd9b0e2307ac4c4c8"
+        "module/manifest.py": "bbd4c62d751ef4e53b0f11f3f407c1abc2791cb16a24e58a37e1fbac28d70f21",
+        "module/webapi.py": "ec6b0aeb441c3c86f23b0a184a6c76f154c27d654395bee7717937ab5f56453c"
       },
       "cards": false,
       "provides": [
