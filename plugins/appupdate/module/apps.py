@@ -661,26 +661,44 @@ def _update_json_changelogs(name):
     """读取应用目录下 CI 维护的 update.json（dateforshift 等应用的日志事实源）。
 
     返回 ({versionName: note}, path)；文件缺失/损坏返回 ({}, path)。
-    兼容顶层 note（最新版说明）与 changelogs[] 数组。
+    除顶层 note（最新版说明）与 changelogs[] 外，同时纳入滚动窗口裁剪出的
+    归档分片 update-archive/changelogs-<分片>.json——保证已归档版本的日志
+    在面板仍可查看；同版本以 live 文件为准（归档先读，live 后写覆盖）。
     """
     path = os.path.join(app_dir(name), "update.json")
+    logs = {}
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except (OSError, ValueError):
-        return {}, path
-    logs = {}
-    if isinstance(data, dict):
-        vn = str(data.get("versionName") or "")
-        note = data.get("note")
-        if vn and note:
-            logs[vn] = str(note)
-        for item in data.get("changelogs") or []:
+        return logs, path
+
+    def _absorb(entries):
+        for item in entries or []:
             if isinstance(item, dict):
                 ivn = str(item.get("versionName") or "")
                 inote = item.get("note")
                 if ivn and inote:
                     logs[ivn] = str(inote)
+
+    arch_dir = os.path.join(os.path.dirname(path), "update-archive")
+    try:
+        shards = sorted(fn for fn in os.listdir(arch_dir)
+                        if re.fullmatch(r"changelogs-\d{4}\.json", fn))
+    except OSError:
+        shards = []
+    for fn in shards:
+        try:
+            with open(os.path.join(arch_dir, fn), encoding="utf-8") as f:
+                _absorb(json.load(f))
+        except (OSError, ValueError):
+            continue
+    if isinstance(data, dict):
+        vn = str(data.get("versionName") or "")
+        note = data.get("note")
+        if vn and note:
+            logs[vn] = str(note)
+        _absorb(data.get("changelogs"))
     return logs, path
 
 
