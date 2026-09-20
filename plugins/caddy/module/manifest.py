@@ -17,12 +17,13 @@ v1.5.2：新增统一站点管理能力与实机/容器部署方式无损切换�
 v1.7.0：SSL 页展示 Caddy 自动 HTTPS 已签发证书及有效期。
 v1.8.0：下载路由渲染前实时重取 appupdate 数据（CI 直传文件即时生效）；
 latest 短链按文件日期选定；apply/应用站点块无变化时跳过写盘与 reload。
+v1.9.0：新增 clear_routes 能力（appupdate 迁移到其他反代时清空托管短链）。
 """
 
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.8.0",
+    "version": "1.9.0",
     "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、自动 HTTPS 证书、access 日志、防火墙；依赖 SSL 证书管理",
     "type": "external",
     "attr": "依赖",
@@ -34,8 +35,9 @@ MANIFEST = {
     "rproxy_module": "aups.modules.caddy.rproxy.caddy",
     # 反代能力集（rproxy 能力协商用）：声明本反代支持哪些能力
     "capabilities": ["status", "show", "preview", "apply", "reload",
-                     "waf", "download_route", "access_log", "sites", "validate", "logs",
-                     "upstreams", "tls", "websocket", "health_check", "deploy_switch"],
+                     "waf", "download_route", "clear_routes", "access_log", "sites",
+                     "validate", "logs", "upstreams", "tls", "websocket", "health_check",
+                     "deploy_switch"],
     # 部署方式：实机 + 容器（docker/podman）
     "deploy": {"host": True, "container": {"kinds": ["docker", "podman"]}},
     "config_dir": "caddy",

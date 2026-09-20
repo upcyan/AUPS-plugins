@@ -511,3 +511,35 @@ def update_app_sites(apps, reload_=True):
     """更新 Caddyfile 中的应用站点块（AUPS APPS SITE 标记区）。"""
     from ..caddyfile import update_app_sites as _update
     return _update(apps, reload_=reload_)
+
+
+def _gen_empty_routes():
+    return "\n".join([_APPS_MARK_BEGIN, _APPS_MARK_END])
+
+
+def clear_routes(reload=True):
+    """清空托管下载路由（appupdate 迁移到其他反代时调用）。
+
+    只清 APPS 短链区，WAF 段与应用站点块保留；切回 caddy 后执行
+    apply() 即可按最新数据重新生成路由。无托管标记区时视为无需清理。
+    """
+    try:
+        text, target = _site()
+    except AppError:
+        return {"cleared": True, "changed": False, "reloaded": False,
+                "note": "Caddyfile 中无托管标记区，无需清理"}
+    lines = text.splitlines()
+    new_body = _replace_section(target["body"], _APPS_MARK_BEGIN, _APPS_MARK_END,
+                                _gen_empty_routes())
+    if new_body == target["body"]:
+        return {"cleared": True, "changed": False, "reloaded": False}
+    out = (lines[: target["start"]]
+           + [lines[target["start"]]]
+           + new_body.splitlines()
+           + [lines[target["end"]]]
+           + lines[target["end"] + 1:])
+    with open(env.caddy_config_file(), "w", encoding="utf-8") as f:
+        f.write("\n".join(out))
+    if reload:
+        _reload(warn_only=True)
+    return {"cleared": True, "changed": True, "reloaded": bool(reload)}

@@ -216,6 +216,53 @@ def remove_app(name):
     return {"name": name, "removed": True, "dir": meta.get("dir", "")}
 
 
+def backend_list():
+    """反代后端概览：当前后端 + 各后端能力（切换/迁移 UI 与 CLI 用）。"""
+    from ... import rproxy
+    try:
+        current = rproxy.backend_name()
+    except Exception:
+        current = None
+    backends = []
+    for name, info in sorted(rproxy.backends().items()):
+        caps = info.get("capabilities") or []
+        backends.append({"name": name, "plugin": info.get("plugin"),
+                         "download_route": "download_route" in caps,
+                         "clear_routes": "clear_routes" in caps})
+    return {"backend": current, "backends": backends}
+
+
+def switch_backend(backend=None, migrate=True, reload=True):
+    """切换默认反代后端，并把下载路由/应用站点迁移过去。
+
+    migrate=True 时先清空旧后端的托管下载短链（应用站点块与 WAF 段保留，
+    切回即可恢复），再对新后端执行完整同步（应用站点块 + 版本短链 + latest）。
+    """
+    from ... import rproxy
+    import importlib
+    old = rproxy.backend_name()
+    if backend:
+        rproxy.set_backend(backend)
+    new = rproxy.backend_name()
+    result = {"backend": new, "previous": old, "cleared": None, "errors": []}
+    if migrate and old and new != old:
+        try:
+            if rproxy.has_capability("clear_routes", old):
+                info = rproxy.backends().get(old) or {}
+                mod = importlib.import_module(info["module"]) if info.get("module") else None
+                fn = getattr(mod, "clear_routes", None)
+                if callable(fn):
+                    result["cleared"] = fn(reload=True)
+                else:
+                    result["errors"].append(f"{old} 未实现 clear_routes()，旧路由保留")
+            else:
+                result["errors"].append(f"{old} 不支持 clear_routes 能力，旧路由保留")
+        except Exception as e:
+            result["errors"].append(f"清理旧后端路由失败：{e}")
+    result["sync"] = sync_proxy_routes(reload=reload)
+    return result
+
+
 def _auto_sync():
     """注册/删除应用后自动同步反代路由（失败不阻断主流程）。"""
     try:

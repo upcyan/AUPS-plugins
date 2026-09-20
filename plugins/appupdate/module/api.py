@@ -44,6 +44,20 @@ def proxy_list(auth=Depends(require_auth)):
     return {"proxies": registry.capability_providers("proxy")}
 
 
+@router.get("/apps/proxy/backends")
+def proxy_backends(auth=Depends(require_auth)):
+    """反代后端概览：当前后端 + 各后端能力（download_route/clear_routes）。"""
+    return A.backend_list()
+
+
+@router.post("/apps/proxy/switch")
+def proxy_switch(body: dict = None, auth=Depends(require_auth)):
+    """切换默认反代后端并迁移下载路由/应用站点（migrate=False 时保留旧后端路由）。"""
+    b = body or {}
+    return A.switch_backend(b.get("backend"), migrate=bool(b.get("migrate", True)),
+                            reload=bool(b.get("reload", True)))
+
+
 @router.post("/apps/caddy")
 def apps_caddy(body: dict = None, auth=Depends(require_auth)):
     """同步反代路由：刷新下载数据块 + 应用站点块 + 短链重定向（含 latest）并 reload。

@@ -6,8 +6,8 @@ CLI 命令组在 aups/core/cli.py 中按此清单注册；Web 路由在 aups/web
 MANIFEST = {
     "name": "appupdate",
     "title": "应用更新管理",
-    "version": "2.6.0",
-    "description": "多应用管理：部署配置（域名/SSL/端口/用户）、版本管理、CI 上传、存储配额、下载统计、下载路由自动同步",
+    "version": "2.7.0",
+    "description": "多应用管理：部署配置（域名/SSL/端口/用户）、版本管理、CI 上传、存储配额、下载统计、下载路由自动同步、反代切换迁移",
     "type": "external",
     "attr": "功能",
     "depends": [{"capability": "proxy"}],
@@ -15,10 +15,10 @@ MANIFEST = {
         "version": "1",
         "api": [{
             "id": "download_routes", "module": "apps", "function": "public_download_routes",
-            "callers": ["caddy"],
+            "callers": ["caddy", "nginx"],
         }],
         "data": [{
-            "id": "download_routes", "readers": ["caddy"],
+            "id": "download_routes", "readers": ["caddy", "nginx"],
             "schema": {
                 "type": "object", "required": ["apps"],
                 "properties": {"apps": {"type": "array", "items": {
@@ -47,6 +47,9 @@ MANIFEST = {
         "/api/apps/{name}/deploy/sshkey",
         "/api/apps/caddy",
         "/api/apps/discover",
+        "/api/apps/proxy-list",
+        "/api/apps/proxy/backends",
+        "/api/apps/proxy/switch",
         "/api/storage/usage",
         "/api/storage/apks",
         "/api/storage/quota",

@@ -160,6 +160,10 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       appsBaseDir = d.base_dir || '/var/www/html';
       usersCache = ud.users || [];
       proxyCache = pd.proxies || [];
+      let bk = { backend: null, backends: [] };
+      try { bk = await api('GET', '/api/apps/proxy/backends'); } catch (e) {}
+      const bkOpts = (bk.backends || []).map(b =>
+        `<option value="${esc(b.name)}" ${b.name === bk.backend ? 'selected' : ''}>${esc(b.name)}${b.download_route ? '' : '（无下载路由）'}</option>`).join('');
       const rows = appsCache.map(a => {
         const dep = a.deploy || {};
         return `<tr>
@@ -180,6 +184,9 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
         <div class="row" style="margin-top:10px">
           <button onclick="${P}addApp()">新增应用</button>
           <button class="ghost" onclick="${P}appsCaddy()">同步反代路由</button>
+          ${bk.backends && bk.backends.length ? `<span class="mut" style="margin-left:auto;font-size:12px">反代</span>
+          <select id="appBackend" style="max-width:140px">${bkOpts}</select>
+          <button class="ghost" onclick="${P}switchBackend()">切换并迁移</button>` : ''}
         </div>
       </div>
       <div id="appModal"></div>`;
@@ -284,6 +291,21 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     try { await api('POST', '/api/apps/caddy', { reload: true }, true); alert('反代路由已更新'); }
     catch(e){ alert('更新失败：' + ((e&&e.detail)||e)); }
     // 停止所有按钮的流光动画
+    try { window.stopAllFx(); } catch(e) {}
+  }
+
+  async function switchBackend() {
+    const sel = document.getElementById('appBackend');
+    const target = sel ? sel.value : '';
+    if (!target) { alert('未检测到可用反代后端'); return; }
+    if (!confirm('切换默认反代到「' + target + '」？\n将清空旧后端的托管下载短链（应用站点保留），并在新后端重建站点与路由（含 latest）。')) return;
+    try {
+      const r = await api('POST', '/api/apps/proxy/switch', { backend: target, migrate: true }, true);
+      const errs = ((r.errors || []).concat((r.sync && r.sync.errors) || []));
+      if (errs.length) alert('已切换到 ' + r.backend + '，但部分步骤失败：\n' + errs.join('\n'));
+      else alert('已切换到 ' + r.backend + '，路由与站点已迁移');
+    } catch(e){ alert('切换失败：' + ((e&&e.detail)||e)); }
+    await appsTab();
     try { window.stopAllFx(); } catch(e) {}
   }
 
@@ -534,7 +556,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     ],
     go: go,
     open: function (s) { go(s || 'apps'); },
-    appsTab, addApp, saveApp, editApp, appDelete, appsCaddy, modalClose,
+    appsTab, addApp, saveApp, editApp, appDelete, appsCaddy, switchBackend, modalClose,
     toggleSslMode, toggleSslType, checkDomain, updateDefaultWorkdir,
     usersTab, userCreate, userDelete, userDirAuth, userDirGrant, userDirRevoke,
     userSsh, sshAdd, sshRemove,

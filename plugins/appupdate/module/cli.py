@@ -19,7 +19,7 @@ from . import users
 
 # 只读命令（免 root）；其余命令要求 root
 READ_ONLY = {
-    "app": {"list", "versions", "latest"},
+    "app": {"list", "versions", "latest", "backends"},
     "storage": {"usage", "apks"},
     "user": {"list"},
     "ssh": {"list"},
@@ -65,9 +65,15 @@ def build(sub):
     av = aps.add_parser("versions", help="列出应用下所有 APK 版本")
     av.add_argument("name")
     av.add_argument("--json", action="store_true")
-    ac = aps.add_parser("caddy", help="把各应用下载路由写入 Caddyfile 并 reload")
+    ac = aps.add_parser("caddy", help="把各应用下载路由写入反代配置并 reload")
     ac.add_argument("--preview", action="store_true", help="只打印路由，不写入")
     ac.add_argument("--no-reload", action="store_true")
+    abk = aps.add_parser("backends", help="列出可用反代后端及能力（当前后端标记）")
+    abk.add_argument("--json", action="store_true")
+    asw = aps.add_parser("switch", help="切换默认反代后端并迁移下载路由/应用站点")
+    asw.add_argument("backend", nargs="?", help="目标后端（caddy/nginx，缺省重新同步当前）")
+    asw.add_argument("--no-migrate", action="store_true", help="保留旧后端路由，不清理")
+    asw.add_argument("--no-reload", action="store_true")
     al = aps.add_parser("latest"); al.add_argument("name")
     aq = aps.add_parser("quota", help="查看/设置应用容量配额或全局总配额（MB，0=不限）")
     aq.add_argument("name", nargs="?")
@@ -236,6 +242,24 @@ def _app(a):
             print(apps.proxy_preview())
             return
         print_json(apps.sync_proxy_routes(reload=not a.no_reload))
+    elif a.action == "backends":
+        d = apps.backend_list()
+        if a.json:
+            print_json(d)
+            return
+        print(f"当前后端: {d['backend'] or '(未配置)'}")
+        for b in d["backends"]:
+            marks = []
+            marks.append("下载路由" if b["download_route"] else "无下载路由")
+            if b["clear_routes"]:
+                marks.append("可迁移清理")
+            cur = " ← 当前" if b["name"] == d["backend"] else ""
+            print(f"  {b['name']:<10} (插件 {b['plugin']})  {' / '.join(marks)}{cur}")
+        print("切换: aups plugins appupdate app switch <后端>")
+    elif a.action == "switch":
+        r = apps.switch_backend(a.backend, migrate=not a.no_migrate,
+                                reload=not a.no_reload)
+        print_json(r)
 
 
 def _ssh(a):
