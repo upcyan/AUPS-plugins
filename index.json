@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "a56439804b087bd743a3047d89258c32c89e9f71",
+  "branch": "53f3d68bf3dae2b8b3d5f67603bfa25133c3335e",
   "plugins": [
     {
       "name": "appupdate",

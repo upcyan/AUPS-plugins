@@ -113,6 +113,16 @@ def main():
             print(f"UPD {name}: {len(diffs)} 个文件哈希已变更")
         else:
             print(f"OK  {name}: {len(p['files'])} 个文件（无变化）")
+    # 固定市场下载提交：branch 字段写当前 HEAD SHA（codeload 按 SHA 的 tarball
+    # 不可变，避免分支压缩包 CDN 缓存导致全量哈希不一致）。脚本在 index 提交
+    # 前运行，HEAD 的 plugins/ 树与最终提交一致。
+    head = subprocess.run(["git", "-C", REPO, "rev-parse", "HEAD"], capture_output=True)
+    if head.returncode == 0:
+        sha = head.stdout.decode().strip()
+        if data.get("branch") != sha:
+            data["branch"] = sha
+            changed += 1
+            print(f"PIN branch -> {sha}")
     with open(INDEX, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
         f.write("\n")
