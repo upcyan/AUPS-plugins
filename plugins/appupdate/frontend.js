@@ -624,7 +624,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     modal(`<h2>更新日志 · ${esc(name)} ${esc(version)}</h2>
       <div id="chgLoading" class="mut" style="margin:10px 0"><span class="spinner"></span> 加载中...</div>
       <div id="chgEdit" style="display:none">
-        <textarea id="chgText" rows="10" style="width:100%;font-family:inherit" placeholder="本版本更新内容（留空保存即清除该条日志）"></textarea>
+        <textarea id="chgText" rows="16" style="width:100%;min-height:45vh;font-family:inherit;resize:vertical;box-sizing:border-box" placeholder="本版本更新内容（留空保存即清除该条日志）"></textarea>
         <div class="row" style="margin-top:10px">
           <button onclick="${P}changelogSave('${esc(name)}','${esc(version)}')">保存</button>
           <button class="ghost" onclick="${P}modalClose()">取消</button>
