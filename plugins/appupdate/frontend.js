@@ -562,7 +562,8 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
           </select>
         </div>
         <div id="verListBox"></div>
-      </div>`;
+      </div>
+      <div id="appModal"></div>`;
       if (_selectedApp) loadVersions(_selectedApp);
     } catch (e) {
       view.innerHTML = navHtml() + errCard(e);
@@ -583,21 +584,23 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       const versions = verData.versions || [];
       const rows = versions.map(v => {
         const isLocked = locked.has(v.version);
+        const logMark = v.has_changelog ? ' <span class="ok" style="font-size:11px">📝</span>' : '';
         return `<tr>
-          <td>${esc(v.version)}</td>
+          <td>${esc(v.version)}${logMark}</td>
           <td class="mut">${fmtSize(v.size_bytes)}</td>
           <td class="mut" style="font-size:11px">${esc(v.rel)}</td>
           <td>${isLocked
             ? `<button class="ghost" onclick="${P}unlockVer('${esc(name)}','${esc(v.version)}')">解锁</button>
                <span class="ok" style="font-size:11px">已锁定</span>`
             : `<button class="ghost" onclick="${P}lockVer('${esc(name)}','${esc(v.version)}')">锁定</button>`}</td>
+          <td><button class="ghost" onclick="${P}changelogLog('${esc(name)}','${esc(v.version)}')">日志</button></td>
           <td><button class="ghost danger" onclick="${P}apkDelete('${esc(name)}','${esc(v.rel)}')">删除</button></td>
         </tr>`;
       }).join('');
       box.innerHTML = `
-        <div class="mut" style="margin-bottom:6px">最新: ${verData.latest ? esc(verData.latest.version) : '-'} · 共 ${versions.length} 个版本</div>
-        <table><thead><tr><th>版本</th><th>大小</th><th>文件</th><th>锁定</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="5" class="mut">暂无版本</td></tr>'}</tbody></table>`;
+        <div class="mut" style="margin-bottom:6px">最新: ${verData.latest ? esc(verData.latest.version) : '-'} · 共 ${versions.length} 个版本 · 点「日志」查看/编辑该版本更新日志（📝 = 已填写）</div>
+        <table><thead><tr><th>版本</th><th>大小</th><th>文件</th><th>锁定</th><th>更新日志</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="mut">暂无版本</td></tr>'}</tbody></table>`;
     } catch(e) { box.innerHTML = errCard(e); }
   }
 
@@ -615,6 +618,33 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     if (!confirm('删除文件 ' + rel + '？')) return;
     try { await api('POST', '/api/storage/delete', { paths: [rel] }, true); await loadVersions(name); }
     catch(e){ alert('删除失败：' + ((e&&e.detail)||e)); }
+  }
+
+  async function changelogLog(name, version) {
+    modal(`<h2>更新日志 · ${esc(name)} ${esc(version)}</h2>
+      <div id="chgLoading" class="mut" style="margin:10px 0"><span class="spinner"></span> 加载中...</div>
+      <div id="chgEdit" style="display:none">
+        <textarea id="chgText" rows="10" style="width:100%;font-family:inherit" placeholder="本版本更新内容（留空保存即清除该条日志）"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button onclick="${P}changelogSave('${esc(name)}','${esc(version)}')">保存</button>
+          <button class="ghost" onclick="${P}modalClose()">取消</button>
+        </div>
+      </div>`);
+    try {
+      const r = await api('GET', '/api/apps/' + encodeURIComponent(name) + '/changelog/' + encodeURIComponent(version));
+      document.getElementById('chgLoading').style.display = 'none';
+      const edit = document.getElementById('chgEdit');
+      edit.style.display = '';
+      document.getElementById('chgText').value = r.changelog || '';
+    } catch(e) { modalClose(); alert('读取失败：' + ((e&&e.detail)||e)); }
+  }
+
+  async function changelogSave(name, version) {
+    const text = document.getElementById('chgText').value;
+    try {
+      await api('POST', '/api/apps/' + encodeURIComponent(name) + '/changelog/' + encodeURIComponent(version), { text });
+      modalClose(); await loadVersions(name);
+    } catch(e){ alert('保存失败：' + ((e&&e.detail)||e)); }
   }
 
   async function setQuota(name) {
@@ -650,6 +680,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     open: function (s) { go(s || 'apps'); },
     appsTab, addApp, saveApp, editApp, appDelete, appsCaddy, switchBackend, modalClose,
     pendSelAll, pendRegister, ciTokenShow, ciTokenCopy, ciTokenReset, watchToggle,
+    changelogLog, changelogSave,
     toggleSslMode, toggleSslType, checkDomain, updateDefaultWorkdir,
     usersTab, userCreate, userDelete, userDirAuth, userDirGrant, userDirRevoke,
     userSsh, sshAdd, sshRemove,

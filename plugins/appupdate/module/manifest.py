@@ -6,8 +6,8 @@ CLI 命令组在 aups/core/cli.py 中按此清单注册；Web 路由在 aups/web
 MANIFEST = {
     "name": "appupdate",
     "title": "应用更新管理",
-    "version": "2.8.0",
-    "description": "多应用管理：部署配置（域名/SSL/端口/用户）、版本管理、CI 上传、存储配额、下载统计、下载路由自动同步、反代切换迁移、CI 推送通知与新项目引导注册",
+    "version": "2.9.0",
+    "description": "多应用管理：部署配置（域名/SSL/端口/用户）、版本管理、CI 上传、存储配额、下载统计、下载路由自动同步、反代切换迁移、CI 推送通知与新项目引导注册、版本更新日志",
     "type": "external",
     "attr": "功能",
     "depends": [{"capability": "proxy"}],
@@ -36,6 +36,7 @@ MANIFEST = {
         "/api/apps/{name}",
         "/api/apps/{name}/versions",
         "/api/apps/{name}/versions/{version}/lock",
+        "/api/apps/{name}/changelog/{version}",
         "/api/apps/{name}/versions/{version}/unlock",
         "/api/apps/{name}/quota",
         "/api/apps/{name}/deploy",

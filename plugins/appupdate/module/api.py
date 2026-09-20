@@ -151,8 +151,21 @@ def apps_get(name: str, auth=Depends(require_auth)):
 @router.get("/apps/{name}/versions")
 def apps_versions(name: str, auth=Depends(require_auth)):
     vs = A.list_versions(name)
+    logs = A.list_changelogs(name)
+    for v in vs:
+        v["has_changelog"] = v["version"] in logs
     latest = A.latest_version(name)
     return {"name": name, "versions": vs, "latest": latest}
+
+
+@router.get("/apps/{name}/changelog/{version}")
+def app_changelog_get(name: str, version: str, auth=Depends(require_auth)):
+    return {"name": name, "version": version, "changelog": A.get_changelog(name, version)}
+
+
+@router.post("/apps/{name}/changelog/{version}")
+def app_changelog_set(name: str, version: str, body: dict = None, auth=Depends(require_auth)):
+    return A.set_changelog(name, version, (body or {}).get("text", ""))
 
 
 @router.post("/apps/{name}/versions/{version}/lock")

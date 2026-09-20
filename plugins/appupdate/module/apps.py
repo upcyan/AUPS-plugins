@@ -627,6 +627,62 @@ def unlock_version(name, version):
     return {"name": name, "version": version, "locked": list(locked)}
 
 
+# -------------------- 更新日志（版本 changelog） --------------------
+
+def _changelog_file():
+    return os.path.join(config.CONF_DIR, "apps-changelog.json")
+
+
+def _load_changelogs():
+    """{应用名: {版本: 日志文本}}；文件缺失/损坏返回空。"""
+    try:
+        with open(_changelog_file(), encoding="utf-8") as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_changelogs(data):
+    os.makedirs(config.CONF_DIR, exist_ok=True)
+    tmp = _changelog_file() + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, _changelog_file())
+
+
+def list_changelogs(name):
+    """某应用的全部更新日志 {版本: 文本}（CI 直传的版本天然无记录）。"""
+    app_dir(name)
+    logs = _load_changelogs().get(name, {})
+    return {k: v for k, v in logs.items() if isinstance(v, str)}
+
+
+def get_changelog(name, version):
+    """读取某应用某版本的更新日志；无记录返回空串。"""
+    logs = list_changelogs(name)
+    return logs.get(str(version), "")
+
+
+def set_changelog(name, version, text):
+    """写入/更新某应用某版本的更新日志；清空文本即删除该条记录。"""
+    app_dir(name)
+    version = str(version or "").strip()
+    if not version:
+        raise AppError("版本号不能为空")
+    data = _load_changelogs()
+    app_notes = data.setdefault(name, {})
+    text = str(text or "").replace("\r\n", "\n").strip()
+    if text:
+        app_notes[version] = text
+    else:
+        app_notes.pop(version, None)
+        if not app_notes:
+            data.pop(name, None)
+    _save_changelogs(data)
+    return {"name": name, "version": version, "changelog": text}
+
+
 def _delete_apk_safe(path):
     base = os.path.realpath(config.BASE_DIR)
     real = os.path.realpath(path)
