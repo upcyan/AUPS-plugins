@@ -9,6 +9,9 @@ APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用
 ## 功能
 
 - **应用管理**：应用注册/版本、存储与配额、APK 管理、未注册检查
+- **下载路由自动同步**：新建/删除应用、保存部署配置时自动把版本短链与 latest
+  重定向同步到反代（latest 按文件日期指向最新文件，CI 经 SSH 直传的新文件
+  由渲染前实时刷新与周期任务跟进），无需再到 VPS 手工编辑 Caddyfile
 - **CI 用户**：APK 上传账号与目录 ACL 授权
 - **SSH 公钥**：CI 用户的上传鉴权公钥管理
 - **存储**：存储用量、配额、强制执行
@@ -29,6 +32,8 @@ aups app ...       # 应用管理
 aups storage ...   # 存储管理
 aups user ...      # CI 用户管理
 aups ssh ...       # SSH 公钥管理
+aups plugins appupdate app caddy            # 手动同步下载路由（默认自动触发）
+aups plugins appupdate cron routes          # 安装每10分钟路由同步定时任务（CI 直传场景）
 ```
 
 ## 安装

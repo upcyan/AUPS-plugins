@@ -375,7 +375,7 @@ def _gen_app_site_blocks(apps, reserved=None):
 
 def update_app_sites(apps, reload_=True):
     """更新 Caddyfile 中的应用站点块（AUPS APPS SITE 标记区）。
-    apps 为 [{name, domain, port, workdir}] 列表。
+    apps 为 [{name, domain, port, workdir}] 列表。内容无变化时跳过写盘。
     """
     d = read()
     # 旧版替换逻辑可能生成嵌套标记；先完整清除，再生成唯一托管区。
@@ -389,9 +389,13 @@ def update_app_sites(apps, reload_=True):
         section = f"{_APPS_SITE_BEGIN}\n{new_sites}\n{_APPS_SITE_END}"
         content = content.rstrip() + "\n\n" + section + "\n"
 
+    if content.rstrip("\n") == d["content"].rstrip("\n"):
+        return {"updated": True, "unchanged": True,
+                "sites": len(_site_blocks(new_sites)), "skipped_existing": skipped}
+
     write(content, reload_=reload_)
-    return {"updated": True, "sites": len(_site_blocks(new_sites)),
-            "skipped_existing": skipped}
+    return {"updated": True, "unchanged": False,
+            "sites": len(_site_blocks(new_sites)), "skipped_existing": skipped}
 
 
 def remove_app_site(domain, reload_=True):

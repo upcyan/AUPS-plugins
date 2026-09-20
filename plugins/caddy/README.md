@@ -54,3 +54,5 @@ aups plugins market install caddy --deploy container   # 容器部署
 ## 说明
 
 作为反代环境插件，可为 appupdate 等应用提供下载路由托管片段。若需证书签发，可搭配 certbot / acme 依赖插件使用。容器部署要求服务器已安装 docker 或 podman 运行时（可在「容器」页安装）。
+
+下载路由渲染前会实时向 appupdate 重取数据（CI 经 SSH 直传的新文件即时生效）；latest 短链按文件日期指向最新文件；托管段无变化时自动跳过写盘与 reload，可安全配合周期同步任务高频执行。

@@ -99,13 +99,78 @@ def list_apps():
 
 
 def public_download_routes():
-    """导出下载路由数据块（契约 v1），供反代插件读取和渲染。"""
+    """导出下载路由数据块（契约 v1），供反代插件读取和渲染。
+
+    versions 按版本号排序（版本短链用）；latest 按文件日期取最新（latest 短链用，
+    CI 经 SSH 直传的文件不经面板，只有这里实时扫描才能保证 latest 跟进新文件）。
+    """
     from ...core import contracts
     payload = {
-        "apps": [{"name": app["name"], "versions": list_versions(app["name"])}
+        "apps": [{"name": app["name"], "versions": list_versions(app["name"]),
+                  "latest": latest_by_date(app["name"])}
                  for app in list_apps()]
     }
     return contracts.write_data("appupdate", "download_routes", payload)
+
+
+def latest_by_date(name):
+    """按文件修改时间取应用目录下最新的可分发文件（latest 短链目标）。"""
+    base = os.path.realpath(app_dir(name))
+    best = None  # (mtime, rel)
+    if os.path.isdir(base):
+        for root, _dirs, files in os.walk(base):
+            for fn in files:
+                if not fn.lower().endswith((".apk", ".jar", ".tar.gz", ".zip")):
+                    continue
+                path = os.path.join(root, fn)
+                try:
+                    mtime = os.path.getmtime(path)
+                except OSError:
+                    continue
+                if best is None or mtime > best[0]:
+                    best = (mtime, os.path.relpath(path, base).replace(os.sep, "/"))
+    if not best:
+        return None
+    return {"version": parse_version(best[1]) or "", "rel": best[1], "mtime": int(best[0])}
+
+
+def sync_proxy_routes(reload=True, include_sites=True):
+    """项目/文件变更后自动同步反代（新建项目自动获得短链重定向）。
+
+    三步：刷新下载数据块（CI 直传不经面板，渲染前必须重算）→ 应用站点块
+    （域名变化时重建）→ 下载路由短链 + WAF 托管段（反代无变化时自动跳过
+    写盘与 reload，周期同步可安全高频执行）。无反代后端时静默返回；各步
+    失败记入 errors 不抛出，不阻断调用方主流程。
+    """
+    result = {"backend": None, "data": False, "sites": None, "routes": None, "errors": []}
+    try:
+        public_download_routes()
+        result["data"] = True
+    except Exception as e:
+        result["errors"].append(f"刷新下载数据失败：{e}")
+    try:
+        from ... import rproxy
+        backend = rproxy.backend_name()
+    except Exception:
+        return result
+    if not backend:
+        return result
+    result["backend"] = backend
+    if include_sites:
+        app_sites = [{"name": a["name"], "domain": (a.get("deploy") or {}).get("domain", ""),
+                      "port": (a.get("deploy") or {}).get("port", 0),
+                      "workdir": (a.get("deploy") or {}).get("workdir") or a.get("dir", "")}
+                     for a in list_apps()]
+        try:
+            result["sites"] = rproxy.update_app_sites(app_sites, reload=False)
+        except Exception as e:
+            result["errors"].append(f"同步应用站点块失败：{e}")
+    if rproxy.has_capability("download_route", backend):
+        try:
+            result["routes"] = rproxy.apply(reload=reload)
+        except Exception as e:
+            result["errors"].append(f"同步下载路由失败：{e}")
+    return result
 
 
 def get_app(name):
@@ -137,6 +202,7 @@ def add_app(name, path=None, comment=""):
         "deploy": {"domain": "", "ssl": {"mode": "none"}, "port": 0},
     }
     _save_registry(reg)
+    _auto_sync()
     return get_app(name)
 
 
@@ -146,7 +212,16 @@ def remove_app(name):
         raise AppError(f"应用未注册：{name}")
     meta = reg["apps"].pop(name)
     _save_registry(reg)
+    _auto_sync()
     return {"name": name, "removed": True, "dir": meta.get("dir", "")}
+
+
+def _auto_sync():
+    """注册/删除应用后自动同步反代路由（失败不阻断主流程）。"""
+    try:
+        sync_proxy_routes()
+    except Exception:
+        pass
 
 
 def app_dir(name):

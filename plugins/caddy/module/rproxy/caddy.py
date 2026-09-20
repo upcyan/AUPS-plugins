@@ -22,13 +22,17 @@ from ....util import has_cmd
 
 
 def _download_routes():
-    """读取 appupdate 的公共数据块；首次缺失时调用其声明的公共 API 生成。"""
+    """渲染前实时重取 appupdate 公共数据块（CI 经 SSH 直传文件不经面板，
+    落盘数据块可能滞后）；appupdate 停用/缺失时退回已落盘数据块。"""
+    from ....core import contracts
     try:
-        from ....core import contracts
-        data = contracts.read_data("caddy", "appupdate", "download_routes")
-        if data is None:
-            data = contracts.call("caddy", "appupdate", "download_routes")
-        return data or {"apps": []}
+        data = contracts.call("caddy", "appupdate", "download_routes")
+        if data is not None:
+            return data
+    except Exception:
+        pass
+    try:
+        return contracts.read_data("caddy", "appupdate", "download_routes") or {"apps": []}
     except Exception:
         return {"apps": []}
 
@@ -365,14 +369,16 @@ def _gen_download_routes():
     """从 appupdate 公共数据（list_apps/list_versions）生成 Caddy 下载路由片段。
 
     数据来源与 appupdate 解耦：只读其公开函数，路由语法渲染为本反代职责。
-    appupdate 未启用或停用时返回空片段。
+    appupdate 未启用或停用时返回空片段。latest 短链目标优先取数据块中的
+    latest 字段（appupdate 按文件日期选定），缺省回退版本号最大的文件。
     """
     data = _download_routes()
     parts = [_APPS_MARK_BEGIN]
     for app in data.get("apps", []):
         host = app["name"]
         vers = app.get("versions", [])
-        if not vers:
+        latest = app.get("latest") or (vers[0] if vers else None)
+        if not latest:
             continue
         parts.append(f"    # -- {host} --")
         for v in vers:
@@ -380,7 +386,6 @@ def _gen_download_routes():
             dl = f"/{host}/{v['rel']}"
             parts.append(f"    @dl_{host}_{v['version']} path {url} /{host}/v{v['version']}")
             parts.append(f"    redir @dl_{host}_{v['version']} {dl}")
-        latest = vers[0]
         parts.append(f"    @dl_latest_{host} path /{host}/latest")
         parts.append(f"    redir @dl_latest_{host} /{host}/{latest['rel']}")
     parts.append(_APPS_MARK_END)
@@ -476,15 +481,19 @@ def apply(reload=True):
     text, target = _site()
     lines = text.splitlines()
     body = target["body"]
-    body = _replace_section(body, _APPS_MARK_BEGIN, _APPS_MARK_END,
-                            _gen_download_routes())
+    new_body = _replace_section(body, _APPS_MARK_BEGIN, _APPS_MARK_END,
+                                _gen_download_routes())
     # WAF 段置于站点块顶部，确保先于 redir/file_server 生效
-    body = _replace_section(body, _WAF_BEGIN, _WAF_END, _waf_snippet(), insert_top=True)
+    new_body = _replace_section(new_body, _WAF_BEGIN, _WAF_END, _waf_snippet(), insert_top=True)
+    if new_body == body:
+        # 托管段无变化：跳过写盘与 reload，周期同步（cron）可安全高频执行
+        return {"backend": NAME, "caddyfile": env.caddy_config_file(),
+                "written": False, "changed": False, "reloaded": False}
     opener = lines[target["start"]]
     closer = lines[target["end"]]
     out = (lines[: target["start"]]
            + [opener]
-           + body.splitlines()
+           + new_body.splitlines()
            + [closer]
            + lines[target["end"] + 1:])
     text = "\n".join(out)
@@ -495,7 +504,7 @@ def apply(reload=True):
     if reload:
         _reload(warn_only=True)
     return {"backend": NAME, "caddyfile": env.caddy_config_file(),
-            "written": True, "reloaded": reload}
+            "written": True, "changed": True, "reloaded": reload}
 
 
 def update_app_sites(apps, reload_=True):

@@ -96,8 +96,10 @@ def build(sub):
     dls = dl.add_subparsers(dest="action", required=True)
     dls.add_parser("stats", help="按应用统计下载次数/独立IP").add_argument("--json", action="store_true")
 
-    # ---- cron（配额清理定时任务，原核心 `stats cron`）----
-    cr = sub.add_parser("cron", help="配额清理定时任务")
+    # ---- cron（定时任务：配额清理 / 下载路由自动同步）----
+    cr = sub.add_parser("cron", help="定时任务（配额清理 / 下载路由自动同步）")
+    cr.add_argument("job", nargs="?", choices=("quota", "routes", "all"), default="quota",
+                    help="quota=每小时配额清理（默认）；routes=每10分钟路由同步；all=两者")
     cr.add_argument("--remove", action="store_true", help="移除定时任务")
 
 
@@ -231,9 +233,9 @@ def _app(a):
                 print(f"    {fp}")
     elif a.action == "caddy":
         if a.preview:
-            print(apps._caddy_preview())
+            print(apps.proxy_preview())
             return
-        print_json(apps.update_caddy_routes(reload=not a.no_reload))
+        print_json(apps.sync_proxy_routes(reload=not a.no_reload))
 
 
 def _ssh(a):
@@ -259,17 +261,28 @@ def _downloads(a):
         print("(暂无下载记录)")
 
 
+_QUOTA_CRON = "/etc/cron.d/aups-enforce-quota"
+_ROUTES_CRON = "/etc/cron.d/aups-appupdate-routes"
+
+
 def _cron(a):
-    path = "/etc/cron.d/aups-enforce-quota"
     if a.remove:
-        try:
-            os.remove(path)
-            print("已移除定时配额清理")
-        except OSError:
-            print("(未安装)")
+        for path, label in ((_QUOTA_CRON, "配额清理"), (_ROUTES_CRON, "路由同步")):
+            try:
+                os.remove(path)
+                print(f"已移除定时{label}")
+            except OSError:
+                print(f"(未安装定时{label})")
         return
-    cron = "0 * * * * root /usr/local/bin/aups plugins appupdate app enforce >/dev/null 2>&1\n"
-    with open(path, "w") as f:
-        f.write(cron)
-    os.chmod(path, 0o600)
-    print(f"已安装每小时配额清理: {path}")
+    if a.job in ("quota", "all"):
+        with open(_QUOTA_CRON, "w") as f:
+            f.write("0 * * * * root /usr/local/bin/aups plugins appupdate app enforce >/dev/null 2>&1\n")
+        os.chmod(_QUOTA_CRON, 0o600)
+        print(f"已安装每小时配额清理: {_QUOTA_CRON}")
+    if a.job in ("routes", "all"):
+        # CI 经 SSH 直传文件不经面板，路由数据块会滞后；周期同步让
+        # latest/版本短链自动跟进新文件（无变化时反代侧跳过 reload）。
+        with open(_ROUTES_CRON, "w") as f:
+            f.write("*/10 * * * * root /usr/local/bin/aups plugins appupdate app caddy >/dev/null 2>&1\n")
+        os.chmod(_ROUTES_CRON, 0o600)
+        print(f"已安装每10分钟下载路由同步: {_ROUTES_CRON}")

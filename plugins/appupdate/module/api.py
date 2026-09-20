@@ -46,19 +46,14 @@ def proxy_list(auth=Depends(require_auth)):
 
 @router.post("/apps/caddy")
 def apps_caddy(body: dict = None, auth=Depends(require_auth)):
-    """同步反代路由：更新应用站点块 + reload。通过核心 rproxy 转发，支持任意反代插件。"""
-    all_apps = A.list_apps()
-    app_sites = [{"name": a["name"], "domain": (a.get("deploy") or {}).get("domain", ""),
-                  "port": (a.get("deploy") or {}).get("port", 0),
-                  "workdir": (a.get("deploy") or {}).get("workdir") or a.get("dir", "")}
-                 for a in all_apps]
-    # 通过核心 rproxy 转发（支持 caddy/nginx 等任意反代插件）
-    try:
-        from ... import rproxy
-        rproxy.update_app_sites(app_sites, reload=bool((body or {}).get("reload", True)))
-    except Exception as e:
-        raise AppError(f"同步反代路由失败：{e}")
-    return {"ok": True, "message": f"已同步 {len([a for a in app_sites if a['domain']])} 个应用域名到反代"}
+    """同步反代路由：刷新下载数据块 + 应用站点块 + 短链重定向（含 latest）并 reload。
+
+    通过核心 rproxy 转发，支持任意反代插件；反代无变化时自动跳过写盘与 reload。
+    """
+    result = A.sync_proxy_routes(reload=bool((body or {}).get("reload", True)))
+    if result["errors"] and not (result["data"] or result["routes"] or result["sites"]):
+        raise AppError("；".join(result["errors"]))
+    return {"ok": True, **result}
 
 
 @router.get("/apps/discover")
@@ -128,15 +123,9 @@ def deploy_set(name: str, body: dict = None, auth=Depends(require_auth)):
         U.grant_dir(ci_user, workdir)
         U.grant_dir(ci_user, apk_dir)
         result["acl_dirs"] = [workdir, apk_dir]
-    # 保存后自动更新反代站点块
+    # 保存后自动同步反代：应用站点块 + 下载路由短链（latest 按文件日期）
     try:
-        all_apps = A.list_apps()
-        app_sites = [{"name": a["name"], "domain": (a.get("deploy") or {}).get("domain", ""),
-                      "port": (a.get("deploy") or {}).get("port", 0),
-                      "workdir": (a.get("deploy") or {}).get("workdir") or a.get("dir", "")}
-                     for a in all_apps]
-        from ... import rproxy
-        rproxy.update_app_sites(app_sites, reload=True)
+        result["sync"] = A.sync_proxy_routes()
     except Exception:
         pass  # 反代更新失败不阻断保存
     return result

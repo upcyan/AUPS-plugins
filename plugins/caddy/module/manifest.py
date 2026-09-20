@@ -15,12 +15,14 @@ v1.5.0：新增 SSL 接入方案（SSL 标签页）：方案 A Flexible（Cloudf
 / 方案 B DNS-01（Cloudflare API 自动签发 Let's Encrypt 证书，支持 Full Strict）。
 v1.5.2：新增统一站点管理能力与实机/容器部署方式无损切换。
 v1.7.0：SSL 页展示 Caddy 自动 HTTPS 已签发证书及有效期。
+v1.8.0：下载路由渲染前实时重取 appupdate 数据（CI 直传文件即时生效）；
+latest 短链按文件日期选定；apply/应用站点块无变化时跳过写盘与 reload。
 """
 
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.7.1",
+    "version": "1.8.0",
     "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、自动 HTTPS 证书、access 日志、防火墙；依赖 SSL 证书管理",
     "type": "external",
     "attr": "依赖",
