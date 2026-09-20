@@ -13,6 +13,10 @@ APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用
   应用目录下 CI 维护的 `update.json`（`changelogs[].versionName/note`，App 端
   展示的同一来源，面板编辑直接写回，CI merge 默认不覆盖已有 note）+ 面板
   补写层（无 update.json 的应用）；清空保存即删除补写层记录
+- **update.json 滚动窗口**：`changelogs` 超过 30 条时自动裁剪到最近 30 条，
+  溢出条目按时间正序归档到应用目录 `update-archive/changelogs-<分片>.json`
+  （每片 100 条，App 不读）；CI 的 merge 脚本与工作流零改动，窗口由面板
+  周期同步在服务端收敛
 - **下载路由自动同步**：新建/删除应用、保存部署配置时自动把版本短链与 latest
   重定向同步到反代（latest 按文件日期指向最新文件，CI 经 SSH 直传的新文件
   由渲染前实时刷新与周期任务跟进），无需再到 VPS 手工编辑 Caddyfile

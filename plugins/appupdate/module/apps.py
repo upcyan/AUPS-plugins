@@ -149,6 +149,12 @@ def sync_proxy_routes(reload=True, include_sites=True):
         result["data"] = True
     except Exception as e:
         result["errors"].append(f"刷新下载数据失败：{e}")
+    # update.json 滚动窗口维护：裁剪超长 changelogs 并归档分片（CI 零改动）
+    try:
+        result["maintain"] = {a["name"]: _maintain_update_json(a["name"])
+                              for a in list_apps()}
+    except Exception:
+        pass
     try:
         from ... import rproxy
         backend = rproxy.backend_name()
@@ -676,6 +682,63 @@ def _update_json_changelogs(name):
                 if ivn and inote:
                     logs[ivn] = str(inote)
     return logs, path
+
+
+_UPDATE_JSON_KEEP = 30   # update.json 保留的最近日志条数（App 跳级升级展示上限）
+_ARCHIVE_SHARD = 100     # 归档分片每片条数
+
+
+def _maintain_update_json(name, keep=_UPDATE_JSON_KEEP, shard=_ARCHIVE_SHARD):
+    """update.json 滚动窗口：changelogs 超过 keep 条时裁剪，溢出条目归档分片。
+
+    归档目录为应用目录下 update-archive/changelogs-<0001>.json（每片 shard
+    条，按时间正序追加，App 不读）。CI 的 merge 脚本无需任何改动——它按
+    现状把新条目插到最前，窗口由面板同步（10 分钟周期 cron）在服务端收敛。
+    返回 {"trimmed": n}；无文件或未超限返回 None。
+    """
+    path = os.path.join(app_dir(name), "update.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return None
+    logs = data.get("changelogs") if isinstance(data, dict) else None
+    if not isinstance(logs, list) or len(logs) <= keep:
+        return None
+    overflow = list(reversed(logs[keep:]))  # 溢出段转为时间正序（旧→新）
+    data["changelogs"] = logs[:keep]
+    data["trimmed"] = int(data.get("trimmed") or 0) + len(overflow)
+    arch_dir = os.path.join(os.path.dirname(path), "update-archive")
+    os.makedirs(arch_dir, exist_ok=True)
+    moved = 0
+    while overflow:
+        shards = sorted(fn for fn in os.listdir(arch_dir)
+                        if re.fullmatch(r"changelogs-\d{4}\.json", fn))
+        target = shards[-1] if shards else "changelogs-0001.json"
+        entries = []
+        if os.path.isfile(os.path.join(arch_dir, target)):
+            try:
+                with open(os.path.join(arch_dir, target), encoding="utf-8") as f:
+                    entries = json.load(f)
+            except (OSError, ValueError):
+                entries = []
+            entries = entries if isinstance(entries, list) else []
+        if len(entries) >= shard:  # 当前片满 → 开新片
+            target = f"changelogs-{len(shards) + 1:04d}.json"
+            entries = []
+        add = overflow[: shard - len(entries)]  # 时间正序顺序写入
+        entries.extend(add)
+        moved += len(add)
+        tmp = os.path.join(arch_dir, target) + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(entries, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, os.path.join(arch_dir, target))
+        overflow = overflow[len(add):]
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, path)
+    return {"trimmed": moved}
 
 
 def _write_update_json_note(name, version, text):
