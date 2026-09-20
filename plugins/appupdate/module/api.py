@@ -70,6 +70,67 @@ def apps_caddy(body: dict = None, auth=Depends(require_auth)):
     return {"ok": True, **result}
 
 
+# ---------- CI 推送通知 / 待注册新项目 / 目录监听 ----------
+
+@router.get("/apps/ci/token")
+def ci_token_get(auth=Depends(require_auth)):
+    import os
+    tok = A.ci_token()
+    return {"token": tok,
+            "curl": ("curl -sk -X POST {url}/api/apps/ci/notify "
+                     "-H 'Content-Type: application/json' "
+                     "-d '{{\"token\":\"{tok}\"}}'").format(
+                         url=os.environ.get("AUP_PUBLIC_URL", "https://<面板地址>"), tok=tok)}
+
+
+@router.post("/apps/ci/token/reset")
+def ci_token_reset(auth=Depends(require_auth)):
+    return {"token": A.ci_token(reset=True)}
+
+
+@router.post("/apps/ci/notify")
+def ci_notify(body: dict = None):
+    """CI 流水线推送后回调（令牌鉴权，不走面板会话）：立即同步下载路由。
+
+    令牌在面板「应用管理 → CI 推送通知」查看/重置，或 CLI `ci token`。
+    """
+    import hmac
+    from fastapi import HTTPException
+    b = body or {}
+    supplied = str(b.get("token") or "")
+    if not supplied or not hmac.compare_digest(supplied, A.ci_token()):
+        raise HTTPException(status_code=403, detail="CI 通知令牌无效")
+    return A.ci_notify(b.get("app"))
+
+
+@router.get("/apps/pending")
+def pending_list(auth=Depends(require_auth)):
+    """未注册的新项目目录（监听触发或打开页面时实时扫描）。"""
+    return A.pending_apps()
+
+
+@router.post("/apps/pending/register")
+def pending_register(body: dict = None, auth=Depends(require_auth)):
+    """批量注册勾选的新项目目录（支持部分/全选）。"""
+    b = body or {}
+    names = b.get("names") or []
+    if not names:
+        raise AppError("未选择要注册的项目")
+    return A.register_apps(names)
+
+
+@router.get("/apps/watch")
+def watch_get(auth=Depends(require_auth)):
+    return A.watch_status()
+
+
+@router.post("/apps/watch")
+def watch_set(body: dict = None, auth=Depends(require_auth)):
+    """启用/停用 BASE_DIR 新目录监听（systemd path unit）。"""
+    b = body or {}
+    return A.watch_enable() if b.get("enable") else A.watch_disable()
+
+
 @router.get("/apps/discover")
 def apps_discover(auth=Depends(require_auth)):
     return A.discover()

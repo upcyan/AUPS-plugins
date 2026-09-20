@@ -15,6 +15,11 @@ APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用
 - **反代切换迁移**：caddy/nginx 之间一键切换默认反代（应用页「切换并迁移」或
   `aups plugins appupdate app switch <后端>`）——旧后端托管短链自动清空、
   应用站点保留，新后端按最新数据重建站点与路由，切回即恢复
+- **CI 推送通知**：CI 流水线推送 APK 后回调 `POST /api/apps/ci/notify`（令牌鉴权，
+  面板应用页查看/复制 curl/重置），立即刷新下载路由，免等周期任务
+- **新项目引导注册**：CI 直传的新目录不自动注册——应用页顶部提示未注册目录
+  （可勾选部分或全选批量注册）；可选启用 systemd path unit 监听 BASE_DIR
+  （`aups plugins appupdate watch on`），新目录出现即记录事件并刷新路由
 - **CI 用户**：APK 上传账号与目录 ACL 授权
 - **SSH 公钥**：CI 用户的上传鉴权公钥管理
 - **存储**：存储用量、配额、强制执行
@@ -39,6 +44,8 @@ aups plugins appupdate app caddy            # 手动同步下载路由（默认�
 aups plugins appupdate cron routes          # 安装每10分钟路由同步定时任务（CI 直传场景）
 aups plugins appupdate app backends         # 列出反代后端及能力
 aups plugins appupdate app switch nginx     # 切换反代并迁移下载路由/应用站点
+aups plugins appupdate ci token             # 查看 CI 通知令牌（--reset 重置）
+aups plugins appupdate watch on             # BASE_DIR 新目录监听（on/off/status）
 ```
 
 ## 安装

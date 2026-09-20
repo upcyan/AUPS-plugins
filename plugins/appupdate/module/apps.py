@@ -9,6 +9,7 @@
 import json
 import os
 import re
+import time
 
 from ... import config
 from ...errors import AppError
@@ -269,6 +270,164 @@ def _auto_sync():
         sync_proxy_routes()
     except Exception:
         pass
+
+
+# -------------------- CI 推送通知与待注册新项目 --------------------
+
+def _ci_token_file():
+    return os.path.join(config.CONF_DIR, "apps-ci-token")
+
+
+def _watch_state_file():
+    return os.path.join(config.CONF_DIR, "apps-watch.json")
+
+
+def ci_token(reset=False):
+    """CI 推送通知令牌：首次访问自动生成（存 CONF_DIR，0600）。"""
+    path = _ci_token_file()
+    if not reset:
+        try:
+            with open(path) as f:
+                tok = f.read().strip()
+            if tok:
+                return tok
+        except OSError:
+            pass
+    import secrets
+    tok = secrets.token_hex(20)
+    os.makedirs(config.CONF_DIR, exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(tok)
+    os.replace(tmp, path)
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+    return tok
+
+
+def pending_apps():
+    """未注册的新项目目录（BASE_DIR 下含 apk/jar/zip 的子目录）+ 监听状态。
+
+    不自动注册：由面板提示用户勾选注册（全部或部分）。
+    """
+    disc = discover()
+    return {"base": disc["base"], "candidates": disc["candidates"],
+            "watch": _watch_read()}
+
+
+def register_apps(names):
+    """批量注册待注册目录（勾选部分或全选）；注册即自动同步反代路由。"""
+    registered, errors = [], []
+    for name in names or []:
+        try:
+            app = add_app(str(name))
+            registered.append({"name": app["name"], "dir": app["dir"]})
+        except Exception as e:
+            errors.append(f"{name}: {e}")
+    return {"registered": registered, "errors": errors}
+
+
+def ci_notify(app=None):
+    """CI 流水线推送后回调：立即同步下载路由（免轮询），并附带待注册提示。"""
+    sync = sync_proxy_routes(reload=True)
+    pend = pending_apps()
+    return {"ok": not sync["errors"],
+            "synced": bool(sync["data"]),
+            "errors": sync["errors"],
+            "pending": [c["name"] for c in pend["candidates"]]}
+
+
+# ---- BASE_DIR 新目录监听（systemd path unit，不自动注册） ----
+
+_WATCH_UNIT = "aups-appupdate-watch"
+
+
+def _watch_read():
+    try:
+        with open(_watch_state_file()) as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def watch_status():
+    """BASE_DIR 新目录监听状态（依赖 systemd，仅 Linux 实机）。"""
+    import shutil as _sh
+    if not _sh.which("systemctl"):
+        return {"available": False, "enabled": False,
+                "reason": "无 systemd（仅支持 Linux 实机部署）"}
+    from ...util import run as _run
+    enabled = _run(["systemctl", "is-enabled", _WATCH_UNIT + ".path"], check=False)
+    active = _run(["systemctl", "is-active", _WATCH_UNIT + ".path"], check=False)
+    return {"available": True, "enabled": enabled.returncode == 0,
+            "active": active.returncode == 0, "base": config.BASE_DIR,
+            "unit": _WATCH_UNIT + ".path", "last_event": _watch_read()}
+
+
+def watch_enable():
+    """安装并启用 path unit：BASE_DIR 出现新目录/文件变化时触发 watch trigger。"""
+    import shutil as _sh
+    from ...util import run as _run
+    if not _sh.which("systemctl"):
+        raise AppError("无 systemd（仅支持 Linux 实机部署）")
+    base = os.path.realpath(config.BASE_DIR)
+    os.makedirs(base, exist_ok=True)
+    units = {
+        _WATCH_UNIT + ".path": (
+            "[Unit]\n"
+            f"Description=AUPS appupdate: watch {base} for new project dirs\n\n"
+            "[Path]\n"
+            f"PathModified={base}\n"
+            f"Unit={_WATCH_UNIT}.service\n\n"
+            "[Install]\n"
+            "WantedBy=multi-user.target\n"
+        ),
+        _WATCH_UNIT + ".service": (
+            "[Unit]\n"
+            f"Description=AUPS appupdate: handle new project dir in {base}\n\n"
+            "[Service]\n"
+            "Type=oneshot\n"
+            "ExecStart=/usr/local/bin/aups plugins appupdate watch trigger\n"
+        ),
+    }
+    for name, content in units.items():
+        with open(os.path.join("/etc/systemd/system", name), "w") as f:
+            f.write(content)
+    _run(["systemctl", "daemon-reload"], check=True)
+    _run(["systemctl", "enable", "--now", _WATCH_UNIT + ".path"], check=True)
+    return watch_status()
+
+
+def watch_disable():
+    """停用并移除监听 unit。"""
+    import shutil as _sh
+    from ...util import run as _run
+    if not _sh.which("systemctl"):
+        raise AppError("无 systemd（仅支持 Linux 实机部署）")
+    _run(["systemctl", "disable", "--now", _WATCH_UNIT + ".path"], check=False)
+    for name in (_WATCH_UNIT + ".path", _WATCH_UNIT + ".service"):
+        try:
+            os.remove(os.path.join("/etc/systemd/system", name))
+        except OSError:
+            pass
+    _run(["systemctl", "daemon-reload"], check=False)
+    return watch_status()
+
+
+def watch_trigger():
+    """path unit 触发入口：记录事件快照并同步一次路由（不自动注册）。"""
+    state = {"ts": int(time.time()), "base": config.BASE_DIR,
+             "candidates": [c["name"] for c in discover()["candidates"]]}
+    os.makedirs(config.CONF_DIR, exist_ok=True)
+    tmp = _watch_state_file() + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(state, f, ensure_ascii=False)
+    os.replace(tmp, _watch_state_file())
+    sync = sync_proxy_routes(reload=True)
+    return {"ok": True, "state": state, "sync_errors": sync["errors"]}
 
 
 def app_dir(name):

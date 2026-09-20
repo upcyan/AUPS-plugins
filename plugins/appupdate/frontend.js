@@ -8,6 +8,9 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   let appsCache = [];
   let usersCache = [];
   let proxyCache = [];
+  let pendingCache = [];
+  let watchCache = {};
+  let ciTokenCache = {};
   let appsBaseDir = '/var/www/html';
 
   function navHtml() {
@@ -151,15 +154,21 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   async function appsTab() {
     view.innerHTML = navHtml() + '<div class="card" style="text-align:center;color:var(--mut)"><span class="spinner"></span> 加载中...</div>';
     try {
-      const [d, ud, pd] = await Promise.all([
+      const [d, ud, pd, pg, wg, tk] = await Promise.all([
         api('GET', '/api/apps'),
         api('GET', '/api/users').catch(() => ({users:[]})),
         api('GET', '/api/apps/proxy-list').catch(() => ({proxies:[]})),
+        api('GET', '/api/apps/pending').catch(() => ({candidates:[]})),
+        api('GET', '/api/apps/watch').catch(() => ({available:false})),
+        api('GET', '/api/apps/ci/token').catch(() => ({token:'',curl:''})),
       ]);
       appsCache = d.apps || [];
       appsBaseDir = d.base_dir || '/var/www/html';
       usersCache = ud.users || [];
       proxyCache = pd.proxies || [];
+      pendingCache = pg.candidates || [];
+      watchCache = wg || {};
+      ciTokenCache = tk || {};
       let bk = { backend: null, backends: [] };
       try { bk = await api('GET', '/api/apps/proxy/backends'); } catch (e) {}
       const bkOpts = (bk.backends || []).map(b =>
@@ -177,7 +186,29 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
             <button class="ghost danger" onclick="${P}appDelete('${esc(a.name)}')">删除</button>
           </td></tr>`;
       }).join('');
+      const pendRows = pendingCache.map(c => `<tr>
+        <td><input type="checkbox" class="pendChk" value="${esc(c.name)}" checked></td>
+        <td><b>${esc(c.name)}</b><div class="mut" style="font-size:11px">${esc(c.dir)}</div></td>
+        <td class="mut">${c.apk_count} 个包</td></tr>`).join('');
+      const pendCard = pendingCache.length ? `
+      <div class="card" style="border:1px solid var(--accent)">
+        <h2>发现 ${pendingCache.length} 个未注册的新项目目录</h2>
+        <div class="mut" style="margin-bottom:8px">CI 直传的目录不会自动注册，请确认后勾选注册（不注册不影响已注册应用的路由）。</div>
+        <table><thead><tr><th style="width:32px"><input type="checkbox" id="pendAll" checked onclick="${P}pendSelAll()"></th><th>目录 / 应用名</th><th>内容</th></tr></thead>
+        <tbody>${pendRows}</tbody></table>
+        <div class="row" style="margin-top:10px">
+          <button onclick="${P}pendRegister()">注册所选</button>
+          <button class="ghost" onclick="${P}appsTab()">刷新</button>
+        </div>
+      </div>` : '';
+      const watchOn = !!watchCache.enabled;
+      const watchTxt = !watchCache.available
+        ? '<span class="mut">不可用（' + esc(watchCache.reason || '无 systemd') + '）</span>'
+        : watchOn ? '<span class="ok">监听中</span> <span class="mut" style="font-size:12px">' + esc(watchCache.base || '') + (watchCache.last_event ? ' · 最近事件 ' + esc(new Date((watchCache.last_event.ts||0)*1000).toLocaleString()) : '') + '</span>'
+        : '<span class="mut">未启用</span>';
+      const tokMasked = (ciTokenCache.token || '').slice(0, 6) + '…';
       view.innerHTML = navHtml() + `
+      ${pendCard}
       <div class="card"><h2>应用列表</h2>
         <table><thead><tr><th>应用</th><th>域名</th><th>端口</th><th>目录</th><th>CI 用户</th><th></th></tr></thead>
         <tbody>${rows || '<tr><td colspan="6" class="mut">暂无应用</td></tr>'}</tbody></table>
@@ -188,6 +219,21 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
           <select id="appBackend" style="max-width:140px">${bkOpts}</select>
           <button class="ghost" onclick="${P}switchBackend()">切换并迁移</button>` : ''}
         </div>
+      </div>
+      <div class="card"><h2>CI 推送通知</h2>
+        <div class="mut" style="margin-bottom:8px">CI 流水线推送 APK 后回调一次，立即刷新下载路由（免等周期任务）。令牌鉴权，仅触发路由同步。</div>
+        <div class="row"><span class="mut">令牌</span>
+          <input id="ciTokenBox" readonly value="${esc(tokMasked)}" style="max-width:220px;font-family:monospace">
+          <button class="ghost" onclick="${P}ciTokenShow()">显示</button>
+          <button class="ghost" onclick="${P}ciTokenCopy()">复制 curl</button>
+          <button class="ghost danger" onclick="${P}ciTokenReset()">重置令牌</button>
+        </div>
+        <div class="row" style="margin-top:6px"><span class="mut" style="font-size:12px">目录监听：${watchTxt}</span>
+          ${watchCache.available ? `<button class="ghost" onclick="${P}watchToggle()">${watchOn ? '停用监听' : '启用监听'}</button>` : ''}
+        </div>
+        <details style="margin-top:8px"><summary class="mut">CI 流水线示例（推送后调用一次）</summary>
+          <pre style="margin-top:6px;white-space:pre-wrap;color:var(--mut);font-size:12px" id="ciCurlBox">${esc(ciTokenCache.curl || '')}</pre>
+        </details>
       </div>
       <div id="appModal"></div>`;
     } catch (e) {
@@ -307,6 +353,52 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     } catch(e){ alert('切换失败：' + ((e&&e.detail)||e)); }
     await appsTab();
     try { window.stopAllFx(); } catch(e) {}
+  }
+
+  function pendSelAll() {
+    const all = document.getElementById('pendAll');
+    document.querySelectorAll('.pendChk').forEach(c => { c.checked = !!(all && all.checked); });
+  }
+
+  async function pendRegister() {
+    const names = Array.from(document.querySelectorAll('.pendChk')).filter(c => c.checked).map(c => c.value);
+    if (!names.length) { alert('请先勾选要注册的项目'); return; }
+    if (!confirm('注册所选 ' + names.length + ' 个项目？注册后自动同步反代路由。')) return;
+    try {
+      const r = await api('POST', '/api/apps/pending/register', { names }, true);
+      const errs = r.errors || [];
+      alert('已注册 ' + (r.registered || []).length + ' 个' + (errs.length ? '，失败：\n' + errs.join('\n') : ''));
+      await appsTab();
+    } catch(e){ alert('注册失败：' + ((e&&e.detail)||e)); }
+    try { window.stopAllFx(); } catch(e) {}
+  }
+
+  function ciTokenShow() {
+    const box = document.getElementById('ciTokenBox');
+    if (!box) return;
+    const shown = box.dataset.shown === '1';
+    box.value = shown ? (ciTokenCache.token || '').slice(0, 6) + '…' : (ciTokenCache.token || '');
+    box.dataset.shown = shown ? '' : '1';
+  }
+
+  function ciTokenCopy() {
+    const text = ciTokenCache.curl || ('curl -sk -X POST /api/apps/ci/notify -H \'Content-Type: application/json\' -d \'{"token":"' + (ciTokenCache.token || '') + '"}\'');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => alert('已复制 curl 命令')).catch(() => alert(text));
+    } else { alert(text); }
+  }
+
+  async function ciTokenReset() {
+    if (!confirm('重置 CI 通知令牌？旧令牌立即失效（CI 配置需同步更新）。')) return;
+    try { const r = await api('POST', '/api/apps/ci/token/reset', {}, true); ciTokenCache = r; await appsTab(); }
+    catch(e){ alert('重置失败：' + ((e&&e.detail)||e)); }
+  }
+
+  async function watchToggle() {
+    const enable = !watchCache.enabled;
+    if (!confirm((enable ? '启用' : '停用') + ' BASE_DIR 新目录监听（systemd path unit）？\n监听只做提示，不会自动注册。')) return;
+    try { watchCache = await api('POST', '/api/apps/watch', { enable }, true); await appsTab(); }
+    catch(e){ alert('操作失败：' + ((e&&e.detail)||e)); }
   }
 
   /* ---------- CI 用户 ---------- */
@@ -557,6 +649,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     go: go,
     open: function (s) { go(s || 'apps'); },
     appsTab, addApp, saveApp, editApp, appDelete, appsCaddy, switchBackend, modalClose,
+    pendSelAll, pendRegister, ciTokenShow, ciTokenCopy, ciTokenReset, watchToggle,
     toggleSslMode, toggleSslType, checkDomain, updateDefaultWorkdir,
     usersTab, userCreate, userDelete, userDirAuth, userDirGrant, userDirRevoke,
     userSsh, sshAdd, sshRemove,

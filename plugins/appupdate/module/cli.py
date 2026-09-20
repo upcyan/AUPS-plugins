@@ -108,6 +108,22 @@ def build(sub):
                     help="quota=每小时配额清理（默认）；routes=每10分钟路由同步；all=两者")
     cr.add_argument("--remove", action="store_true", help="移除定时任务")
 
+    # ---- ci（CI 流水线推送通知）----
+    ci = sub.add_parser("ci", help="CI 流水线推送通知（令牌 / 手动触发）")
+    cis = ci.add_subparsers(dest="action", required=True)
+    ct = cis.add_parser("token", help="查看 CI 通知令牌（首次自动生成）")
+    ct.add_argument("--reset", action="store_true", help="重置令牌")
+    cn = cis.add_parser("notify", help="手动触发一次推送通知（等同 CI 回调）")
+    cn.add_argument("--app", default=None, help="关联应用名（可选，仅记录用途）")
+
+    # ---- watch（BASE_DIR 新目录监听，不自动注册）----
+    wa = sub.add_parser("watch", help="BASE_DIR 新目录监听（systemd path unit）")
+    was = wa.add_subparsers(dest="action", required=True)
+    was.add_parser("status", help="查看监听状态")
+    was.add_parser("on", help="安装并启用监听")
+    was.add_parser("off", help="停用并移除监听")
+    wt = was.add_parser("trigger", help="内部：path unit 触发入口（记录事件+同步路由）")
+
 
 def run(a):
     """按 a.pcmd（命令组）派发到具体处理器。"""
@@ -123,6 +139,10 @@ def run(a):
         _downloads(a)
     elif a.pcmd == "cron":
         _cron(a)
+    elif a.pcmd == "ci":
+        _ci(a)
+    elif a.pcmd == "watch":
+        _watch(a)
 
 
 def _user(a):
@@ -310,3 +330,23 @@ def _cron(a):
             f.write("*/10 * * * * root /usr/local/bin/aups plugins appupdate app caddy >/dev/null 2>&1\n")
         os.chmod(_ROUTES_CRON, 0o600)
         print(f"已安装每10分钟下载路由同步: {_ROUTES_CRON}")
+
+
+def _ci(a):
+    if a.action == "token":
+        print_json({"token": apps.ci_token(reset=a.reset),
+                    "hint": "CI 推送后回调 POST /api/apps/ci/notify {\"token\": ...}"})
+    elif a.action == "notify":
+        print_json(apps.ci_notify(a.app))
+
+
+def _watch(a):
+    if a.action == "status":
+        print_json(apps.watch_status())
+    elif a.action == "on":
+        print_json(apps.watch_enable())
+        print("监听已启用：新目录仅提示，不自动注册（面板应用页勾选注册）")
+    elif a.action == "off":
+        print_json(apps.watch_disable())
+    elif a.action == "trigger":
+        print_json(apps.watch_trigger())
