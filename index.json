@@ -10,7 +10,7 @@
         "安全",
         "网络"
       ],
-      "version": "2.7.0",
+      "version": "2.8.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -18,15 +18,15 @@
         }
       ],
       "files": {
-        "README.md": "ba5f0d252d229dccd51280e80af66aadbbe8ada5c3d0cd5dd65ac3dd2eb07e7b",
-        "frontend.js": "b9ebca46ce668bea3f115bcd87aa14f48045c07d4480de85aebb78c845b92990",
-        "manifest.json": "e744162ed6f2a8db27b2278cfeadab771f9d8bbd899fc2a7127ec30b69aa7f5b",
+        "README.md": "049ceaefe3aa9643f9ba12757c923d9acef8533a80db71f41fb7b6d7af5e5be7",
+        "frontend.js": "fba656b1cf6486efe51edcf92046a396f8c272562249350c2df62a7194e6f7e7",
+        "manifest.json": "25816b1f982352903e6c49a915b04ffbb142b46cb039f574b5c0fa67f601d305",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "2718783765f0acc73409a357a081803aae6852ff139aff9e0f3559a3000421c0",
-        "module/apps.py": "03594ed9219e5c95855ab0dd320d4baeb054f361dcaca7c80cfe545b7d9048d0",
-        "module/cli.py": "6eee96d5bc6a723adb02bb12ceaae878075602fe7196e5f11f92fecfbb8605fe",
+        "module/api.py": "c7b9359d5c99724f9309c21e8c99bbafbd90490bb2351456ebab1f9dc10cd750",
+        "module/apps.py": "f9b136eadbbd81a95bd920832e12553e866fba3cb0d2aaa61645d04327f01c8e",
+        "module/cli.py": "ba6d66efc97da6825f750d7e442e9f50cb8c28471c2173e6b6f5285327e0695c",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "77e6dccff4c1ae6c0c2acc7d89bdb4f58c127d69f4d5693f8712da5ded13b6c1",
+        "module/manifest.py": "5378d6c43031e99c8135ef7d1715fd6f7ae7456dcd63cbb7a564480cffe2f73c",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "0959e83a0fe917acde58316397b27bb123751c6de0a2e0e6b6e046a791670678",
         "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
