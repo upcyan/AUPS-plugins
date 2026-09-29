@@ -41,6 +41,14 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     return s.toFixed(i ? 1 : 0) + ' ' + u[i];
   }
 
+  function fmtTime(ts) {
+    if (!ts) return '-';
+    const d = new Date(ts * 1000);
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+      + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
   function modal(html) {
     document.getElementById('appModal').innerHTML =
       `<div class="ov-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50">
@@ -589,6 +597,9 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
           <td>${esc(v.version)}${logMark}</td>
           <td class="mut">${fmtSize(v.size_bytes)}</td>
           <td class="mut" style="font-size:11px">${esc(v.rel)}</td>
+          <td class="mut" style="font-size:11px" title="文件落到本服务器的时刻">${esc(fmtTime(v.ctime))}</td>
+          <td class="mut" style="font-size:11px" title="文件内容最后修改时刻（CI 保留时间戳时为构建时间）">${esc(fmtTime(v.mtime))}</td>
+          <td><button class="ghost" onclick="${P}verChecksum('${esc(name)}','${encodeURIComponent(v.rel)}')">校验码</button></td>
           <td>${isLocked
             ? `<button class="ghost" onclick="${P}unlockVer('${esc(name)}','${esc(v.version)}')">解锁</button>
                <span class="ok" style="font-size:11px">已锁定</span>`
@@ -599,9 +610,33 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       }).join('');
       box.innerHTML = `
         <div class="mut" style="margin-bottom:6px">最新: ${verData.latest ? esc(verData.latest.version) : '-'} · 共 ${versions.length} 个版本 · 点「日志」查看/编辑该版本更新日志（📝 = 已填写）</div>
-        <table><thead><tr><th>版本</th><th>大小</th><th>文件</th><th>锁定</th><th>更新日志</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6" class="mut">暂无版本</td></tr>'}</tbody></table>`;
+        <table><thead><tr><th>版本</th><th>大小</th><th>文件</th><th>上传时间</th><th>更新时间</th><th>校验码</th><th>锁定</th><th>更新日志</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="9" class="mut">暂无版本</td></tr>'}</tbody></table>`;
     } catch(e) { box.innerHTML = errCard(e); }
+  }
+
+  async function verChecksum(name, relEncoded) {
+    const rel = decodeURIComponent(relEncoded || '');
+    modal(`<h2>文件校验码 · ${esc(name)}</h2>
+      <div class="mut" style="font-size:12px;word-break:break-all;margin-bottom:10px">${esc(rel)}</div>
+      <div id="chkBox" class="mut"><span class="spinner"></span> 计算中（大文件可能需要几秒）...</div>
+      <div class="row" style="margin-top:10px"><button class="ghost" onclick="${P}modalClose()">关闭</button></div>`);
+    try {
+      const r = await api('GET', '/api/apps/' + encodeURIComponent(name) + '/checksum?rel=' + relEncoded);
+      const row = (label, val) => `<tr>
+        <td class="mut" style="white-space:nowrap;width:70px">${label}</td>
+        <td style="font-family:monospace;font-size:11px;word-break:break-all">${esc(val)}</td>
+        <td style="white-space:nowrap;width:64px"><button class="ghost" onclick="${P}copyText('${esc(val)}')">复制</button></td>
+      </tr>`;
+      const box = document.getElementById('chkBox');
+      if (box) box.innerHTML = `<table>${row('MD5', r.md5)}${row('SHA1', r.sha1)}${row('SHA256', r.sha256)}</table>`;
+    } catch(e) { modalClose(); alert('计算失败：' + ((e&&e.detail)||e)); }
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => alert('已复制')).catch(() => alert(text));
+    } else { alert(text); }
   }
 
   async function lockVer(name, version) {
@@ -684,7 +719,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     toggleSslMode, toggleSslType, checkDomain, updateDefaultWorkdir,
     usersTab, userCreate, userDelete, userDirAuth, userDirGrant, userDirRevoke,
     userSsh, sshAdd, sshRemove,
-    storageTab, loadVersions, lockVer, unlockVer, apkDelete,
+    storageTab, loadVersions, lockVer, unlockVer, apkDelete, verChecksum, copyText,
     setQuota, setTotalQuota, enforceQuota,
   };
 })();

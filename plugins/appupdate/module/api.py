@@ -173,6 +173,14 @@ def app_version_lock(name: str, version: str, auth=Depends(require_auth)):
     return A.lock_version(name, version)
 
 
+@router.get("/apps/{name}/checksum")
+def app_file_checksum(name: str, rel: str = "", auth=Depends(require_auth)):
+    """计算应用目录内文件的 MD5/SHA1/SHA256（?rel= 相对路径）。"""
+    if not rel:
+        raise AppError("缺少 rel 参数")
+    return A.file_checksums(name, rel)
+
+
 @router.post("/apps/{name}/versions/{version}/unlock")
 def app_version_unlock(name: str, version: str, auth=Depends(require_auth)):
     return A.unlock_version(name, version)

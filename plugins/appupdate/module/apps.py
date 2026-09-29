@@ -6,6 +6,7 @@
 反代路由：通过 rproxy 公共 API 与 caddy/nginx 解耦。
 """
 
+import hashlib
 import json
 import os
 import re
@@ -525,16 +526,39 @@ def list_versions(name):
                     continue
                 path = os.path.join(root, fn)
                 try:
-                    size = os.path.getsize(path)
+                    st = os.stat(path)
                 except OSError:
                     continue
                 versions.append({
                     "version": vstr,
                     "file": path,
                     "rel": os.path.relpath(path, base).replace(os.sep, "/"),
-                    "size_bytes": size,
+                    "size_bytes": st.st_size,
+                    # 上传时间取 ctime（文件落到本机的时刻，scp/rsync 落盘即更新），
+                    # 更新时间取 mtime（内容最后修改，rsync -a 保留的是构建机时间）。
+                    "ctime": int(st.st_ctime),
+                    "mtime": int(st.st_mtime),
                 })
     return sorted(versions, key=lambda v: _version_key(v["version"]), reverse=True)
+
+
+def file_checksums(name, rel):
+    """按相对路径计算应用目录内文件的 MD5/SHA1/SHA256（惰性计算，不缓存）。"""
+    base = os.path.realpath(app_dir(name))
+    path = os.path.realpath(os.path.join(base, rel))
+    if path != base and not path.startswith(base + os.sep):
+        raise AppError("非法文件路径")
+    if not os.path.isfile(path):
+        raise AppError("文件不存在: " + rel)
+    md5, sha1, sha256 = hashlib.md5(), hashlib.sha1(), hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            md5.update(chunk)
+            sha1.update(chunk)
+            sha256.update(chunk)
+    return {"file": os.path.relpath(path, base).replace(os.sep, "/"),
+            "size_bytes": os.path.getsize(path),
+            "md5": md5.hexdigest(), "sha1": sha1.hexdigest(), "sha256": sha256.hexdigest()}
 
 
 def latest_version(name):
