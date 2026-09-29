@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "689aa34a2b767b0a12b456f0e2f9e6037019adaa",
+  "branch": "ca1db944295eaf20678ef94f02bd23941d98383e",
   "plugins": [
     {
       "name": "appupdate",
@@ -10,7 +10,7 @@
         "安全",
         "网络"
       ],
-      "version": "2.11.2",
+      "version": "2.12.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -18,15 +18,15 @@
         }
       ],
       "files": {
-        "README.md": "232b2c52b0b330413483213c3a27cb093adcde0dd7f23ace8f54f740ef569e7b",
-        "frontend.js": "56062319c6b041c499587438570776abb45fb7358884266f1665a4f7aadc2e15",
-        "manifest.json": "57ee75ba92c83e3d56ddbfaea5b45c2f16a2102a682b43830b0400798886a04e",
+        "README.md": "f0e6cd5c9f3d03810ee8962e0a08a43ad6dd37fffa01cc74c7cb1d8fb6ca336d",
+        "frontend.js": "115c24b382d5e8c602ef416fdb54c420e86060d3b5b42e457a84b08b3f804dd3",
+        "manifest.json": "e3bb55c7c6a91af71baaf06f57b8cdf53db357da47bd2a847179ad880fb90316",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "33abfe0d4111ffe55e9a9f1d1068c9d39b45e8265e03b24f535413afbaaa1390",
-        "module/apps.py": "ffe6a57010d076938b929a630a7f4d06de34a4c77d6f0619474d756b310db734",
+        "module/api.py": "831bc1b26826d10fd96cb8727fda73113620ae79c5f0edcf6be57ec61e6c907f",
+        "module/apps.py": "aac97976deda86b05a169d48f27fc7683cd417d18fd493cfdc846da324aa0808",
         "module/cli.py": "ba6d66efc97da6825f750d7e442e9f50cb8c28471c2173e6b6f5285327e0695c",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "9d1676f7c1e0e64e9560ea37d84440f7bdd3f81c90627c56b96bb270a5fdf30d",
+        "module/manifest.py": "ea2e2f8fc3ec4793612001d63e2e9a5e11192b89ab548089fef803094c4eda41",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "0959e83a0fe917acde58316397b27bb123751c6de0a2e0e6b6e046a791670678",
         "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
