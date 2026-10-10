@@ -1,0 +1,37 @@
+# 换行符统一：仓库内一律以 LF 存储，检出时也保持 LF。
+#
+# 背景：此前仓库 blob 为 LF，而部分工作树文件是 CRLF，导致 89 个文件常年
+# 显示为 modified、diff 呈整文件重写，提交时极易把无关改动带进历史。
+# 加入本文件后 `git status` 只反映真实内容变更。
+#
+# 注意：本规则会重新规范化工作树中混用/CRLF 的文本文件，从而改变这些文件的
+# blob 哈希。plugins/ 下任何 blob 变化都必须重跑 gen_index_hashes.py 刷新
+# index.json（面板安装按 files 段双向校验哈希，不一致会拒绝安装）。
+* text=auto eol=lf
+
+# 显式声明文本文件类型（便于 diff 与合并按行处理）
+*.py    text eol=lf
+*.js    text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.sh    text eol=lf
+*.txt   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+
+# 二进制文件：禁止换行符转换，避免损坏内容
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.svg   text eol=lf
+*.pdf   binary
+*.zip   binary
+*.gz    binary
+*.tar   binary
+*.whl   binary
+*.apk   binary
+*.so    binary
+*.pyc   binary

@@ -23,6 +23,8 @@ v1.10.0：短链改为 302 到带扩展名的真实文件并补 Content-Disposit
 真实文件匹配改用 path_regexp 以覆盖子目录（path 的 * 不跨 /）。
 v1.10.1：应用站点块自带 AUPS APPS 托管标记区，修复 update_app_sites 生成的块
 缺标记导致 apply() 报「未找到 AUPS 托管标记区」、短链始终注入不进去的问题。
+v1.11.1：仓库加入 .gitattributes（统一 LF），frontend.js / module/api.py 换行符
+规范化后哈希变化，同步刷新 index.json。
 v1.11.0：自动检测并就地接管手写站点块（只补托管标记，不改用户指令），
 域名被占用的应用不再因「重复」被跳过；apply/clear_routes 覆盖全部托管站点块，
 路由按域名分发到各自站点；同步幂等（无变化时不写盘、不 reload）。
@@ -31,7 +33,7 @@ v1.11.0：自动检测并就地接管手写站点块（只补托管标记，不�
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.11.0",
+    "version": "1.11.1",
     "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、自动 HTTPS 证书、access 日志、防火墙；依赖 SSL 证书管理",
     "type": "external",
     "attr": "依赖",
