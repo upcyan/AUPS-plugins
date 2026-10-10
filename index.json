@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "ca1db944295eaf20678ef94f02bd23941d98383e",
+  "branch": "35a3d41ed109fe459f6e697d2b3e3e05a5b375cf",
   "plugins": [
     {
       "name": "appupdate",
@@ -10,7 +10,7 @@
         "安全",
         "网络"
       ],
-      "version": "2.12.0",
+      "version": "2.13.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -18,15 +18,15 @@
         }
       ],
       "files": {
-        "README.md": "f0e6cd5c9f3d03810ee8962e0a08a43ad6dd37fffa01cc74c7cb1d8fb6ca336d",
+        "README.md": "bdabc7b6065760902652761639c5f497e1b6392c6ff9284706dcf552510e8883",
         "frontend.js": "115c24b382d5e8c602ef416fdb54c420e86060d3b5b42e457a84b08b3f804dd3",
-        "manifest.json": "e3bb55c7c6a91af71baaf06f57b8cdf53db357da47bd2a847179ad880fb90316",
+        "manifest.json": "7ea7d02e906fd1ff9b953cd3910d1d8497780b768f55a4ef63114074e1be55d8",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "831bc1b26826d10fd96cb8727fda73113620ae79c5f0edcf6be57ec61e6c907f",
-        "module/apps.py": "aac97976deda86b05a169d48f27fc7683cd417d18fd493cfdc846da324aa0808",
+        "module/api.py": "d18aac1d295e6fc5364e2fd77290dba54bb819a7fc1d83ffbc549f3f0c7b8779",
+        "module/apps.py": "fb3b642d5a05fcc1622a3df72e04bc3e51a54d17117621f8e444b55a0258de3c",
         "module/cli.py": "ba6d66efc97da6825f750d7e442e9f50cb8c28471c2173e6b6f5285327e0695c",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "ea2e2f8fc3ec4793612001d63e2e9a5e11192b89ab548089fef803094c4eda41",
+        "module/manifest.py": "c3653b8fa2b83bf45e3f0b121700517d25516970d2af48e722dda5acafaa4779",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "0959e83a0fe917acde58316397b27bb123751c6de0a2e0e6b6e046a791670678",
         "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
@@ -38,21 +38,21 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.9.0",
+      "version": "1.11.0",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
-        "README.md": "d51aba0a8e2902fd325d2b25c4df5ae18d32c1565dd578a68db808078e2aef66",
+        "README.md": "46e7e1b17eaba767db9b0047879f8b9cc8eb865d275b123448879fb208764f6a",
         "frontend.js": "20a8e78f72890313ecf5e2f7df5007a216704b3369a0ff73af1aa69c279fccdd",
-        "manifest.json": "8d65871c2198ec52e22780b1759335269cc584e330ce7031be95e821eca69331",
+        "manifest.json": "a8e280c3316dee112480c9276114f65fcbe29001822d3d3f9d4807391c46ed2e",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
         "module/api.py": "5ab9e5c42c95a8cd208df293a633465da0167c1249bdbdadb5428c60229108bb",
-        "module/caddyfile.py": "b1a0782614adf27ad7811bf2b9719c9d93971d60c01347216010c4bfd5f67ba4",
+        "module/caddyfile.py": "0ff02fb3c2240f700101353aa933ecbc8022457b2463fb1e932ba819ca906918",
         "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
         "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
-        "module/manifest.py": "3105414d256a3424c0200b8f028f01799f34b9f8f6cc81ae409da2d1dea3ac5b",
+        "module/manifest.py": "4ce0d2ca166cf51e73ac478559bd77fb65428f4ecfee04d71f06017a4b5a0739",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
-        "module/rproxy/caddy.py": "6c1c9d479906f1c8d9b4317ae95d1fefb40eacf06af3d4f0114e18f18eeba6cf"
+        "module/rproxy/caddy.py": "9e695ed351863587dddb1d729e85d44fa51c3d9ecb5551c3227361fd71c689ab"
       },
       "cards": false,
       "provides": [
@@ -77,7 +77,7 @@
       "name": "nginx",
       "title": "Nginx 依赖",
       "attr": "依赖",
-      "version": "1.3.0",
+      "version": "1.4.0",
       "description": "Nginx 反代：站点、证书、WebSocket、上游池、配置校验回滚与日志",
       "install_params": [
         {
@@ -91,11 +91,11 @@
       "files": {
         "README.md": "55322ed5f3968c69e83f06e5a158eb18b36cbd12675e08f803d1ddbc9baf376b",
         "frontend.js": "24377947abd9d376050125ea2a0b80739052e22925c7f1d9bfb1ae0048dad952",
-        "manifest.json": "1bc52327013dc769fc5c0b72f57c9e281b4f0c2e69b0c831675e175d40bb6f59",
+        "manifest.json": "f638794dc60347f70852773f0d1811188c781598f69e680326a5538876dd2a13",
         "module/__init__.py": "4dad3b5e3fd946cbd24fb74eff88dab5c3574b2707419a88676cccdedf4f7c55",
-        "module/api.py": "c05b3a99a9b1ed6ac45b2791bad5bd8d440f0655ceb388d14d862583d0569fd5",
+        "module/api.py": "cee78de4c133d3d29da975d2af637888748f7b7f83b411d463b8675479650e71",
         "module/cli.py": "a1889b0da989611aee38d7426b1544fd435f3ef246f3fdc5d15403d473ae94e3",
-        "module/manifest.py": "bbd4c62d751ef4e53b0f11f3f407c1abc2791cb16a24e58a37e1fbac28d70f21",
+        "module/manifest.py": "c16d9b25d031475c9e9845979e509be8afc8b8351a9fffa253572eb12f8fb2b8",
         "module/webapi.py": "ec6b0aeb441c3c86f23b0a184a6c76f154c27d654395bee7717937ab5f56453c"
       },
       "cards": false,
