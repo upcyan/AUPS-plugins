@@ -333,6 +333,11 @@ def delete_site(host):
 _APPS_SITE_BEGIN = "# >>> AUPS APPS SITE (managed, do not remove) <<<"
 _APPS_SITE_END = "# <<< AUPS APPS SITE >>>"
 
+# 下载路由托管标记区：必须落在应用站点块内，rproxy 的 apply() 才找得到注入点。
+# 缺失时 apply() 会报「Caddyfile 中未找到 AUPS 托管标记区」，短链永远注入不进去。
+_APPS_ROUTE_BEGIN = "# >>> AUPS APPS (managed, do not remove) <<<"
+_APPS_ROUTE_END = "# <<< AUPS APPS >>>"
+
 
 def _site_addresses(host):
     """把站点标签归一化为地址集合，供重复域名检测。"""
@@ -344,14 +349,24 @@ def _site_addresses(host):
     return out
 
 
-def _gen_app_site_blocks(apps, reserved=None):
+def _gen_app_site_blocks(apps, reserved=None, preserved=None):
     """生成应用站点块；已有自定义站点保留并跳过，避免重复域名。
 
     每个应用对应一个工作目录：站点以 file_server 直接托管该目录下的静态文件
     （update.json / APK）。port 为对外服务端口（声明/注册用），非内部反代目标。
+
+    块内自带 AUPS APPS 下载路由标记区——rproxy 的 apply() 只向含该标记的站点块
+    注入短链重定向与 attachment 响应头；标记缺失会导致 apply() 报错、短链始终
+    不生效（latest 回落到 file_server 直吐文件，缺 Content-Type 而不触发下载）。
+
+    preserved 为 {地址: {host, body}}：上一轮托管区内已有块的原文。命中时复用其
+    body（连同 apply() 写入的 WAF 段与下载路由段），使 update_app_sites 与
+    apply() 的组合成为幂等操作——否则每轮同步都先删后建，内容虽最终收敛，却会
+    每次写盘并 reload，破坏「无变化即跳过」的高频同步优化。
     """
     blocks = []
     seen = set(reserved or ())
+    preserved = preserved or {}
     skipped = []
     for app in apps:
         name = (app.get("name") or "").strip()
@@ -364,8 +379,14 @@ def _gen_app_site_blocks(apps, reserved=None):
             skipped.append(domain)
             continue
         seen.update(addresses)
+        snap = next((preserved[a] for a in addresses if a in preserved), None)
+        if snap and snap.get("body", "").strip():
+            blocks.append(f"{snap['host']} {{\n{snap['body']}\n}}")
+            continue
         block = f"""{domain} {{
     respond /.well-known/aups-domain-check "aups-domain-verify:{name}" 200
+    {_APPS_ROUTE_BEGIN}
+    {_APPS_ROUTE_END}
     root * {workdir}
     file_server
 }}"""
@@ -373,28 +394,111 @@ def _gen_app_site_blocks(apps, reserved=None):
     return "\n\n".join(blocks), skipped
 
 
+def _block_indent(lines, blk):
+    """探测站点块内部缩进（tab 或若干空格），默认四空格。"""
+    for ln in lines[blk["start"] + 1: blk["end"]]:
+        if ln.strip():
+            return ln[: len(ln) - len(ln.lstrip())] or "    "
+    return "    "
+
+
+def _adopt_app_site(lines, blk, name):
+    """就地接管手写站点块：注入域名校验与下载路由标记区。
+
+    只新增 AUPS 托管行，不改动用户已有指令（root / file_server / reverse_proxy /
+    header 等一律原样保留），因此对手写站点是安全的、可反复执行的（标记已存在
+    则不再插入）。
+
+    必要性：apply() 只向含 AUPS APPS 标记的站点块注入短链。若应用的域名已被
+    手写站点块占用，而该块缺标记，则 update_app_sites 会因「域名重复」跳过它，
+    apply() 随即报「未找到 AUPS 托管标记区」，短链永远注入不进去——表现为
+    /latest 由 file_server 直吐文件、缺 Content-Type 而不触发下载。
+
+    返回 (lines, changed, added)。
+    """
+    body = "\n".join(lines[blk["start"] + 1: blk["end"]])
+    indent = _block_indent(lines, blk)
+    inserts, added = [], []
+    if "aups-domain-check" not in body:
+        inserts.append(f'{indent}respond /.well-known/aups-domain-check '
+                       f'"aups-domain-verify:{name}" 200')
+        added.append("domain_check")
+    if _APPS_ROUTE_BEGIN not in body:
+        inserts.append(f"{indent}{_APPS_ROUTE_BEGIN}")
+        inserts.append(f"{indent}{_APPS_ROUTE_END}")
+        added.append("download_routes")
+    if not inserts:
+        return lines, False, []
+    lines[blk["start"] + 1: blk["start"] + 1] = inserts
+    return lines, True, added
+
+
 def update_app_sites(apps, reload_=True):
-    """更新 Caddyfile 中的应用站点块（AUPS APPS SITE 标记区）。
+    """更新 Caddyfile 中的应用站点（AUPS APPS SITE 标记区）。
     apps 为 [{name, domain, port, workdir}] 列表。内容无变化时跳过写盘。
+
+    两步：先接管已有同名站点块（就地补标记区，保留用户配置），再为没有对应
+    站点的应用生成托管站点块。这样无论站点是面板生成还是手工编写，下载路由
+    都有注入点。
     """
     d = read()
+    # 采集上轮托管区内已有块的原文（含 apply() 写入的 WAF/路由段），供重建时复用。
+    # 否则每轮同步都先删后建，内容虽收敛却每次写盘 + reload。
+    preserved = {}
+    for blk in _site_blocks(_extract_section(d["content"], _APPS_SITE_BEGIN,
+                                             _APPS_SITE_END)):
+        for addr in _site_addresses(blk["host"]):
+            preserved.setdefault(addr, {"host": blk["host"], "body": blk["body"]})
+
     # 旧版替换逻辑可能生成嵌套标记；先完整清除，再生成唯一托管区。
     content = _remove_section(d["content"], _APPS_SITE_BEGIN, _APPS_SITE_END)
+    lines = content.splitlines()
+    blocks = _site_blocks(content)
+
+    # 第一步：接管域名已被现有站点块占用的应用（就地补标记，不改用户指令）
+    pending, handled = [], set()
+    for app in apps or []:
+        name = (app.get("name") or "").strip()
+        domain = (app.get("domain") or "").strip()
+        if not name or not domain:
+            continue
+        addresses = _site_addresses(domain)
+        for blk in blocks:
+            if blk["start"] in handled:
+                continue
+            if _site_addresses(blk["host"]) & addresses:
+                pending.append((blk, name))
+                handled.add(blk["start"])
+                break
+    # 自下而上插入，避免前面的插入使后续块的行索引失效
+    adopted = []
+    for blk, name in sorted(pending, key=lambda x: x[0]["start"], reverse=True):
+        lines, changed, added = _adopt_app_site(lines, blk, name)
+        if changed:
+            adopted.append({"domain": blk["host"], "app": name, "added": added})
+    content = "\n".join(lines)
+
+    # 第二步：为未被现有站点占用的应用生成托管站点块
     reserved = set()
     for blk in _site_blocks(content):
         reserved.update(_site_addresses(blk["host"]))
-    new_sites, skipped = _gen_app_site_blocks(apps, reserved)
+    new_sites, skipped = _gen_app_site_blocks(apps, reserved, preserved)
+    # 已接管的应用不算「因域名重复被跳过」，避免前端误报
+    adopted_addresses = set()
+    for item in adopted:
+        adopted_addresses |= _site_addresses(item["domain"])
+    skipped = [s for s in skipped if not (_site_addresses(s) & adopted_addresses)]
 
     if new_sites:
         section = f"{_APPS_SITE_BEGIN}\n{new_sites}\n{_APPS_SITE_END}"
         content = content.rstrip() + "\n\n" + section + "\n"
 
     if content.rstrip("\n") == d["content"].rstrip("\n"):
-        return {"updated": True, "unchanged": True,
+        return {"updated": True, "unchanged": True, "adopted": [],
                 "sites": len(_site_blocks(new_sites)), "skipped_existing": skipped}
 
     write(content, reload_=reload_)
-    return {"updated": True, "unchanged": False,
+    return {"updated": True, "unchanged": False, "adopted": adopted,
             "sites": len(_site_blocks(new_sites)), "skipped_existing": skipped}
 
 
@@ -412,6 +516,21 @@ def remove_app_site(domain, reload_=True):
             break
     write(content, reload_=reload_)
     return {"removed": True, "domain": domain}
+
+
+def _extract_section(text, begin, end):
+    """取标记区内部原文（不含标记行本身）。标记缺失时返回空串。"""
+    out, on = [], False
+    for line in text.splitlines():
+        if begin in line:
+            on = True
+            continue
+        if end in line:
+            on = False
+            continue
+        if on:
+            out.append(line)
+    return "\n".join(out)
 
 
 def _remove_section(text, begin, end):

@@ -56,3 +56,5 @@ aups plugins market install caddy --deploy container   # 容器部署
 作为反代环境插件，可为 appupdate 等应用提供下载路由托管片段。若需证书签发，可搭配 certbot / acme 依赖插件使用。容器部署要求服务器已安装 docker 或 podman 运行时（可在「容器」页安装）。
 
 下载路由渲染前会实时向 appupdate 重取数据（CI 经 SSH 直传的新文件即时生效）；latest 短链按文件日期指向最新文件；托管段无变化时自动跳过写盘与 reload，可安全配合周期同步任务高频执行。
+
+短链（`/应用/latest`、`/应用/版本号`）一律 302 到带扩展名的真实文件，真实文件（.apk/.jar/.zip/.tar.gz）补 `Content-Disposition: attachment` 强制下载。这是因为无扩展名路径无法按扩展名推断 MIME，响应缺 `Content-Type`，叠加安全头的 `X-Content-Type-Options: nosniff` 后浏览器禁止嗅探，会把 APK 当文本内联渲染而不下载。匹配用 `path_regexp`（Caddy 的 `path` 通配符中 `*` 不跨 `/`，匹配不到 `/应用/apk/x.apk` 这类子目录文件）。

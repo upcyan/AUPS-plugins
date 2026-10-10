@@ -4,12 +4,15 @@ v1.2.0：容器部署（docker/podman）、deploy_switch 能力。
 v1.3.0：与 caddy 后端能力对齐——download_route（托管下载路由 aups-routes.conf，
 latest 按文件日期、apply 无变化跳过 reload）、preview、clear_routes（迁移清理）、
 update_app_sites（应用站点托管）；前端补齐站点管理/实例控制 UI。
+v1.4.0：下载路由与 caddy 后端对齐——短链 302 到带扩展名的真实文件，真实文件
+（.apk/.jar/.zip/.tar.gz）补 Content-Disposition: attachment 强制下载，修复无扩展名
+路径缺 Content-Type 时浏览器内联渲染 APK 而非下载。
 """
 
 MANIFEST = {
     "name": "nginx",
     "title": "Nginx 依赖",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "description": "Nginx 反代：站点管理、托管下载路由、实例控制、证书（通过 certbot/acme 申请）",
     "type": "external",
     "attr": "依赖",

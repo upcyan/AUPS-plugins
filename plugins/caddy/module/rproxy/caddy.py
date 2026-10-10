@@ -365,14 +365,15 @@ def _site_blocks(text):
     return blocks
 
 
-def _gen_download_routes():
-    """从 appupdate 公共数据（list_apps/list_versions）生成 Caddy 下载路由片段。
+# 可分发文件扩展名：其直链补 Content-Disposition 强制下载
+_DL_EXTS = ("apk", "jar", "zip", "tar.gz")
 
-    数据来源与 appupdate 解耦：只读其公开函数，路由语法渲染为本反代职责。
-    appupdate 未启用或停用时返回空片段。latest 短链目标优先取数据块中的
-    latest 字段（appupdate 按文件日期选定），缺省回退版本号最大的文件。
+
+def _render_routes(data):
+    """把下载路由数据渲染成 Caddy 片段（含 AUPS APPS 标记区）。
+
+    路由语法渲染是本反代领域职责，数据由 appupdate 提供（见 _download_routes）。
     """
-    data = _download_routes()
     parts = [_APPS_MARK_BEGIN]
     for app in data.get("apps", []):
         host = app["name"]
@@ -388,8 +389,38 @@ def _gen_download_routes():
             parts.append(f"    redir @dl_{host}_{v['version']} {dl}")
         parts.append(f"    @dl_latest_{host} path /{host}/latest")
         parts.append(f"    redir @dl_latest_{host} /{host}/{latest['rel']}")
+        # 直链强制下载：短链 302 后浏览器跟随到此处，凭该响应头弹出下载。
+        # 用 path_regexp 而非 path 通配符——Caddy 的 path 匹配中 * 不跨 /，
+        # 而真实文件常位于子目录（如 /app/apk/x.apk），path /app/*.apk 匹配不到。
+        exts = "|".join(re.escape(e) for e in _DL_EXTS)
+        parts.append(f"    @dl_file_{host} path_regexp dl_file_{host} "
+                     f"^/{re.escape(host)}/.*\\.({exts})$")
+        parts.append(f'    header @dl_file_{host} Content-Disposition "attachment"')
     parts.append(_APPS_MARK_END)
     return "\n".join(parts)
+
+
+def _gen_download_routes():
+    """从 appupdate 公共数据生成 Caddy 下载路由片段（全量，供 preview 用）。
+
+    数据来源与 appupdate 解耦：只读其公开函数，路由语法渲染为本反代职责。
+    appupdate 未启用或停用时返回空片段。latest 短链目标优先取数据块中的
+    latest 字段（appupdate 按文件日期选定），缺省回退版本号最大的文件。
+
+    latest 与版本短链都是无扩展名路径，若由 file_server 直接托管，Caddy 无法
+    按扩展名推断 MIME，响应缺 Content-Type；叠加安全头的
+    X-Content-Type-Options: nosniff 后浏览器禁止嗅探，会把 APK 当文本内联渲染
+    而不是下载。故此处：
+
+    1. 短链一律 302 到带扩展名的真实文件；
+    2. 真实文件（.apk/.jar/.zip/.tar.gz）补 Content-Disposition: attachment
+       强制下载。不覆盖 Content-Type，保留 file_server 按扩展名的推断结果，
+       以免把 jar/zip 误标为 APK 类型。
+
+    redir 在 Caddy 指令序中先于 file_server，故目录内即使存在同名 latest
+    物理文件也会优先重定向。
+    """
+    return _render_routes(_download_routes())
 
 
 def _replace_section(body, begin, end, snippet, insert_top=False):
@@ -436,25 +467,68 @@ def _extract_section(body, begin, end):
     return "\n".join(out)
 
 
+def _site_addresses(host):
+    """把站点标签归一化为地址集合（与 caddyfile._site_addresses 同规则）。
+
+    在本模块内保留一份，避免反代渲染依赖 caddyfile 的文本管理实现。
+    """
+    out = set()
+    for value in re.split(r"[\s,]+", host or ""):
+        value = re.sub(r"^https?://", "", value.strip().lower()).rstrip("/.")
+        if value:
+            out.add(value)
+    return out
+
+
+def _managed_sites(text):
+    """返回所有含 AUPS 托管标记区的站点块（可能多个：每个应用域名一个）。"""
+    return [blk for blk in _site_blocks(text)
+            if (_APPS_MARK_BEGIN in blk["body"] or _OLD_APPS_BEGIN in blk["body"]
+                or _WAF_BEGIN in blk["body"] or _OLD_WAF_BEGIN in blk["body"])]
+
+
 def _site():
-    """找到托管站点块（含下载路由或 WAF 标记区）。"""
+    """找到首个托管站点块（含下载路由或 WAF 标记区）。保留旧签名供 show() 用。"""
     try:
         text = open(env.caddy_config_file(), encoding="utf-8").read()
     except OSError:
         raise AppError(f"Caddyfile 不存在：{env.caddy_config_file()}")
-    blocks = _site_blocks(text)
-    target = None
-    for blk in blocks:
-        if (_APPS_MARK_BEGIN in blk["body"] or _OLD_APPS_BEGIN in blk["body"]
-                or _WAF_BEGIN in blk["body"] or _OLD_WAF_BEGIN in blk["body"]):
-            target = blk
-            break
-    if target is None:
+    blocks = _managed_sites(text)
+    if not blocks:
         raise AppError(
             "Caddyfile 中未找到 AUPS 托管标记区。请在下载站点块内加一行：\n"
             f"  {_APPS_MARK_BEGIN}\n"
             "（面板会自动把下载路由与 WAF 规则写入该站点块）")
-    return text, target
+    return text, blocks[0]
+
+
+def _assign_routes(blocks, data):
+    """把应用路由分配到各托管站点块，返回 {块下标: [应用]}。
+
+    规则（保证短链在任何情况下都不丢，否则 App 下载会 404）：
+
+    - 声明了 domain 且与块地址匹配 → 只注入该块，避免把 /otherapp/latest
+      写进无关站点；
+    - 声明了 domain 但没有任何块匹配 → 兜底注入首个托管块。应用尚未部署站点、
+      或站点块同步失败（sync 的站点步报错后 apply 仍会执行）时都会走到这里；
+    - 未声明 domain → 注入所有托管块，兼容未绑定域名的旧配置。
+    """
+    apps = data.get("apps", [])
+    if not blocks:
+        return {}
+    assign = {i: [] for i in range(len(blocks))}
+    for app in apps:
+        domain = (app.get("domain") or "").strip()
+        if not domain:
+            for i in range(len(blocks)):
+                assign[i].append(app)
+            continue
+        addresses = _site_addresses(domain)
+        hit = [i for i, blk in enumerate(blocks)
+               if _site_addresses(blk["host"]) & addresses]
+        for i in (hit or [0]):
+            assign[i].append(app)
+    return assign
 
 
 def show():
@@ -478,33 +552,58 @@ def preview():
 
 
 def apply(reload=True):
-    text, target = _site()
+    """向所有 AUPS 托管站点块注入下载路由与 WAF 段。
+
+    多应用多域名时每块只收属于自己域名的路由（见 _routes_for），避免把
+    /otherapp/latest 的重定向写进无关站点；WAF 段每块都要有，故逐块渲染。
+    """
+    try:
+        text = open(env.caddy_config_file(), encoding="utf-8").read()
+    except OSError:
+        raise AppError(f"Caddyfile 不存在：{env.caddy_config_file()}")
+    targets = _managed_sites(text)
+    if not targets:
+        raise AppError(
+            "Caddyfile 中未找到 AUPS 托管标记区。请在下载站点块内加一行：\n"
+            f"  {_APPS_MARK_BEGIN}\n"
+            "（面板会自动把下载路由与 WAF 规则写入该站点块）")
+
+    data = _download_routes()
+    waf_snippet = _waf_snippet()
     lines = text.splitlines()
-    body = target["body"]
-    new_body = _replace_section(body, _APPS_MARK_BEGIN, _APPS_MARK_END,
-                                _gen_download_routes())
-    # WAF 段置于站点块顶部，确保先于 redir/file_server 生效
-    new_body = _replace_section(new_body, _WAF_BEGIN, _WAF_END, _waf_snippet(), insert_top=True)
-    if new_body == body:
+    changed = False
+    # 先按稳定顺序算好各块的路由分配，再自下而上写回，避免前面的替换使后续块
+    # 的行索引失效。
+    assign = _assign_routes(targets, data)
+    rendered = {id(t): _render_routes({"apps": assign[i]})
+                for i, t in enumerate(targets)}
+    for target in sorted(targets, key=lambda b: b["start"], reverse=True):
+        body = "\n".join(lines[target["start"] + 1: target["end"]])
+        new_body = _replace_section(body, _APPS_MARK_BEGIN, _APPS_MARK_END,
+                                    rendered[id(target)])
+        # WAF 段置于站点块顶部，确保先于 redir/file_server 生效
+        new_body = _replace_section(new_body, _WAF_BEGIN, _WAF_END, waf_snippet,
+                                    insert_top=True)
+        if new_body == body:
+            continue
+        lines[target["start"] + 1: target["end"]] = new_body.splitlines()
+        changed = True
+
+    if not changed:
         # 托管段无变化：跳过写盘与 reload，周期同步（cron）可安全高频执行
         return {"backend": NAME, "caddyfile": env.caddy_config_file(),
-                "written": False, "changed": False, "reloaded": False}
-    opener = lines[target["start"]]
-    closer = lines[target["end"]]
-    out = (lines[: target["start"]]
-           + [opener]
-           + new_body.splitlines()
-           + [closer]
-           + lines[target["end"] + 1:])
-    text = "\n".join(out)
+                "written": False, "changed": False, "reloaded": False,
+                "sites": len(targets)}
+    out = "\n".join(lines)
     from ..caddyfile import ensure_global_options
-    text = ensure_global_options(text)
+    out = ensure_global_options(out)
     with open(env.caddy_config_file(), "w", encoding="utf-8") as f:
-        f.write(text)
+        f.write(out)
     if reload:
         _reload(warn_only=True)
     return {"backend": NAME, "caddyfile": env.caddy_config_file(),
-            "written": True, "changed": True, "reloaded": reload}
+            "written": True, "changed": True, "reloaded": reload,
+            "sites": len(targets)}
 
 
 def update_app_sites(apps, reload_=True):
@@ -518,28 +617,38 @@ def _gen_empty_routes():
 
 
 def clear_routes(reload=True):
-    """清空托管下载路由（appupdate 迁移到其他反代时调用）。
+    """清空全部托管下载路由（appupdate 迁移到其他反代时调用）。
 
     只清 APPS 短链区，WAF 段与应用站点块保留；切回 caddy 后执行
     apply() 即可按最新数据重新生成路由。无托管标记区时视为无需清理。
+
+    须覆盖所有托管站点块——多应用多域名时每块各有一份短链，只清首个会留下
+    陈旧重定向（迁移后仍把请求导向本后端）。
     """
     try:
-        text, target = _site()
-    except AppError:
+        text = open(env.caddy_config_file(), encoding="utf-8").read()
+    except OSError:
+        return {"cleared": True, "changed": False, "reloaded": False,
+                "note": "Caddyfile 不存在，无需清理"}
+    targets = _managed_sites(text)
+    if not targets:
         return {"cleared": True, "changed": False, "reloaded": False,
                 "note": "Caddyfile 中无托管标记区，无需清理"}
     lines = text.splitlines()
-    new_body = _replace_section(target["body"], _APPS_MARK_BEGIN, _APPS_MARK_END,
-                                _gen_empty_routes())
-    if new_body == target["body"]:
+    changed = False
+    for target in sorted(targets, key=lambda b: b["start"], reverse=True):
+        body = "\n".join(lines[target["start"] + 1: target["end"]])
+        new_body = _replace_section(body, _APPS_MARK_BEGIN, _APPS_MARK_END,
+                                    _gen_empty_routes())
+        if new_body == body:
+            continue
+        lines[target["start"] + 1: target["end"]] = new_body.splitlines()
+        changed = True
+    if not changed:
         return {"cleared": True, "changed": False, "reloaded": False}
-    out = (lines[: target["start"]]
-           + [lines[target["start"]]]
-           + new_body.splitlines()
-           + [lines[target["end"]]]
-           + lines[target["end"] + 1:])
     with open(env.caddy_config_file(), "w", encoding="utf-8") as f:
-        f.write("\n".join(out))
+        f.write("\n".join(lines))
     if reload:
         _reload(warn_only=True)
-    return {"cleared": True, "changed": True, "reloaded": bool(reload)}
+    return {"cleared": True, "changed": True, "reloaded": bool(reload),
+            "sites": len(targets)}

@@ -63,9 +63,13 @@ def apps_caddy(body: dict = None, auth=Depends(require_auth)):
     """同步反代路由：刷新下载数据块 + 应用站点块 + 短链重定向（含 latest）并 reload。
 
     通过核心 rproxy 转发，支持任意反代插件；反代无变化时自动跳过写盘与 reload。
+
+    任一步失败都向调用方报错：此前只在三项结果全空时才抛，于是站点块同步成功
+    但路由注入失败时（如站点块缺 AUPS APPS 托管标记区）仍静默返回 ok，前端谎报
+    「反代路由已更新」，而短链实际从未生效。
     """
     result = A.sync_proxy_routes(reload=bool((body or {}).get("reload", True)))
-    if result["errors"] and not (result["data"] or result["routes"] or result["sites"]):
+    if result["errors"]:
         raise AppError("；".join(result["errors"]))
     return {"ok": True, **result}
 

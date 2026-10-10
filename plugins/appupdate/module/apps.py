@@ -105,10 +105,15 @@ def public_download_routes():
 
     versions 按版本号排序（版本短链用）；latest 按文件日期取最新（latest 短链用，
     CI 经 SSH 直传的文件不经面板，只有这里实时扫描才能保证 latest 跟进新文件）。
+
+    domain 供反代把各应用的路由分发到对应站点块（多应用多域名时必需）；缺失或
+    为空表示未绑定域名，反代将路由注入全部托管站点块以兼容旧配置。
     """
     from ...core import contracts
     payload = {
-        "apps": [{"name": app["name"], "versions": list_versions(app["name"]),
+        "apps": [{"name": app["name"],
+                  "domain": ((app.get("deploy") or {}).get("domain") or "").strip(),
+                  "versions": list_versions(app["name"]),
                   "latest": latest_by_date(app["name"])}
                  for app in list_apps()]
     }

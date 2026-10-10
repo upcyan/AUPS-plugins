@@ -388,6 +388,9 @@ def apply(reload=True):
 _ROUTES_BEGIN = "# >>> AUPS APPS (managed, do not remove) <<<"
 _ROUTES_END = "# <<< AUPS APPS >>>"
 
+# 可分发文件扩展名：其直链补 Content-Disposition 强制下载（与 caddy 后端对齐）
+_DL_EXTS = ("apk", "jar", "zip", "tar.gz")
+
 
 def _routes_conf():
     return os.path.join(config.plugin_dir("nginx", "config"), "aups-routes.conf")
@@ -419,6 +422,11 @@ def _gen_routes_conf():
     versions 按版本号降序渲染版本短链；latest 优先取数据块 latest 字段
     （appupdate 按文件日期选定），缺省回退版本号最大的文件。同一版本多个
     文件时只保留首个（版本序最高），避免 location 重复导致校验失败。
+
+    短链（无扩展名）一律 302 到带扩展名的真实文件，且真实文件补
+    Content-Disposition: attachment——否则 location 命中后由 root 直接吐字节，
+    nginx 按 MIME 表也推不出无扩展名路径的类型，浏览器可能内联渲染而非下载。
+    与 caddy 后端保持同形行为。
     """
     out = [_ROUTES_BEGIN]
     seen = set()
@@ -440,6 +448,11 @@ def _gen_routes_conf():
         rel = latest.get("rel")
         if rel:
             out.append(f"    location = /{host}/latest {{ return 302 /{host}/{rel}; }}")
+        # 直链强制下载：短链 302 后浏览器跟随到此处，凭该响应头弹出下载
+        exts = "|".join(re.escape(e) for e in _DL_EXTS)
+        out.append(f"    location ~ ^/{re.escape(host)}/.*\\.({exts})$ {{")
+        out.append('        add_header Content-Disposition "attachment";')
+        out.append("    }")
     out.append(_ROUTES_END)
     return "\n".join(out) + "\n"
 

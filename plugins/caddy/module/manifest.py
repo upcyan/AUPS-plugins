@@ -18,12 +18,20 @@ v1.7.0：SSL 页展示 Caddy 自动 HTTPS 已签发证书及有效期。
 v1.8.0：下载路由渲染前实时重取 appupdate 数据（CI 直传文件即时生效）；
 latest 短链按文件日期选定；apply/应用站点块无变化时跳过写盘与 reload。
 v1.9.0：新增 clear_routes 能力（appupdate 迁移到其他反代时清空托管短链）。
+v1.10.0：短链改为 302 到带扩展名的真实文件并补 Content-Disposition: attachment，
+修复无扩展名路径缺 Content-Type（叠加 nosniff）时 APK 被浏览器内联渲染而非下载；
+真实文件匹配改用 path_regexp 以覆盖子目录（path 的 * 不跨 /）。
+v1.10.1：应用站点块自带 AUPS APPS 托管标记区，修复 update_app_sites 生成的块
+缺标记导致 apply() 报「未找到 AUPS 托管标记区」、短链始终注入不进去的问题。
+v1.11.0：自动检测并就地接管手写站点块（只补托管标记，不改用户指令），
+域名被占用的应用不再因「重复」被跳过；apply/clear_routes 覆盖全部托管站点块，
+路由按域名分发到各自站点；同步幂等（无变化时不写盘、不 reload）。
 """
 
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.9.0",
+    "version": "1.11.0",
     "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、自动 HTTPS 证书、access 日志、防火墙；依赖 SSL 证书管理",
     "type": "external",
     "attr": "依赖",
