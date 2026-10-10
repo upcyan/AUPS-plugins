@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "35a3d41ed109fe459f6e697d2b3e3e05a5b375cf",
+  "branch": "e4714025b5c9253e058dfa3ac9dc6da528963d1c",
   "plugins": [
     {
       "name": "appupdate",
@@ -38,19 +38,19 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.11.0",
+      "version": "1.11.1",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
         "README.md": "46e7e1b17eaba767db9b0047879f8b9cc8eb865d275b123448879fb208764f6a",
-        "frontend.js": "20a8e78f72890313ecf5e2f7df5007a216704b3369a0ff73af1aa69c279fccdd",
-        "manifest.json": "a8e280c3316dee112480c9276114f65fcbe29001822d3d3f9d4807391c46ed2e",
+        "frontend.js": "8901987d6c527ab25871b00703c152afee06fd47cd12ce5ace6fcc2ad586f7cf",
+        "manifest.json": "47a94f26323e7b1d215cc60db311df8fafa03d48ce71ce2170f0fa93f1e81f92",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
-        "module/api.py": "5ab9e5c42c95a8cd208df293a633465da0167c1249bdbdadb5428c60229108bb",
+        "module/api.py": "0eb37b269b23ddb9b5f661cdd819846b5b6ac6f9285470d42dd8ccdf528d192c",
         "module/caddyfile.py": "0ff02fb3c2240f700101353aa933ecbc8022457b2463fb1e932ba819ca906918",
         "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
         "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
-        "module/manifest.py": "4ce0d2ca166cf51e73ac478559bd77fb65428f4ecfee04d71f06017a4b5a0739",
+        "module/manifest.py": "edea1b5d277595225a1b8e52d19f7131488be70dd590ccaaee522fd7302443b2",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
         "module/rproxy/caddy.py": "9e695ed351863587dddb1d729e85d44fa51c3d9ecb5551c3227361fd71c689ab"
       },
