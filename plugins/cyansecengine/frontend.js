@@ -9,7 +9,9 @@ window.AUPS_PLUGINS.cyansecengine = (function () {
   const provider = (v, fallback) => safe((v && v.provider) || fallback || '核心/未安装');
 
   async function load() {
-    const root = view('cyansecengine');
+    // 核心全局 view 是 DOM 元素（const view = document.getElementById('view')），
+    // 不是函数；写成 view('cyansecengine') 会抛 TypeError，页面停在加载占位态。
+    const root = document.getElementById('view');
     if (!root) return;
     root.innerHTML = '<div class="card"><h2>青·擎</h2><div class="mut">正在读取安全引擎状态…</div></div>';
     try {

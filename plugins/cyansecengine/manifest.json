@@ -1,7 +1,10 @@
 {
   "name": "cyansecengine",
   "title": "青·擎",
-  "attr": ["安全", "网络"],
-  "version": "3.1.0",
+  "attr": [
+    "安全",
+    "网络"
+  ],
+  "version": "3.1.1",
   "description": "青·擎统一安全编排：防火墙、WAF、漏洞检测、主机安全和实时防护的统一状态与操作入口"
 }

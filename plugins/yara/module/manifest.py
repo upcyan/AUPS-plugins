@@ -12,7 +12,7 @@
 MANIFEST = {
     "name": "yara",
     "title": "YARA 引擎",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "YARA 规则扫描引擎：引擎安装、规则订阅与扫描，规则数据由核心持有。供核心主机安全与 cyansecengine 调用",
     "type": "external",
     "attr": "依赖",

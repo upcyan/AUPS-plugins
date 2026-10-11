@@ -8,7 +8,9 @@ window.AUPS_PLUGINS['baseline'] = (function () {
   const P = 'AUPS_PLUGINS.baseline.';
 
   async function overview() {
-    const root = view('baseline');
+    // 核心全局 view 是 DOM 元素（const view = document.getElementById('view')），
+    // 不是函数；写成 view('baseline') 会抛 TypeError，页面停在「正在加载插件」占位态。
+    const root = document.getElementById('view');
     if (!root) return;
     root.innerHTML = `<div class="card" style="position:relative;z-index:1"><h2>基线巡检</h2><span class="mut">加载中...</span></div>`;
     const st = await api('GET', '/api/baseline/status').catch(() => ({}));

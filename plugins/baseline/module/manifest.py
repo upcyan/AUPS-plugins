@@ -12,7 +12,7 @@
 MANIFEST = {
     "name": "baseline",
     "title": "基线检查",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "VPS 基线检查（纯只读审计）：账号与权限 / 系统配置 / 内核网络加固 / 服务应用，四类检查项一键巡检并生成报告",
     "type": "external",
     "attr": "功能",
