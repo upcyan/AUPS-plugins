@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "045e53c607b036b0a72cadacaf12a7d820caa553",
+  "branch": "1e4a7554351e9194ae048e4ac41384bfeeb145eb",
   "plugins": [
     {
       "name": "appupdate",
@@ -449,15 +449,15 @@
         "功能",
         "安全"
       ],
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "只读远程调试通道：限时随机令牌、预设有限授权命令、目录白名单、输出脱敏与调用审计；用于远程查看面板配置/日志/服务状态排障",
       "files": {
-        "frontend.js": "3c92fd5440d232f2e89de1eada584f3fec0f5f282eede6cb97e6d115c7df4600",
-        "manifest.json": "c7bcdde6ca26ced17ee584c1cc494172600d622a8c24f9d85bb57652a837d235",
+        "frontend.js": "3aa9a730e4251169ef103cc1171b9ff65014f1cda1d42ad96da6b7942f52b7bc",
+        "manifest.json": "78da2edcd6361a93090404b062aff3f0d2445e4862f8e4ba24667421c202b276",
         "module/__init__.py": "4ff4013bd07a92f85b2f11d60dcac0866aec9f1e09f90d0fdf557342f19878d9",
         "module/api.py": "d09a38b047b52db0f7bf284705242dd58131b9c33e2681f2a7e0d1162da700de",
         "module/cli.py": "2d18b864df4c91202765dff5fda0bc7c40ded28fbfcf1242fac3404d95e67626",
-        "module/manifest.py": "e34bc87fc98e29ae01d8850d50f03fe541d9c3189f84db14a89f7d10270f4a5b",
+        "module/manifest.py": "56a242402f9b79fd8279fd2f7376586d1f1ff8754ab5939bc77cf15731a4cc5d",
         "module/redact.py": "725742ba59fb997bf66ed04a1bda7fe17d562fe33c23fd08c1fdff862f8b7cc4",
         "module/runner.py": "823df70d33500f402d1881b3de355821b1c3159f28053a6a8755d1783d7cb720",
         "module/store.py": "3afbcfbc02ed4ba8a7b0f51a5fc930c4570926fae57b7ee1c11d269f1009292c"
