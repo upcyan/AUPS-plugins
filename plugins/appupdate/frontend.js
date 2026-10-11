@@ -590,6 +590,22 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       ]);
       const locked = new Set(appData.locked || []);
       const versions = verData.versions || [];
+      const integrity = verData.integrity || { status: 'unavailable' };
+      const integrityLabels = {
+        verified: 'MD5 / SHA-256 双校验通过',
+        missing: '校验字段未补齐，请同步反代路由或发送 CI 通知',
+        mismatch: '校验值与本地 APK 不一致，请确认发布文件后重新同步',
+        error: '无法校验：' + (integrity.error || '未知错误'),
+        unavailable: '未发现 update.json',
+      };
+      const integrityClass = integrity.status === 'verified' ? 'ok' :
+        (integrity.status === 'mismatch' || integrity.status === 'error' ? 'err' : 'mut');
+      const integrityHtml = `<div class="${integrityClass}" style="margin-bottom:10px;word-break:break-all">
+        update.json：${esc(integrityLabels[integrity.status] || integrity.status)}
+        ${integrity.file ? `<div class="mut" style="font-size:11px">校验目标：${esc(integrity.file)}（按 apkUrl，不按 latest）</div>` : ''}
+        ${integrity.apkMd5 ? `<div class="mut" style="font-size:11px">实际 MD5：${esc(integrity.apkMd5)}</div>` : ''}
+        ${integrity.apkSha256 ? `<div class="mut" style="font-size:11px">实际 SHA-256：${esc(integrity.apkSha256)}</div>` : ''}
+      </div>`;
       const rows = versions.map(v => {
         const isLocked = locked.has(v.version);
         const logMark = v.has_changelog ? ' <span class="ok" style="font-size:11px">📝</span>' : '';
@@ -610,6 +626,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       }).join('');
       box.innerHTML = `
         <div class="mut" style="margin-bottom:6px">最新: ${verData.latest ? esc(verData.latest.version) : '-'} · 共 ${versions.length} 个版本 · 点「日志」查看/编辑该版本更新日志（📝 = 已填写）</div>
+        ${integrityHtml}
         <table><thead><tr><th>版本</th><th>大小</th><th>文件</th><th>上传时间</th><th>更新时间</th><th>校验码</th><th>锁定</th><th>更新日志</th><th></th></tr></thead>
         <tbody>${rows || '<tr><td colspan="9" class="mut">暂无版本</td></tr>'}</tbody></table>`;
     } catch(e) { box.innerHTML = errCard(e); }

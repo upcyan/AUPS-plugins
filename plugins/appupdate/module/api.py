@@ -159,7 +159,8 @@ def apps_versions(name: str, auth=Depends(require_auth)):
     for v in vs:
         v["has_changelog"] = v["version"] in logs
     latest = A.latest_version(name)
-    return {"name": name, "versions": vs, "latest": latest}
+    return {"name": name, "versions": vs, "latest": latest,
+            "integrity": A.update_integrity_status(name)}
 
 
 @router.get("/apps/{name}/changelog/{version}")

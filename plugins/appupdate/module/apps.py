@@ -10,7 +10,10 @@ import hashlib
 import json
 import os
 import re
+import stat
+import tempfile
 import time
+from urllib.parse import unquote, urlsplit
 
 from ... import config
 from ...errors import AppError
@@ -24,7 +27,8 @@ def _registry():
     path = config.APPS_FILE
     if os.path.isfile(path):
         try:
-            return json.load(open(path))
+            with open(path, encoding="utf-8") as f:
+                return json.load(f)
         except (OSError, ValueError):
             pass
     return {"apps": {}, "total_quota_mb": 0}
@@ -149,7 +153,8 @@ def sync_proxy_routes(reload=True, include_sites=True):
     写盘与 reload，周期同步可安全高频执行）。无反代后端时静默返回；各步
     失败记入 errors 不抛出，不阻断调用方主流程。
     """
-    result = {"backend": None, "data": False, "sites": None, "routes": None, "errors": []}
+    result = {"backend": None, "data": False, "sites": None, "routes": None,
+              "integrity": {}, "errors": []}
     try:
         public_download_routes()
         result["data"] = True
@@ -161,6 +166,14 @@ def sync_proxy_routes(reload=True, include_sites=True):
                               for a in list_apps()}
     except Exception:
         pass
+    # 哈希与反代后端无关：即使未启用反代，CI 发布也需补齐 update.json 双校验。
+    for app in list_apps():
+        name = app["name"]
+        try:
+            result["integrity"][name] = update_integrity(name, write=True)
+        except (AppError, OSError) as e:
+            result["integrity"][name] = {"status": "error", "error": str(e)}
+            result["errors"].append(f"同步应用 {name} 的 APK 双校验失败：{e}")
     try:
         from ... import rproxy
         backend = rproxy.backend_name()
@@ -347,7 +360,7 @@ def ci_notify(app=None):
     pend = pending_apps()
     return {"ok": not sync["errors"],
             "synced": bool(sync["data"]),
-            "errors": sync["errors"],
+            "errors": sync["errors"], "integrity": sync["integrity"],
             "pending": [c["name"] for c in pend["candidates"]]}
 
 
@@ -557,13 +570,134 @@ def file_checksums(name, rel):
         raise AppError("文件不存在: " + rel)
     md5, sha1, sha256 = hashlib.md5(), hashlib.sha1(), hashlib.sha256()
     with open(path, "rb") as f:
+        before = os.fstat(f.fileno())
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
             md5.update(chunk)
             sha1.update(chunk)
             sha256.update(chunk)
+        after = os.fstat(f.fileno())
+    if _file_identity(before) != _file_identity(after) or _file_identity(after) != _file_identity(os.stat(path)):
+        raise AppError("APK 在计算校验码期间发生变化，请上传完成后重试")
     return {"file": os.path.relpath(path, base).replace(os.sep, "/"),
-            "size_bytes": os.path.getsize(path),
+            "size_bytes": after.st_size,
             "md5": md5.hexdigest(), "sha1": sha1.hexdigest(), "sha256": sha256.hexdigest()}
+
+
+def _file_identity(st):
+    return (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+
+
+def _update_apk_rel(app, url):
+    """只解析 apkUrl 指定的本应用文件，不下载 URL，不回退到 latest。"""
+    if not isinstance(url, str) or not url.strip():
+        raise AppError("update.json 缺少 apkUrl")
+    try:
+        parsed = urlsplit(url.strip())
+        if parsed.scheme not in ("", "http", "https") or parsed.username or parsed.password:
+            raise ValueError("不支持的 URL")
+        if parsed.netloc:
+            if not parsed.scheme:
+                raise ValueError("不支持相对协议 URL")
+            domain = (app.get("deploy") or {}).get("domain") or ""
+            configured = urlsplit(domain if "://" in domain else "https://" + domain)
+            if domain and parsed.hostname != configured.hostname:
+                raise ValueError("apkUrl 域名与应用部署域名不一致")
+        path = unquote(parsed.path, errors="strict")
+    except (ValueError, UnicodeError) as e:
+        raise AppError("非法 APK URL：" + str(e))
+    if "\\" in path or "\x00" in path:
+        raise AppError("非法 APK 文件路径")
+    parts = path.lstrip("/").split("/")
+    if any(p in ("", ".", "..") for p in parts):
+        raise AppError("非法 APK 文件路径")
+    if parts[0] == app["name"]:
+        parts = parts[1:]
+    rel = "/".join(parts)
+    if not rel.lower().endswith(".apk"):
+        raise AppError("apkUrl 必须指向真实 .apk 文件，不能使用 latest 短链")
+    base = os.path.realpath(app["dir"])
+    target = os.path.realpath(os.path.join(base, rel))
+    if not target.startswith(base + os.sep):
+        raise AppError("非法 APK 文件路径：超出应用目录")
+    if not os.path.isfile(target):
+        raise AppError("apkUrl 对应的本地 APK 不存在：" + rel)
+    return rel
+
+
+def update_integrity(name, write=False):
+    """核对 update.json 的 apkMd5/apkSha256；write=True 时按 apkUrl 补齐或修正。
+
+    保留全部其他元数据、权限与属主；摘要正确时不重写。计算过程中 APK 或元数据
+    发生变化时拒绝写入，避免将上一版校验值覆盖到 CI 刚发布的新版本。
+    """
+    app = get_app(name)
+    base = os.path.realpath(app["dir"])
+    path = os.path.join(base, "update.json")
+    if os.path.islink(path):
+        raise AppError("update.json 不能是符号链接")
+    try:
+        with open(path, "rb") as f:
+            before = os.fstat(f.fileno())
+            original = f.read()
+    except FileNotFoundError:
+        return {"status": "unavailable", "updated": False}
+    try:
+        data = json.loads(original)
+    except (ValueError, UnicodeError) as e:
+        raise AppError("update.json JSON 格式错误：" + str(e))
+    if not isinstance(data, dict):
+        raise AppError("update.json JSON 顶层必须是对象")
+    rel = _update_apk_rel(app, data.get("apkUrl"))
+    target = os.path.join(base, rel)
+    apk_before = _file_identity(os.stat(target))
+    checksums = file_checksums(name, rel)
+    if apk_before != _file_identity(os.stat(target)):
+        raise AppError("APK 在计算校验码期间发生变化，请重试")
+    with open(path, "rb") as f:
+        if _file_identity(os.fstat(f.fileno())) != _file_identity(before) or f.read() != original:
+            raise AppError("update.json 在校验期间发生变化，请重试")
+    actual = {"apkMd5": checksums["md5"], "apkSha256": checksums["sha256"]}
+    matches = {key: isinstance(data.get(key), str) and data[key].lower() == value
+               for key, value in actual.items()}
+    status = "verified" if all(matches.values()) else (
+        "missing" if not data.get("apkMd5") or not data.get("apkSha256") else "mismatch")
+    result = {"status": status, "updated": False, "file": rel,
+              "version": data.get("versionName", ""), "apkUrl": data["apkUrl"],
+              "md5_matches": matches["apkMd5"], "sha256_matches": matches["apkSha256"],
+              **actual}
+    if not write or all(matches.values()):
+        return result
+    data.update(actual)
+    fd, tmp = tempfile.mkstemp(prefix=".update-integrity-", suffix=".tmp", dir=base)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            current = os.fstat(f.fileno())
+            if (current.st_uid, current.st_gid) != (before.st_uid, before.st_gid):
+                os.fchown(f.fileno(), before.st_uid, before.st_gid)
+            os.fchmod(f.fileno(), stat.S_IMODE(before.st_mode))
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+            f.flush()
+            os.fsync(f.fileno())
+        with open(path, "rb") as f:
+            if _file_identity(os.fstat(f.fileno())) != _file_identity(before) or f.read() != original:
+                raise AppError("update.json 在校验期间发生变化，请重试")
+        if apk_before != _file_identity(os.stat(target)):
+            raise AppError("APK 在写入校验码前发生变化，请重试")
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+    return {**result, "status": "verified", "updated": True,
+            "md5_matches": True, "sha256_matches": True}
+
+
+def update_integrity_status(name):
+    """供面板读取真实校验状态；单应用异常不阻止版本列表展示。"""
+    try:
+        return update_integrity(name)
+    except (AppError, OSError) as e:
+        return {"status": "error", "updated": False, "error": str(e)}
 
 
 def latest_version(name):

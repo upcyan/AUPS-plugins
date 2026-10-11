@@ -1,12 +1,14 @@
 """appupdate 模块清单：多应用管理、部署配置、版本管理、CI 用户。
 
 CLI 命令组在 aups/core/cli.py 中按此清单注册；Web 路由在 aups/web/app.py 中按此挂载。
+v2.14.0：同步与 CI 通知按 apkUrl 指定的本地 APK 补齐 apkMd5/apkSha256；
+版本页展示双校验状态，保留既有元数据，拒绝越界路径与并发变更时的错误写回。
 """
 
 MANIFEST = {
     "name": "appupdate",
     "title": "应用更新管理",
-    "version": "2.13.0",
+    "version": "2.14.0",
     "description": "多应用管理：部署配置（域名/SSL/端口/用户）、版本管理（上传/更新时间、MD5/SHA1/SHA256 校验码）、CI 上传、存储配额、下载统计、下载路由自动同步、反代切换迁移、CI 推送通知与新项目引导注册、版本更新日志",
     "type": "external",
     "attr": "功能",
