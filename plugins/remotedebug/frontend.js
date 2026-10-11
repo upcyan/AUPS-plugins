@@ -135,7 +135,9 @@ window.AUPS_PLUGINS['remotedebug'] = (function () {
     if (!command) { out.textContent = '请先输入命令'; return; }
     out.textContent = '执行中...';
     try {
-      const r = await api('POST', '/api/remotedebug/exec', { command });
+      // 页面执行走面板会话鉴权的 /run（操作者本就是面板管理员）；
+      // /exec 是给远程排障方的令牌面，需带 X-Debug-Token。
+      const r = await api('POST', '/api/remotedebug/run', { command });
       out.textContent = renderResult(r);
     } catch (e) {
       out.textContent = '执行失败：' + ((e && e.message) || e);

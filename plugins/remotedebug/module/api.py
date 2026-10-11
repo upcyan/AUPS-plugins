@@ -1,9 +1,13 @@
 """remotedebug 插件 Web API（由核心自动挂载，前缀 /api）。
 
-两类调用面：
-- 管理面（建会话/查会话/吊销/审计/命令目录）：走面板会话鉴权，须管理员；
-- 令牌面（执行只读命令）：不占用面板会话，凭限时随机令牌 + 只读白名单 +
-  根目录限制 + 输出脱敏。令牌面同样要求面板以 root 运行。
+两类调用面，鉴权方式不同，不可混用：
+- 管理面（须面板会话）：/status、/sessions、/revoke、/audit、/catalog，以及
+  /run —— 面板页面上的「执行」按钮走这条，凭面板登录态即可，无需令牌；
+- 令牌面（/exec，不占用面板会话）：供远程排障方凭限时随机令牌调用，
+  叠加只读白名单 + 根目录限制 + 输出脱敏。同样要求面板以 root 运行。
+
+把两者分开是有意的：页面用户已经通过面板鉴权，再要他手工造令牌纯属多余；
+而远程方不应拿到面板会话，故只给限时令牌。
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -115,25 +119,11 @@ def rd_audit(limit: int = 200, auth=Depends(require_auth)):
     return {"audit": ST.audit_log(limit)}
 
 
-@router.post("/remotedebug/exec")
-def rd_exec(request: Request, body: dict = None):
-    """执行只读命令（令牌面）：不占用面板会话。"""
-    token = (request.headers.get("X-Debug-Token")
-             or (body or {}).get("token") or "")
-    session = ST.verify_token(token)
-    if session is None:
-        raise HTTPException(status_code=401, detail="调试令牌无效、已过期或已吊销")
-    import os
-    if getattr(os, "geteuid", lambda: 0)() != 0:
-        raise HTTPException(status_code=403, detail="管理面板需以 root 运行")
-
+def _do_exec(request, body, session, roots, allowed, ip):
+    """执行只读命令并审计；失败转成干净的 HTTP 400。两处调用面共用。"""
     b = body or {}
     command = str(b.get("command") or b.get("cmd") or "")
-    # 会话级范围限制：会话声明了 commands 时，只开放这些命令
-    allowed = session.get("commands") or None
-    ip = request.client.host if request.client else ""
     try:
-        roots = _session_roots(session)
         result = RUN.execute(command, roots=roots,
                              max_steps=b.get("max_steps", RUN.MAX_STEPS),
                              timeout=b.get("timeout", 10),
@@ -142,7 +132,7 @@ def rd_exec(request: Request, body: dict = None):
     except AppError as e:
         ST.record_audit(session, command=command, ok=False, ip=ip, note=str(e))
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:  # 兜底：任何意外都记审计并给干净 400，不暴露 500 堆栈
+    except Exception as e:  # 兜底：意外也记审计并给干净 400，不暴露 500 堆栈
         ST.record_audit(session, command=command, ok=False, ip=ip,
                         note=f"内部错误：{type(e).__name__}")
         raise HTTPException(status_code=400,
@@ -152,11 +142,49 @@ def rd_exec(request: Request, body: dict = None):
                     duration_ms=result.get("duration_ms"),
                     output_bytes=result.get("output_bytes"),
                     redactions=result.get("redactions"), ip=ip)
-    return {"ok": result["ok"], "session": {"sid": session["sid"],
-                                            "label": session.get("label"),
-                                            "expires_at": session.get("expires_at")},
-            "roots": roots, **{k: v for k, v in result.items()
-                               if k not in ("ok",)}}
+    return {"ok": result["ok"],
+            "session": {"sid": (session or {}).get("sid", ""),
+                        "label": (session or {}).get("label", ""),
+                        "expires_at": (session or {}).get("expires_at")},
+            "roots": roots,
+            **{k: v for k, v in result.items() if k != "ok"}}
+
+
+@router.post("/remotedebug/run")
+def rd_run(request: Request, body: dict = None, auth=Depends(require_auth)):
+    """面板页面执行入口：凭面板会话鉴权，不需要调试令牌。
+
+    与会话绑定无关——这是「当前登录的面板管理员在页面上跑只读命令」，
+    他本就有面板权限。令牌面 /exec 是给远程排障方的另一条通道。
+    """
+    ip = request.client.host if request.client else ""
+    session = {"sid": "panel", "label": "面板会话", "roots": [], "commands": []}
+    roots = _session_roots(session)
+    # 不限制命令：面板管理员本就拥有面板全部权限，白名单仍只含只读命令
+    return _do_exec(request, body, session, roots, None, ip)
+
+
+@router.post("/remotedebug/exec")
+def rd_exec(request: Request, body: dict = None):
+    """执行只读命令（令牌面）：不占用面板会话，凭限时令牌。"""
+    token = (request.headers.get("X-Debug-Token")
+             or (body or {}).get("token") or "")
+    session = ST.verify_token(token)
+    if session is None:
+        raise HTTPException(status_code=401, detail="调试令牌无效、已过期或已吊销")
+    import os
+    if getattr(os, "geteuid", lambda: 0)() != 0:
+        raise HTTPException(status_code=403, detail="管理面板需以 root 运行")
+
+    ip = request.client.host if request.client else ""
+    try:
+        roots = _session_roots(session)
+    except AppError as e:
+        ST.record_audit(session, command="", ok=False, ip=ip, note=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
+    # 会话级范围限制：会话声明了 commands 时，只开放这些命令
+    allowed = session.get("commands") or None
+    return _do_exec(request, body, session, roots, allowed, ip)
 
 
 @router.get("/remotedebug/catalog")

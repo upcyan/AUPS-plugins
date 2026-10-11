@@ -395,6 +395,7 @@ class ApiTests(unittest.TestCase):
     def test_all_routes_registered_on_expected_paths(self):
         paths = {(m, p) for m, p, _ in self.api.router.routes}
         for expected in (("POST", "/remotedebug/exec"),
+                         ("POST", "/remotedebug/run"),
                          ("GET", "/remotedebug/status"),
                          ("GET", "/remotedebug/sessions"),
                          ("POST", "/remotedebug/sessions"),
@@ -402,6 +403,49 @@ class ApiTests(unittest.TestCase):
                          ("GET", "/remotedebug/audit"),
                          ("GET", "/remotedebug/catalog")):
             self.assertIn(expected, paths)
+
+    # ---------- 面板页面执行入口（/run，面板会话鉴权） ----------
+
+    def test_run_endpoint_does_not_require_debug_token(self):
+        """页面执行按钮走 /run：面板登录态即可，不该索要调试令牌。
+
+        回归背景：前端曾调用令牌面 /exec 且不带令牌，页面「执行」必然 401。
+        """
+        result = self.api.rd_run(_Req(ip="198.51.100.9"),
+                                 {"command": "cat " + str(self.cfg)})
+        self.assertTrue(result["ok"], result)
+        self.assertIn("update.050709.xyz", result["stdout"])
+
+    def test_run_still_restricted_to_read_only_catalog(self):
+        for line in ("rm -rf " + str(self.root), "cat /etc/hostname",
+                     "cat " + str(self.outside / "secret.txt")):
+            with self.subTest(line=line):
+                with self.assertRaises(_FakeHTTPException) as ctx:
+                    self.api.rd_run(_Req(), {"command": line})
+                self.assertEqual(ctx.exception.status_code, 400)
+
+    def test_run_output_is_redacted_and_audited(self):
+        result = self.api.rd_run(_Req(ip="198.51.100.9"),
+                                 {"command": "cat " + str(self.secret)})
+        self.assertNotIn("SUPERSECRET123", json.dumps(result, ensure_ascii=False))
+        rows = self.store.audit_log(base=self.data_dir())
+        self.assertEqual(len(rows), 1)
+        self.assertTrue(rows[0]["ok"])
+        self.assertEqual(rows[0]["ip"], "198.51.100.9")
+
+    def test_frontend_uses_run_not_exec(self):
+        """静态检查：页面执行必须调 /run，否则线上又会 401。"""
+        source = (ROOT / "plugins" / PLUGIN / "frontend.js").read_text(encoding="utf-8")
+        code = "\n".join(l for l in source.splitlines()
+                         if not l.strip().startswith(("//", "*", "/*")))
+        self.assertIn("/api/remotedebug/run", code)
+        self.assertNotIn("api('POST', '/api/remotedebug/exec'", code)
+
+    def test_token_endpoint_still_requires_token(self):
+        """令牌面不受影响：没有令牌仍必须 401。"""
+        with self.assertRaises(_FakeHTTPException) as ctx:
+            self.exec_call("cat " + str(self.cfg), token=None)
+        self.assertEqual(ctx.exception.status_code, 401)
 
 
 if __name__ == "__main__":

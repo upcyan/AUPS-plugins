@@ -21,7 +21,7 @@ v0.1.1：修复前端首屏渲染——核心全局 view 是 DOM 元素而非函
 MANIFEST = {
     "name": "remotedebug",
     "title": "远程调试",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "只读远程调试通道：限时随机令牌、预设有限授权命令、目录白名单、输出脱敏与调用审计；用于远程查看面板配置/日志/服务状态排障",
     "type": "external",
     "attr": ["功能", "安全"],
@@ -36,6 +36,7 @@ MANIFEST = {
         "/api/remotedebug/revoke-all",
         "/api/remotedebug/audit",
         "/api/remotedebug/catalog",
+        "/api/remotedebug/run",
         "/api/remotedebug/exec",
     ],
     "cli_groups": ["remotedebug"],
