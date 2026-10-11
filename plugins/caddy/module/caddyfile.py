@@ -381,7 +381,9 @@ def _gen_app_site_blocks(apps, reserved=None, preserved=None):
         seen.update(addresses)
         snap = next((preserved[a] for a in addresses if a in preserved), None)
         if snap and snap.get("body", "").strip():
-            blocks.append(f"{snap['host']} {{\n{snap['body']}\n}}")
+            # 旧版本生成的块可能尚无路由标记；保留原文不等于跳过升级修复。
+            body, _added = _ensure_app_site_body(snap["body"], name)
+            blocks.append(f"{snap['host']} {{\n{body}\n}}")
             continue
         block = f"""{domain} {{
     respond /.well-known/aups-domain-check "aups-domain-verify:{name}" 200
@@ -402,35 +404,62 @@ def _block_indent(lines, blk):
     return "    "
 
 
-def _adopt_app_site(lines, blk, name):
-    """就地接管手写站点块：注入域名校验与下载路由标记区。
-
-    只新增 AUPS 托管行，不改动用户已有指令（root / file_server / reverse_proxy /
-    header 等一律原样保留），因此对手写站点是安全的、可反复执行的（标记已存在
-    则不再插入）。
-
-    必要性：apply() 只向含 AUPS APPS 标记的站点块注入短链。若应用的域名已被
-    手写站点块占用，而该块缺标记，则 update_app_sites 会因「域名重复」跳过它，
-    apply() 随即报「未找到 AUPS 托管标记区」，短链永远注入不进去——表现为
-    /latest 由 file_server 直吐文件、缺 Content-Type 而不触发下载。
-
-    返回 (lines, changed, added)。
-    """
-    body = "\n".join(lines[blk["start"] + 1: blk["end"]])
-    indent = _block_indent(lines, blk)
+def _ensure_app_site_body(body, name):
+    """只补应用校验行与成对路由标记，不覆盖 root、header 或现有路由。"""
+    lines = body.splitlines()
+    indent = next((ln[:len(ln) - len(ln.lstrip())] or "    "
+                   for ln in lines if ln.strip()), "    ")
     inserts, added = [], []
     if "aups-domain-check" not in body:
         inserts.append(f'{indent}respond /.well-known/aups-domain-check '
                        f'"aups-domain-verify:{name}" 200')
         added.append("domain_check")
-    if _APPS_ROUTE_BEGIN not in body:
-        inserts.append(f"{indent}{_APPS_ROUTE_BEGIN}")
-        inserts.append(f"{indent}{_APPS_ROUTE_END}")
+    pairs = ((_APPS_ROUTE_BEGIN, _APPS_ROUTE_END),
+             ("# >>> AUP APPS (managed, do not remove) <<<", "# <<< AUP APPS >>>"))
+    for begin, end in pairs:
+        start = next((i for i, ln in enumerate(lines) if ln.strip() == begin), None)
+        stop = next((i for i, ln in enumerate(lines) if ln.strip() == end), None)
+        if start is not None or stop is not None:
+            if start is None:
+                lines.insert(stop, indent + begin)
+                added.append("download_routes")
+            elif stop is None:
+                # 旧错误提示让用户只加 begin。先补空段的 end，避免 replace_section
+                # 将 begin 后全部配置（尤其 root/file_server）当作托管内容删除。
+                lines.insert(start + 1, indent + end)
+                added.append("download_routes")
+            elif stop < start:
+                raise AppError("AUPS 下载路由标记顺序损坏，已停止修改配置")
+            break
+    else:
+        inserts.extend((indent + _APPS_ROUTE_BEGIN, indent + _APPS_ROUTE_END))
         added.append("download_routes")
-    if not inserts:
-        return lines, False, []
-    lines[blk["start"] + 1: blk["start"] + 1] = inserts
-    return lines, True, added
+    if not added:
+        return body, []
+    return "\n".join(inserts + lines), added
+
+
+def ensure_app_site_markers(content, apps):
+    """按注册域名自动修复已有块；不猜测其他站点，也不修改共享站点的 root。"""
+    registered = [(a.get("name"), _site_addresses(a.get("domain")))
+                  for a in apps or [] if a.get("name") and a.get("domain")]
+    lines = content.splitlines()
+    adopted = []
+    for blk in reversed(_site_blocks(content)):
+        addresses = _site_addresses(blk["host"])
+        name = next((name for name, domains in registered if addresses & domains), None)
+        if name is None:
+            continue
+        if blk["end"] <= blk["start"]:
+            raise AppError("自动托管需要多行站点块：" + blk["host"])
+        body, added = _ensure_app_site_body(blk["body"], name)
+        if not added:
+            continue
+        lines[blk["start"] + 1:blk["end"]] = body.splitlines()
+        adopted.append({"domain": blk["host"], "app": name, "added": added})
+    if not adopted:
+        return content, []
+    return "\n".join(lines), adopted
 
 
 def update_app_sites(apps, reload_=True):
@@ -452,31 +481,8 @@ def update_app_sites(apps, reload_=True):
 
     # 旧版替换逻辑可能生成嵌套标记；先完整清除，再生成唯一托管区。
     content = _remove_section(d["content"], _APPS_SITE_BEGIN, _APPS_SITE_END)
-    lines = content.splitlines()
-    blocks = _site_blocks(content)
-
-    # 第一步：接管域名已被现有站点块占用的应用（就地补标记，不改用户指令）
-    pending, handled = [], set()
-    for app in apps or []:
-        name = (app.get("name") or "").strip()
-        domain = (app.get("domain") or "").strip()
-        if not name or not domain:
-            continue
-        addresses = _site_addresses(domain)
-        for blk in blocks:
-            if blk["start"] in handled:
-                continue
-            if _site_addresses(blk["host"]) & addresses:
-                pending.append((blk, name))
-                handled.add(blk["start"])
-                break
-    # 自下而上插入，避免前面的插入使后续块的行索引失效
-    adopted = []
-    for blk, name in sorted(pending, key=lambda x: x[0]["start"], reverse=True):
-        lines, changed, added = _adopt_app_site(lines, blk, name)
-        if changed:
-            adopted.append({"domain": blk["host"], "app": name, "added": added})
-    content = "\n".join(lines)
+    # 第一步：按注册域名就地补标记；与 apply() 的恢复逻辑使用同一个实现。
+    content, adopted = ensure_app_site_markers(content, apps)
 
     # 第二步：为未被现有站点占用的应用生成托管站点块
     reserved = set()

@@ -57,4 +57,6 @@ aups plugins market install caddy --deploy container   # 容器部署
 
 下载路由渲染前会实时向 appupdate 重取数据（CI 经 SSH 直传的新文件即时生效）；latest 短链按文件日期指向最新文件；托管段无变化时自动跳过写盘与 reload，可安全配合周期同步任务高频执行。
 
+从 1.11.2 起，无需手工添加下载路由标记。站点同步与路由 apply 都会按已注册应用的部署域名检查已有站点块，自动补齐缺失或不完整的 AUPS APPS 标记，兼容旧标记。升级旧托管块时也会修复，不再原样复用缺标记的块。共享域名的原有 root、header 和其他配置保持不变；无匹配域名时明确报告域名与配置路径，不猜测接管无关站点。路由写入会校验并备份，重载失败会恢复旧配置并报错。
+
 短链（`/应用/latest`、`/应用/版本号`）一律 302 到带扩展名的真实文件，真实文件（.apk/.jar/.zip/.tar.gz）补 `Content-Disposition: attachment` 强制下载。这是因为无扩展名路径无法按扩展名推断 MIME，响应缺 `Content-Type`，叠加安全头的 `X-Content-Type-Options: nosniff` 后浏览器禁止嗅探，会把 APK 当文本内联渲染而不下载。匹配用 `path_regexp`（Caddy 的 `path` 通配符中 `*` 不跨 `/`，匹配不到 `/应用/apk/x.apk` 这类子目录文件）。

@@ -204,7 +204,8 @@ def access_log_status():
     """access 日志配置状态（供 Web 总览展示）。"""
     text = ""
     try:
-        text = open(env.caddy_config_file(), encoding="utf-8").read()
+        with open(env.caddy_config_file(), encoding="utf-8") as f:
+            text = f.read()
     except OSError:
         pass
     return {
@@ -490,7 +491,8 @@ def _managed_sites(text):
 def _site():
     """找到首个托管站点块（含下载路由或 WAF 标记区）。保留旧签名供 show() 用。"""
     try:
-        text = open(env.caddy_config_file(), encoding="utf-8").read()
+        with open(env.caddy_config_file(), encoding="utf-8") as f:
+            text = f.read()
     except OSError:
         raise AppError(f"Caddyfile 不存在：{env.caddy_config_file()}")
     blocks = _managed_sites(text)
@@ -554,24 +556,29 @@ def preview():
 def apply(reload=True):
     """向所有 AUPS 托管站点块注入下载路由与 WAF 段。
 
-    多应用多域名时每块只收属于自己域名的路由（见 _routes_for），避免把
+    多应用多域名时按 _assign_routes 分配路由，避免把
     /otherapp/latest 的重定向写进无关站点；WAF 段每块都要有，故逐块渲染。
     """
     try:
-        text = open(env.caddy_config_file(), encoding="utf-8").read()
+        with open(env.caddy_config_file(), encoding="utf-8") as f:
+            text = f.read()
     except OSError:
         raise AppError(f"Caddyfile 不存在：{env.caddy_config_file()}")
+    from .. import caddyfile
+    data = _download_routes()
+    # 不依赖此前已执行 update_app_sites：注入步骤本身按注册域名补齐标记，
+    # 包括旧托管块及 begin/end 不完整的配置。无关站点不被自动接管。
+    text, adopted = caddyfile.ensure_app_site_markers(text, data.get("apps", []))
     targets = _managed_sites(text)
     if not targets:
-        raise AppError(
-            "Caddyfile 中未找到 AUPS 托管标记区。请在下载站点块内加一行：\n"
-            f"  {_APPS_MARK_BEGIN}\n"
-            "（面板会自动把下载路由与 WAF 规则写入该站点块）")
+        domains = sorted({a.get("domain", "") for a in data.get("apps", []) if a.get("domain")})
+        raise AppError("无法自动定位应用下载站点；请核对已注册应用的部署域名和面板配置路径。"
+                       f"域名：{', '.join(domains) or '(未配置)'}；"
+                       f"配置：{env.caddy_config_file()}")
 
-    data = _download_routes()
     waf_snippet = _waf_snippet()
     lines = text.splitlines()
-    changed = False
+    changed = bool(adopted)
     # 先按稳定顺序算好各块的路由分配，再自下而上写回，避免前面的替换使后续块
     # 的行索引失效。
     assign = _assign_routes(targets, data)
@@ -595,15 +602,11 @@ def apply(reload=True):
                 "written": False, "changed": False, "reloaded": False,
                 "sites": len(targets)}
     out = "\n".join(lines)
-    from ..caddyfile import ensure_global_options
-    out = ensure_global_options(out)
-    with open(env.caddy_config_file(), "w", encoding="utf-8") as f:
-        f.write(out)
-    if reload:
-        _reload(warn_only=True)
+    # 复用标准保存流程：校验、备份、重载失败回滚。不再忽略重载异常并谎报成功。
+    caddyfile.write(out, reload_=reload)
     return {"backend": NAME, "caddyfile": env.caddy_config_file(),
             "written": True, "changed": True, "reloaded": reload,
-            "sites": len(targets)}
+            "sites": len(targets), "adopted": adopted}
 
 
 def update_app_sites(apps, reload_=True):
@@ -626,7 +629,8 @@ def clear_routes(reload=True):
     陈旧重定向（迁移后仍把请求导向本后端）。
     """
     try:
-        text = open(env.caddy_config_file(), encoding="utf-8").read()
+        with open(env.caddy_config_file(), encoding="utf-8") as f:
+            text = f.read()
     except OSError:
         return {"cleared": True, "changed": False, "reloaded": False,
                 "note": "Caddyfile 不存在，无需清理"}

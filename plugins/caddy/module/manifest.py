@@ -28,12 +28,14 @@ v1.11.1：仓库加入 .gitattributes（统一 LF），frontend.js / module/api.
 v1.11.0：自动检测并就地接管手写站点块（只补托管标记，不改用户指令），
 域名被占用的应用不再因「重复」被跳过；apply/clear_routes 覆盖全部托管站点块，
 路由按域名分发到各自站点；同步幂等（无变化时不写盘、不 reload）。
+v1.11.2：旧托管块复用时补齐缺失路由标记；apply 本身按注册域名自动恢复注入点，
+兼容不完整与旧版标记，保留共享站点 root；保存前校验，重载失败回滚并明确报错。
 """
 
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.11.1",
+    "version": "1.11.2",
     "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、自动 HTTPS 证书、access 日志、防火墙；依赖 SSL 证书管理",
     "type": "external",
     "attr": "依赖",
