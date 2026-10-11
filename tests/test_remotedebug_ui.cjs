@@ -49,6 +49,8 @@ function makeContext({ status, sessions, execResult, audit, apiError } = {}) {
       if (apiError) throw new Error(apiError);
       if (url === '/api/remotedebug/status') return status;
       if (url === '/api/remotedebug/sessions') return { sessions: sessions || [] };
+      // 页面执行走面板会话鉴权的 /run；/exec 是令牌面
+      if (url === '/api/remotedebug/run') return execResult;
       if (url === '/api/remotedebug/exec') return execResult;
       if (url.startsWith('/api/remotedebug/audit')) return { audit: audit || [] };
       if (url === '/api/remotedebug/revoke-all') return { revoked: 1 };
@@ -135,7 +137,8 @@ test('空命令不发请求，直接提示', async () => {
   await plugin.open('terminal');
   elements.rdCmd.value = '   ';
   // 只统计 exec 请求：open 阶段会先拉 status/sessions
-  const execCalls = () => calls.filter(([, url]) => url === '/api/remotedebug/exec').length;
+  const execCalls = () => calls.filter(([, url]) =>
+    url === '/api/remotedebug/run' || url === '/api/remotedebug/exec').length;
   const before = execCalls();
   await plugin.runExec();
   assert.match(elements.rdOut.textContent, /请先输入命令/);
@@ -172,6 +175,21 @@ test('审计加载后渲染成表格或空态，不抛异常', async () => {
   await plugin.loadAudit();
   assert.match(elements.rdAuditBox.innerHTML, /203\.0\.113\.9/);
   assert.match(elements.rdAuditBox.innerHTML, /通过/);
+});
+
+test('页面执行必须走 /run（面板会话鉴权），不得调令牌面 /exec', async () => {
+  // 回归背景：曾调用 /exec 却不带 X-Debug-Token，页面「执行」线上必然 401。
+  const { plugin, elements, calls } = makeContext({
+    status: STATUS,
+    execResult: { ok: true, argv: ['cat', 'x'], stdout: 'ok', stderr: '', steps: [] },
+  });
+  await plugin.open('terminal');
+  elements.rdCmd.value = 'cat x';
+  await plugin.runExec();
+  const urls = calls.map(([, url]) => url).filter(u => u.includes('/remotedebug/'));
+  assert.ok(urls.includes('/api/remotedebug/run'), '页面执行应调用 /run');
+  assert.ok(!urls.includes('/api/remotedebug/exec'),
+    '页面执行不得调用需要令牌的 /exec');
 });
 
 test('导出契约保持核心所需形状', () => {
