@@ -27,7 +27,10 @@ window.AUPS_PLUGINS['remotedebug'] = (function () {
   }
 
   async function terminal() {
-    const root = view('remotedebug');
+    // 注意：核心全局 view 是 DOM 元素（const view = getElementById('view')），
+    // 不是函数。写成 view('remotedebug') 会抛 TypeError，而 openPlugin 的
+    // try/catch 只弹一次提示，页面便停在「正在加载插件」占位态。
+    const root = document.getElementById('view');
     if (!root) return;
     root.innerHTML = '<div class="card"><h2>终端命令</h2>'
       + '<span class="mut">加载中...</span></div>';
@@ -240,7 +243,7 @@ window.AUPS_PLUGINS['remotedebug'] = (function () {
       { id: 'terminal', title: '终端命令' },
     ],
     go: terminal,
-    open: function (s) { terminal(); },
+    open: function (s) { return terminal(); },
     terminal, fill, clearOut, runExec, openSession, copy, copyUsage,
     revoke, revokeAll, loadAudit,
   };

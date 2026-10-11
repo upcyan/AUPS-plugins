@@ -10,6 +10,10 @@
 - 脱敏：输出经 redact 遮蔽密码/令牌/私钥等，保留校验值与常规日志；
 - 留痕：每次调用写审计（命令、结果、来源 IP、脱敏次数），不记令牌与输出正文。
 
+v0.1.1：修复前端首屏渲染——核心全局 view 是 DOM 元素而非函数，
+原写法 view('remotedebug') 抛 TypeError 导致页面停在「正在加载插件」；
+改为 document.getElementById('view')，并让 open() 返回 Promise 便于等待渲染。
+
 未实现（框架位，见 api /status 的 interactive 字段）：远程交互式 shell / SSH
 会话——需要 PTY 与流式通道，风险面显著更大，本期只保留位置。
 """
@@ -17,7 +21,7 @@
 MANIFEST = {
     "name": "remotedebug",
     "title": "远程调试",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "只读远程调试通道：限时随机令牌、预设有限授权命令、目录白名单、输出脱敏与调用审计；用于远程查看面板配置/日志/服务状态排障",
     "type": "external",
     "attr": ["功能", "安全"],
