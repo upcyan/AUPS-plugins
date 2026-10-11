@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "1e4a7554351e9194ae048e4ac41384bfeeb145eb",
+  "branch": "e73a40e2c74ea1e4317480558b835f2155d0f2d4",
   "plugins": [
     {
       "name": "appupdate",
@@ -153,7 +153,7 @@
         "安全",
         "网络"
       ],
-      "version": "3.1.0",
+      "version": "3.1.1",
       "description": "青·擎统一安全编排：防火墙、WAF、漏洞检测、主机安全和实时防护的统一状态与操作入口",
       "depends": [
         {
@@ -178,12 +178,12 @@
       ],
       "files": {
         "README.md": "d5edc0e5ed4d1d133c250575e0914f6dee3b2765c94133aa186bd7b2d733041a",
-        "frontend.js": "0aaa6512b30cca281ce79c8ff8775c05989d5c3a87707ddb8c480438d712fd0d",
-        "manifest.json": "f219f068315edf72aa488d671b882ab17ac2d9c2fd19c40ca0f40b8e4ac4fb71",
+        "frontend.js": "7e74eb321ef6c1ac57aa26b0dfff9799861d75cfe0658f3dd9ceeb889dca9d65",
+        "manifest.json": "f538d95f8c103157abf9e83cc4f54d7da70d813fb8b97f45671dcdb65aa04d0f",
         "module/__init__.py": "7af431cad3378f51d813b3523f7645b78e3c1a5dd77c4ab62f00471b041ffe81",
         "module/api.py": "613923efdb4e3e13533ee7ed8ce4faff921e94983dcbfec4cd14df0a66751760",
         "module/firewall.py": "a906e3a36cbead886cd9564e25f2cc410a94b3c62958467996f6c61304fbd7e8",
-        "module/manifest.py": "abf5d7e288a2c0248853b3b642ad417fd5122c60cba01b3b2b524ab71b744432",
+        "module/manifest.py": "b512f7471a4e65507a1ca8bde57712c2f6255b10f6f6e1ead19d8b5159337cff",
         "module/security.py": "b16148dc4b4706fdfc94901ae54139c837c63d68477a9dce0d84f326c3f214c6"
       },
       "cards": false,
@@ -195,15 +195,15 @@
       "name": "yara",
       "title": "YARA 引擎",
       "attr": "依赖",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "YARA 规则扫描引擎：引擎安装、规则订阅与扫描，规则数据由核心持有。供核心主机安全与 cyansecengine 调用",
       "files": {
         "README.md": "09ee986df232e43a4644b0b8dd1fc1e5ebca2a47bc636a8f59cf0e3c482b7a7f",
-        "frontend.js": "d54b11aa648bd73c0e4d37f988301924d18ae209c07a39d61488748f435748a7",
-        "manifest.json": "3275400de742cfd50fc5d54bc4669ba13be51626fcf3e9af9f4305d527c9365c",
+        "frontend.js": "7d34f9c0b74858494825fa54489bb972a7e32d816ef92a3939e2b71f96510bee",
+        "manifest.json": "620db01aa07b25b77c2d3bb5dd19d6da9476121c24f5e4e8f010fe3c26c2fadd",
         "module/__init__.py": "30db9a99b3bff061b382b0fd543a9db7e473e1aa1e44fab731e4580bd7fa17a4",
         "module/api.py": "dd851aec7f9341489c4a66b8364beee400194daf3ab5f5bd75b6573691e3da71",
-        "module/manifest.py": "c3fc919a435b8397f0cd7dc064afae3619e4375e8bb91795f3bde3dc7d254d38",
+        "module/manifest.py": "36ce7a0f7ae6d9bd2bfb4ec2c6a773d6df735af9477a495e958928b5753553dc",
         "module/scanner.py": "0460433ec4450fb7f3da627184ba7a9609aff50f95bdbf23174fca1250c79e0f"
       },
       "cards": false,
@@ -255,15 +255,15 @@
       "name": "baseline",
       "title": "基线检查",
       "attr": "功能",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "VPS 基线检查（纯只读审计）：账号与权限 / 系统配置 / 内核网络加固 / 服务应用，四类检查项一键巡检并生成报告",
       "files": {
         "README.md": "53aa53cf1f781adf004ed88ed5669ab1b9824b800a7092fba32d9a8ed762cb8d",
-        "frontend.js": "0e99ba8547077d20a579ef60b829aa7d9535869b27aca3e4b0a4c317c16e5909",
-        "manifest.json": "a8c1382a7635c81a068155dca1ac6f3bb434d58fbb0daa62a22e77745d946590",
+        "frontend.js": "9f4bba5f58e9c5dda136c1b6bfbdf6b837ec97960423aeb5d8285a174af5277f",
+        "manifest.json": "ce5f232e97fbb07814935de82f5f0d12983dc03786632de4cffe8772b2360306",
         "module/__init__.py": "259c5075b9a3219e2f04900475fd9e2468c4d0da97c449ba4fb7615171ecc607",
         "module/api.py": "952b1ad1540b2615d5a777201e1516261f76929886b5e0484b745f1b0817c731",
-        "module/manifest.py": "8cd80c431b275aee6859a9af728d8eb50552df576c48146110f9572484919593",
+        "module/manifest.py": "084176ee82318eb5bc96ce3b767caf368400c126092fbbff93b3ae88affd5d32",
         "module/scanner.py": "4243d96d941cf494092e899cdb5d1b830b9d39ee76e8995d0282c7720c4558a4"
       },
       "cards": false,
