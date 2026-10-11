@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "0147cad323212bcdb0d2650c9f4ba0162abf5c4b",
+  "branch": "c877fbd350b60364ab7eb4f5b7a45352d6752652",
   "plugins": [
     {
       "name": "appupdate",
@@ -38,21 +38,21 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.11.1",
+      "version": "1.11.2",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
-        "README.md": "46e7e1b17eaba767db9b0047879f8b9cc8eb865d275b123448879fb208764f6a",
+        "README.md": "af6f52630f2fc4ec7129bd9172bb2c520a1ea1a557dcfceec6d862b87694fed4",
         "frontend.js": "8901987d6c527ab25871b00703c152afee06fd47cd12ce5ace6fcc2ad586f7cf",
-        "manifest.json": "47a94f26323e7b1d215cc60db311df8fafa03d48ce71ce2170f0fa93f1e81f92",
+        "manifest.json": "5c3f7dd74460cd16f4ff7dfe207c6c5e60eef4b0e7437422aef946562758440f",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
         "module/api.py": "0eb37b269b23ddb9b5f661cdd819846b5b6ac6f9285470d42dd8ccdf528d192c",
-        "module/caddyfile.py": "0ff02fb3c2240f700101353aa933ecbc8022457b2463fb1e932ba819ca906918",
+        "module/caddyfile.py": "27e0d2c4652a0134ce66b5512153a830ba57c89b8b6431ff8d5e861bd4159039",
         "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
         "module/env.py": "276cf07fafac33c565bee504343d66fa9123f8fae288c01712eb3ac00b75e61b",
-        "module/manifest.py": "edea1b5d277595225a1b8e52d19f7131488be70dd590ccaaee522fd7302443b2",
+        "module/manifest.py": "e30ae4ad5611d82e9071c1ca301d814ee0cb53dec3cc0d625a33b50943306630",
         "module/sslmode.py": "25381c9daccba7efbf001103c38882b8da858523d0a275499e94b3df4ab782d2",
-        "module/rproxy/caddy.py": "9e695ed351863587dddb1d729e85d44fa51c3d9ecb5551c3227361fd71c689ab"
+        "module/rproxy/caddy.py": "d517b86aff04cb10847919142c497f49d540bac24ac92dd035f73ef21e3a644b"
       },
       "cards": false,
       "provides": [
