@@ -36,12 +36,15 @@ Caddy 反代：托管片段（下载路由/WAF）、WAF 防护、Caddyfile 管�
 ## CLI
 
 ```bash
-aups plugins caddy ...                # Caddy 状态 / 安装 / 实例控制 / Caddyfile 管理
-aups plugins caddy instance reload    # 重载 Caddy（重载前自动补齐 80 端口监听）
-aups plugins caddy caddyfile show     # 显示完整 Caddyfile
-aups plugins caddy caddyfile sites    # 列出站点块
-aups plugins caddy caddyfile add <host> --mode reverse_proxy --target localhost:8080
-aups caddyconf ...                    # Caddy 配置管理（反代/WAF）
+# 层级：aups plugins <插件名> <命令组> ...；本插件命令组为 caddy / caddyconf，
+# 与插件同名，故出现两次 caddy，勿省略。
+aups plugins caddy caddy status              # Caddy 状态 / 部署目录
+aups plugins caddy caddy instance reload     # 重载（重载前自动补齐 80 端口监听）
+aups plugins caddy caddy caddyfile show      # 显示完整 Caddyfile
+aups plugins caddy caddy caddyfile sites     # 列出站点块
+aups plugins caddy caddy caddyfile repair-http  # 重建 80 端口托管区
+aups plugins caddy caddy caddyfile add <host> --mode reverse_proxy --target localhost:8080
+aups plugins caddy caddyconf apply           # 写入下载路由 + WAF 片段并 reload
 ```
 
 ## 安装
