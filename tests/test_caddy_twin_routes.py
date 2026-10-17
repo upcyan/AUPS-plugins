@@ -55,6 +55,31 @@ class TwinRouteTests(unittest.TestCase):
         defs = re.findall(r"^\s*(@[\w.\-]+)\s+\S", out, re.MULTILINE)
         self.assertEqual(len(defs), len(set(defs)), defs)
 
+    def test_waf_regex_braces_do_not_break_parsing(self):
+        # 真实故障：WAF 正则含字面量括号（\\$\\{、{0,80}），字符级深度计数被
+        # 带偏后两个站点块被吞成一个，重建的孪生块尾部多出孤立 }，
+        # caddy 报 "subject does not qualify for certificate: '}'"
+        waf = ("    @waf_rule_4 {\n"
+               "        path_regexp (?i)(;\\s*(ls|cat)\\b|\\$\\{|%00)\n"
+               "    }\n"
+               "    @waf_rule_8 {\n"
+               "        path_regexp (?i)(\\{?\\{.{0,80}?\\}\\}?|\\$\\{\\{)\n"
+               "    }\n"
+               "    respond @waf_rule_4 403\n")
+        text = ("{\n    auto_https disable_redirects\n}\n\n"
+                + DOMAIN + " {\n" + waf + "    file_server\n}\n\n"
+                + "http://" + DOMAIN + " {\n    file_server\n}\n")
+        for mod in (self.rp, self.cf):
+            blocks = mod._site_blocks(text)
+            self.assertEqual([b["host"] for b in blocks],
+                             [DOMAIN, "http://" + DOMAIN], "块边界被正则带偏")
+        with patch.object(self.cf, "_port_state",
+                          lambda *a, **k: (80, 443, set(), True)):
+            fixed = self.cf.ensure_http_listener(
+                "{\n    auto_https disable_redirects\n}\n\n"
+                + DOMAIN + " {\n" + waf + "    file_server\n}\n")
+        self.assertIsNone(re.search(r"\n\}\n\}\n", fixed), "孪生块后出现孤立 }")
+
     def test_render_yields_unique_matchers(self):
         blocks = self.rp._managed_sites(BOTH)
         assign = self.rp._assign_routes(blocks, DATA)

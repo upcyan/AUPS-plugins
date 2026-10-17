@@ -330,6 +330,45 @@ _OLD_APPS_END = "# <<< AUP APPS >>>"
 _IGNORE_TOP = (".", "import", "log", "email", "https_port", "http_port", "acme_dns")
 
 
+def _line_brace_delta(line):
+    """一行内有效 { - } 数：跳过引号串、\\{ \\} 转义与 {n,m} 量词语法。
+
+    WAF 正则里的字面量括号（如 \\$\\{、{0,80}）不计入块深度，否则块边界
+    解析被带偏，把相邻站点块吞进同一个块。
+    """
+    delta = 0
+    in_str = None
+    i, n = 0, len(line)
+    while i < n:
+        ch = line[i]
+        if in_str:
+            if ch == "\\" and i + 1 < n:
+                i += 2
+                continue
+            if ch == in_str:
+                in_str = None
+            i += 1
+            continue
+        if ch in "\"'":
+            in_str = ch
+            i += 1
+            continue
+        if ch == "\\" and i + 1 < n and line[i + 1] in "{}":
+            i += 2
+            continue
+        if ch == "{":
+            # 正则量词 {0,80}：{ 紧跟数字且形如 {n[,m]}，视为字面量语法
+            m = re.match(r"\{\d+(,\d*)?\}", line[i:])
+            if m and (i == 0 or line[i - 1] not in " \t"):
+                i += m.end()
+                continue
+            delta += 1
+        elif ch == "}":
+            delta -= 1
+        i += 1
+    return delta
+
+
 def _site_blocks(text):
     """把 Caddyfile 文本拆成顶层站点块。返回 [{host, start, end, body}]，忽略全局块。
 
@@ -344,11 +383,15 @@ def _site_blocks(text):
             host = stripped.split("{")[0].strip()
             skip = (not host) or host.startswith(_IGNORE_TOP)
             if not skip:
-                depth = 0
                 interior = []
                 j = i
+                depth = 0
                 while j < n:
-                    depth += lines[j].count("{") - lines[j].count("}")
+                    # 括号上下文感知：跳过引号串、\\{ \\} 转义与 {n,m} 量词，
+                    # 字符级计数会被 WAF 正则里的字面量括号带偏（真实故障：
+                    # 相邻站点块被吞并，多出孤立 }，报
+                    # "subject does not qualify for certificate: '}'"）
+                    depth += _line_brace_delta(lines[j])
                     if j > i:
                         interior.append(lines[j])
                     if depth == 0:
