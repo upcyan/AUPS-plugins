@@ -256,6 +256,21 @@ def ensure_http_listener(content):
     return (content.rstrip() + "\n\n" + section + "\n") if content.strip() else section + "\n"
 
 
+def repair_http_listener(content):
+    """无条件清理旧托管区并按当前主块重建，供升级后手动修复陈旧配置。
+
+    与 ensure_http_listener 的差别：即便当前已存在 80 监听，也会先清掉
+    AUPS SSL FLEXIBLE 托管区再重建，用于修复旧版本生成的、带重复 matcher 的块。
+    返回 (新内容, 是否改动)。
+    """
+    content = content or ""
+    before = content
+    if _SSL_FLEX_BEGIN in content:
+        content = _remove_section(content, _SSL_FLEX_BEGIN, _SSL_FLEX_END)
+    fixed = ensure_http_listener(content)
+    return fixed, fixed != before
+
+
 def write(content, reload_=True):
     """保存完整 Caddyfile：校验 → 备份 → 写入 → reload（reload 失败不阻断保存）。"""
     content = (content or "").replace("\r\n", "\n")

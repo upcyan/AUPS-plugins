@@ -48,6 +48,7 @@ def build(sub):
     cfs_up.add_argument("--extra", default=None)
     cfs_del = cfss.add_parser("delete", help="删除站点")
     cfs_del.add_argument("host")
+    cfss.add_parser("repair-http", help="重建 80 端口托管区（修复重复 matcher 等旧配置）")
     cfs_save = cfss.add_parser("save", help="保存完整 Caddyfile（内容从 --file 读取）")
     cfs_save.add_argument("--file", default="", help="Caddyfile 内容文件路径（默认 stdin）")
     cfs_save.add_argument("--no-reload", action="store_true")
@@ -167,6 +168,13 @@ def _caddy_caddyfile(a):
         print_json(CF.update_site(a.host, a.mode, a.target, a.extra))
     elif a.cfa == "delete":
         print_json(CF.delete_site(a.host))
+    elif a.cfa == "repair-http":
+        d = CF.read()
+        fixed, changed = CF.repair_http_listener(d["content"])
+        if not changed and fixed == d["content"]:
+            print("无变化：80 端口托管区已是最新")
+            return
+        print_json(CF.write(fixed, reload_=not getattr(a, "no_reload", False)))
     elif a.cfa == "save":
         if a.file:
             with open(a.file, encoding="utf-8") as f:

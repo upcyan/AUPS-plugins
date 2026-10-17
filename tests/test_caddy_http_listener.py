@@ -100,6 +100,28 @@ class HttpListenerTests(unittest.TestCase):
         defs = _re.findall(r"^\s*(@[\w.\-]+)\s+\S", fixed, _re.MULTILINE)
         self.assertEqual(len(defs), len(set(defs)), defs)
 
+    def test_repair_clears_stale_duplicate_matchers(self):
+        # 升级前生成、已落盘的孪生块带重复 matcher；repair 必须清掉重建
+        stale = (
+            "{\n    auto_https disable_redirects\n}\n\n"
+            f"{DOMAIN} {{\n    @dl_a path /a\n    file_server\n}}\n\n"
+            f"{self.cf._SSL_FLEX_BEGIN}\nhttp://{DOMAIN} {{\n"
+            "    @dl_a path /a\n    file_server\n}\n"
+            f"{self.cf._SSL_FLEX_END}\n"
+        )
+        with patch.object(self.cf, "_port_state", _port_state_patch):
+            fixed, changed = self.cf.repair_http_listener(stale)
+        self.assertTrue(changed)
+        import re as _re
+        defs = _re.findall(r"^\s*(@[\w.\-]+)\s+\S", fixed, _re.MULTILINE)
+        self.assertEqual(len(defs), len(set(defs)), defs)
+        self.assertIn("@aups80_dl_a", fixed)
+        # 再跑一次不应再改动
+        with patch.object(self.cf, "_port_state", _port_state_patch):
+            again, changed2 = self.cf.repair_http_listener(fixed)
+        self.assertFalse(changed2)
+        self.assertEqual(again, fixed)
+
     def test_path_regexp_identifier_renamed(self):
         # @dl_file_x path_regexp dl_file_x ... 中的标识符与 matcher 名在 Caddy 中
         # 同处一个命名空间，孪生块沿用同名会冲突，必须一并改名。

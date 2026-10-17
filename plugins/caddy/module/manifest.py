@@ -35,7 +35,7 @@ v1.11.2：旧托管块复用时补齐缺失路由标记；apply 本身按注册�
 MANIFEST = {
     "name": "caddy",
     "title": "Caddy 依赖",
-    "version": "1.11.4",
+    "version": "1.11.5",
     "description": "Caddy 反代：实机/容器部署切换、统一站点管理、Caddyfile 管理、实例控制、自动 HTTPS 证书、access 日志、防火墙；依赖 SSL 证书管理",
     "type": "external",
     "attr": "依赖",
