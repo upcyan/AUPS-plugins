@@ -73,6 +73,13 @@ def _validate(content):
                 return None  # 无 caddy 可校验，跳过（安装后由 apply/reload 再校验）
             res = env.run([b, "validate", "--config", tmp, "--adapter", "caddyfile"])
         if res.returncode != 0:
+            # 保留被拒绝的候选文本：线上排障时磁盘上永远看不到非法内容，
+            # 没有这份现场，只能对着报错盲猜。
+            keep = os.path.join(d, ".validate.failed.Caddyfile")
+            try:
+                shutil.copy2(tmp, keep)
+            except OSError:
+                pass
             return (res.stderr or res.stdout or "Caddyfile 校验失败").strip()
         return None
     finally:
