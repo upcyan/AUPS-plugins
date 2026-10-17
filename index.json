@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "f2eededa088761f43b0296ae4a7625a05265cd1c",
+  "branch": "beaabebce59e79186306623cb28e96e2eb1c6478",
   "plugins": [
     {
       "name": "appupdate",
@@ -41,7 +41,7 @@
       "version": "1.11.5",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
-        "README.md": "42769344b064a7a1a8c0f0ca58800e97ce739a0f31d7e6f416b8b566316cd77e",
+        "README.md": "0ee25165d3305aff4e48a85374b6f179d2382c7070d3a17d01fcfd4110d3d1d0",
         "frontend.js": "8901987d6c527ab25871b00703c152afee06fd47cd12ce5ace6fcc2ad586f7cf",
         "manifest.json": "5c3f7dd74460cd16f4ff7dfe207c6c5e60eef4b0e7437422aef946562758440f",
         "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
