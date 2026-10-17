@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "a6ddd2e325405a2dfd28f157ef7151825e4f54ee",
+  "branch": "d456132daea6b95ce246ee15b79f4e127a4085af",
   "plugins": [
     {
       "name": "appupdate",
@@ -21,15 +21,15 @@
         "README.md": "60bf79d8016d1d4b199d2e7437f023c737f572dcd295513c072ca52cc47e9e5f",
         "frontend.js": "a7e17eaa2235fe91a29c9182acfa16eb7e30831bade8a65e7ad07ec3a1e17ffa",
         "manifest.json": "1df8937047e42cc5c76f600789e3abe56c00132e3618827bbb91e241e0a0eaf0",
-        "module/__init__.py": "4bc627b6a99224fed24ed8f42a2ad484015e5c2bfffec66debf090d85ba98ddc",
+        "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
         "module/api.py": "13c55a9e68a5da9c38e52d8b5ecca2607e476b987912bc80a1ebf58d2fa3a63f",
         "module/apps.py": "ce37a4231466a1898da0aa49f127a7df79b33c8c2b23dc50b2f5becc117bfa52",
-        "module/cli.py": "c5ca060cc7cb4fbe5b9200d1152ccac036c02458ecf1df89c489c87c2a570e5e",
-        "module/downloads.py": "9ca7b9b3711dd2332a284042c14b5f6fb2fc108e8f22fbd7e40ffa10adaaf542",
+        "module/cli.py": "ba6d66efc97da6825f750d7e442e9f50cb8c28471c2173e6b6f5285327e0695c",
+        "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
         "module/manifest.py": "e8202788aade480ccca53152d9b04fa56109fc0d3b4223b2a7547a679d699356",
-        "module/sshkeys.py": "063a53cd0cb2a363b509464374fec8c38130485aa8833c0c13dc4c07b52d8811",
-        "module/storage.py": "a27297a25bd299b3eb4d80b04264f3e72971817d29eb4c8c6f3c2d1a678da499",
-        "module/users.py": "ba501b0c817e546c7d0b88532d5986f6b772252697b70a8b3071aa006c92a3f9"
+        "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
+        "module/storage.py": "0959e83a0fe917acde58316397b27bb123751c6de0a2e0e6b6e046a791670678",
+        "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
       },
       "cards": true,
       "provides": []
@@ -42,14 +42,14 @@
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
         "README.md": "42769344b064a7a1a8c0f0ca58800e97ce739a0f31d7e6f416b8b566316cd77e",
-        "frontend.js": "20a8e78f72890313ecf5e2f7df5007a216704b3369a0ff73af1aa69c279fccdd",
+        "frontend.js": "8901987d6c527ab25871b00703c152afee06fd47cd12ce5ace6fcc2ad586f7cf",
         "manifest.json": "5c3f7dd74460cd16f4ff7dfe207c6c5e60eef4b0e7437422aef946562758440f",
-        "module/__init__.py": "7da098dedbe8612e211b60c2198fc89b58ca28317877ab9854710c8dd70118ce",
-        "module/api.py": "5ab9e5c42c95a8cd208df293a633465da0167c1249bdbdadb5428c60229108bb",
+        "module/__init__.py": "f6fd3ec5f46ff7e3f58ed0364287c0028c5d28a39f339fee062b78dbddc50ce9",
+        "module/api.py": "0eb37b269b23ddb9b5f661cdd819846b5b6ac6f9285470d42dd8ccdf528d192c",
         "module/caddyfile.py": "39728bbb5fd11616ca4a9e359183b11774877ad0ee19a31716eb8bd59751b86b",
-        "module/certificates.py": "4a9ad449332282a7e7791b73e2ebfa0ae5801cea8383f9ff0e81512d80bdc849",
-        "module/cli.py": "853f4e59a9f1386ca2c3bc8966b7b3ce6abd7e17c3daa4cf2178eb33dd645bf6",
-        "module/env.py": "ec6d0389cd2a24af47d1958481915b3ecd95a9e5fddd5fdec894cc3945b176f9",
+        "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
+        "module/cli.py": "517988e723614ee6bcc5eb278fecbcfc380e117993ad506ce322a66cac3afb2f",
+        "module/env.py": "259361e16293d759997facff88bcd52690d25e6f6c164c9a20752374ec850ed7",
         "module/manifest.py": "fa9b5d3ed4aef6d1bef8f6494e7431a86191d3f6bd70c2e178ee1910579f2fd3",
         "module/sslmode.py": "20cdec2378ba08f2a778b9259485d05c642744f4eb6693d21866e8bb49e72bdd",
         "module/rproxy/caddy.py": "d517b86aff04cb10847919142c497f49d540bac24ac92dd035f73ef21e3a644b"
@@ -89,14 +89,14 @@
         }
       ],
       "files": {
-        "README.md": "ff45a390f44ce037672f7e4ca4254094a6d0e1a4e3899c442961be7d0af23440",
-        "frontend.js": "ad23df70f0b04a13101b343169afaa08ef638d7f4ad37b3bd1965c74277baf28",
+        "README.md": "55322ed5f3968c69e83f06e5a158eb18b36cbd12675e08f803d1ddbc9baf376b",
+        "frontend.js": "24377947abd9d376050125ea2a0b80739052e22925c7f1d9bfb1ae0048dad952",
         "manifest.json": "f638794dc60347f70852773f0d1811188c781598f69e680326a5538876dd2a13",
-        "module/__init__.py": "24ec284993d41bc58a60fbe5fcd75a3d4568f5f2e085af2b80e167dbefe9e699",
+        "module/__init__.py": "4dad3b5e3fd946cbd24fb74eff88dab5c3574b2707419a88676cccdedf4f7c55",
         "module/api.py": "cee78de4c133d3d29da975d2af637888748f7b7f83b411d463b8675479650e71",
-        "module/cli.py": "b2e9ff790601b4dafbd8d417af4c84447561c728510d45d4800055feafa1b833",
+        "module/cli.py": "a1889b0da989611aee38d7426b1544fd435f3ef246f3fdc5d15403d473ae94e3",
         "module/manifest.py": "c16d9b25d031475c9e9845979e509be8afc8b8351a9fffa253572eb12f8fb2b8",
-        "module/webapi.py": "0f0326c1d9b5fe436f74384b5579b063751d997ec2d4bc7a2ab140f62097333b"
+        "module/webapi.py": "ec6b0aeb441c3c86f23b0a184a6c76f154c27d654395bee7717937ab5f56453c"
       },
       "cards": false,
       "provides": [
@@ -111,14 +111,14 @@
       "version": "0.3.0",
       "description": "Let's Encrypt 证书签发（certbot）：申请/续期，证书落在面板数据目录",
       "files": {
-        "README.md": "bcd00cf04a90c709291e2282d1c067872a4e1ee339cf544e221752fab002345d",
-        "frontend.js": "bff0663aa0ad934b06c30c18fd8173fe251d6c316e12f875f9634afbb4e7c427",
-        "manifest.json": "5ae20a8f430475ad19086d13275e8f455a244eb2a507f0b100dd13acdf6d25e2",
-        "module/__init__.py": "f369be9775bd4382b41f1db7d1c7d6f7f1a2549707956e817ba9bd2fe25426d5",
-        "module/api.py": "2010dc8648214f3432475e41e3204a5a2da6fd01e52cebdd13dfa5111daffd7e",
-        "module/cli.py": "62846774000d5da07972c368c71131459d1f668ceea9fda989f2b91325c65154",
-        "module/manifest.py": "5020851e10a227052a67278251955135ddeee579213e52b0bfb479be2868052f",
-        "module/webapi.py": "e29ab804e3bd821c0ee720e035fdf5457b2eedd095daa4e3062239f04384f021"
+        "README.md": "24ebee3899d0f44153443f9ec58ba0982e15dd541a59fd38cf6277c44ba196f7",
+        "frontend.js": "f3a7037ced423e9c75822764a57a4f90b38e6741d09f7ce8a1be89647665ff11",
+        "manifest.json": "7cb709f59b18c8ac8ec4c48eb3b6e2d151066c3ad4f39fc6aaaae4e34ceb543e",
+        "module/__init__.py": "80c35c8af1068f969d1b091017f9445b8ba586ae8c1393f5bdf26f709e71a7a3",
+        "module/api.py": "f33a99021c410077724fb19fc1af3fa8fd48cfa9bad4af997c462143a05ec133",
+        "module/cli.py": "3e307a0d1cd3ede85aac8bedc8c9d0b4181399ef71146618be6597680b8d02e3",
+        "module/manifest.py": "86a4d37940c73ee99e196f59417c86459d9dda34159b83cf31d7a35a3db15ab2",
+        "module/webapi.py": "60fc107157d91b5c9e76d920ea5655d3ef9e0a9d32f15f1cbf977c3f08bd754a"
       },
       "cards": false,
       "provides": [
@@ -132,14 +132,14 @@
       "version": "0.3.0",
       "description": "acme.sh 证书签发（零依赖脚本）：申请/续期，脚本与证书落在面板目录",
       "files": {
-        "README.md": "650d63c3e0c5d4291247a409c65b92b1bd0b3c8ee03aed8ce8b032d9a8887aca",
-        "frontend.js": "804c8120ef74dd2c8e0b6206c96ec400d60201f865d3e67cda75c91ced259f9d",
-        "manifest.json": "06348556613c85f9588201c7dd399af42f618ec9ac7f283157b2cf7b5f07e198",
-        "module/__init__.py": "67eb0d4243dadd03017441ef9978c426cfa4ed19063111b9b344c0c67f660951",
-        "module/api.py": "84807c04ad650da34c7a4b01c9b94110b6b21e8d21495e8879159577591fc586",
-        "module/cli.py": "42051e8abe6a5c16460406823a57ea88895745f6a5a075d222cf55f054f7e6c0",
-        "module/manifest.py": "5dfcc74342332bb3599a866f2772ba2159a5d616a79ecbf5d906d26663fda5b6",
-        "module/webapi.py": "f945d75ed4ac4886fbd336d72ac027d13d662de5399b284ef2d43536ca80df89"
+        "README.md": "9f3085a722daa6ad75594aae190c74e4bc7a1f38f7d880c5f53976ed300da099",
+        "frontend.js": "1211c35d79ad22e857ce4cf13cdd36ab1eca3994eb2ea1c3597b951885d889f6",
+        "manifest.json": "dd96e28dd5f9c80da336fc76adf5834fb3e5f9f65d4bb92fc78389599388f609",
+        "module/__init__.py": "57eb64d0b44feb6604e575eb19fec5df7bb0f0e565d0105ca50033158034af50",
+        "module/api.py": "67e6e05191d5a6f0ccbef639e376d5197ac5a57403472079168612d86d1d978d",
+        "module/cli.py": "21b9c1581e97d9cc66f1db7f5b24ea4d99c337dcc40a3e4fddbb3687bc44cbf7",
+        "module/manifest.py": "a152f0833e9086e36397921d28fd946bf7805135445d463ab258f8e35100731c",
+        "module/webapi.py": "b1d34df98f6f2f790c627ea7c79c1555eac17a9a26b451dd6d6a6aeda2f28a1c"
       },
       "cards": false,
       "provides": [
@@ -180,7 +180,7 @@
         "README.md": "d5edc0e5ed4d1d133c250575e0914f6dee3b2765c94133aa186bd7b2d733041a",
         "frontend.js": "7e74eb321ef6c1ac57aa26b0dfff9799861d75cfe0658f3dd9ceeb889dca9d65",
         "manifest.json": "f538d95f8c103157abf9e83cc4f54d7da70d813fb8b97f45671dcdb65aa04d0f",
-        "module/__init__.py": "45ab05d575be3294243363c31c0b14d080a96ce0aaf045685c51b6fe675b1b3f",
+        "module/__init__.py": "7af431cad3378f51d813b3523f7645b78e3c1a5dd77c4ab62f00471b041ffe81",
         "module/api.py": "613923efdb4e3e13533ee7ed8ce4faff921e94983dcbfec4cd14df0a66751760",
         "module/firewall.py": "a906e3a36cbead886cd9564e25f2cc410a94b3c62958467996f6c61304fbd7e8",
         "module/manifest.py": "b512f7471a4e65507a1ca8bde57712c2f6255b10f6f6e1ead19d8b5159337cff",
@@ -198,13 +198,13 @@
       "version": "1.0.1",
       "description": "YARA 规则扫描引擎：引擎安装、规则订阅与扫描，规则数据由核心持有。供核心主机安全与 cyansecengine 调用",
       "files": {
-        "README.md": "41db8960e53f7094175153f49c5c3fd4bf5518816b670c1e74b107e55ffdb3b5",
+        "README.md": "09ee986df232e43a4644b0b8dd1fc1e5ebca2a47bc636a8f59cf0e3c482b7a7f",
         "frontend.js": "7d34f9c0b74858494825fa54489bb972a7e32d816ef92a3939e2b71f96510bee",
         "manifest.json": "620db01aa07b25b77c2d3bb5dd19d6da9476121c24f5e4e8f010fe3c26c2fadd",
-        "module/__init__.py": "cc9a6171b8dd0a88a422a64ec9a471d2a9bce1033ac48e31d64353af2cfbd7d1",
-        "module/api.py": "cf32f83ba7c7f1d9b461195f34994fffb09d9b42308b757fee615c3225748163",
+        "module/__init__.py": "30db9a99b3bff061b382b0fd543a9db7e473e1aa1e44fab731e4580bd7fa17a4",
+        "module/api.py": "dd851aec7f9341489c4a66b8364beee400194daf3ab5f5bd75b6573691e3da71",
         "module/manifest.py": "36ce7a0f7ae6d9bd2bfb4ec2c6a773d6df735af9477a495e958928b5753553dc",
-        "module/scanner.py": "d76e7bb6f4879cfa02436da0598ee6d252d86791a3cb47318a616fd2ec1361fd"
+        "module/scanner.py": "0460433ec4450fb7f3da627184ba7a9609aff50f95bdbf23174fca1250c79e0f"
       },
       "cards": false,
       "provides": [
@@ -218,13 +218,13 @@
       "version": "1.2.0",
       "description": "rkhunter 主机入侵检测引擎（依赖插件）：二进制部署与扫描由插件实现，报告由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
       "files": {
-        "README.md": "eef4623e4e20a9a649a987c7c2aadbf5274a9e7c8767570f3ccc498a38d0e292",
+        "README.md": "bee30e79a63065b59efdfda89cbccb1e31041316f846ef7220336f1addde4fe1",
         "frontend.js": "af7ef08efca99b08cdbac3c041eecb46fb08ca42d72eb6af5c4ae7f34fb0c937",
-        "manifest.json": "1b7ddc993f9b4a469708fd0609283518310d81d5b64322599cff338b33e660db",
-        "module/__init__.py": "285afa448b7dd281e9f3e64ca3d92df9d94e700abf06d94211530df9aa804d2d",
-        "module/api.py": "a771e92b444e1d8e343889a1e69a1b126af43dcf78ccc41ef2ba281df579a6cc",
-        "module/manifest.py": "ac7b0d012b96fbf7ca38bb28ed117ac7d32435bac458890eed2f969e4ef489b8",
-        "module/scanner.py": "4b2bc3a6c93c73827e062a97fa76ca3a27b873a62db75b2dd0a20c74d69e7541"
+        "manifest.json": "091f4c398834a41e2b9f558c29e41358f6824274961786b522b5e0ca0aaef202",
+        "module/__init__.py": "446bc3c7a08d03b37b0e5254b1cd73bc8727472bb714c149670d0339fbcd080e",
+        "module/api.py": "0294fce5112ebb8a08dd151c427f060834a0eb8165d704aa0e652cf860ddf66f",
+        "module/manifest.py": "df3070542a4a6e670cb6ddf6cdb4589a85d0ca697be90f14969c5db890ada8d1",
+        "module/scanner.py": "b4cdd9a892add84112760b3669a60331f29a22b2bfc6db7af65d4abac55778a7"
       },
       "cards": false,
       "provides": [
@@ -238,13 +238,13 @@
       "version": "1.2.0",
       "description": "LMD (maldet) 恶意软件扫描引擎（依赖插件）：二进制部署与扫描由插件实现，报告/隔离区由核心持有，安装时若已存在旧二进制将先卸载再重装为插件受管",
       "files": {
-        "README.md": "86b426041b88906fcd88d3f36d23fced7e51e263dd40320dc1323d2dc558b4d3",
+        "README.md": "f506b0a9ee927f3cc5994053ef7b77950c156538a1b17b1a5150162abfff685a",
         "frontend.js": "6d0c72c6fc57614bf4eb75936ba4b841ec3b40e879f62fdadc7d5a7937a53912",
-        "manifest.json": "c860f3870d96db40a2dbd1c09e9764f4d2c4f4c2f7183ab98272fd86d3871b4e",
-        "module/__init__.py": "d22d15f69a132013d6fe86768c336c0b6cddc6df945c2bbe82c252161c5197e2",
-        "module/api.py": "5ab31f60301f6728a204039dae6c36f8964a29e59243500dd2d4ecee3c1c016f",
-        "module/manifest.py": "728c2e4a971db865ea71fd6c69c683ffc6cea4b2b41bac867ba7d96d1fdf8212",
-        "module/scanner.py": "040788535735da8c2e42b72f036e9e2b39de482b9c2094f24e45035f72b83d26"
+        "manifest.json": "098c1550c9a66edb305d1f0e1a51ab8facaae0f0e845369c8153154ea1155510",
+        "module/__init__.py": "d616ac336a47a47e3e37c0bed77d4b6b7f990a308b1f2975858cb8660b8f5865",
+        "module/api.py": "93202aa79d5513d4286658974c55886094d70c4962d68a3c00e0629b84db1acc",
+        "module/manifest.py": "3e4ed54431b0e94334aabb90b4583f0e8cc6c7264f83857c2da3f01918bb224c",
+        "module/scanner.py": "4ddd5db4b10e70e73e26df03add567bac3c4c82b390cd4bfdd88d75885fef92d"
       },
       "cards": false,
       "provides": [
@@ -258,13 +258,13 @@
       "version": "1.0.1",
       "description": "VPS 基线检查（纯只读审计）：账号与权限 / 系统配置 / 内核网络加固 / 服务应用，四类检查项一键巡检并生成报告",
       "files": {
-        "README.md": "073e687870d2762c8df1bf08d41037ba4f7134740988990598d0b52db6da2644",
+        "README.md": "53aa53cf1f781adf004ed88ed5669ab1b9824b800a7092fba32d9a8ed762cb8d",
         "frontend.js": "9f4bba5f58e9c5dda136c1b6bfbdf6b837ec97960423aeb5d8285a174af5277f",
         "manifest.json": "ce5f232e97fbb07814935de82f5f0d12983dc03786632de4cffe8772b2360306",
-        "module/__init__.py": "e2527eaa363198dc1f5687327a4d9a105129e6634fed4c46c1cd93a95be6d0af",
-        "module/api.py": "464fae9144ea942d10955c86c36c3c89799a7b4c5cffcbc5e132d48e70b2caee",
+        "module/__init__.py": "259c5075b9a3219e2f04900475fd9e2468c4d0da97c449ba4fb7615171ecc607",
+        "module/api.py": "952b1ad1540b2615d5a777201e1516261f76929886b5e0484b745f1b0817c731",
         "module/manifest.py": "084176ee82318eb5bc96ce3b767caf368400c126092fbbff93b3ae88affd5d32",
-        "module/scanner.py": "43d645fc6b73c04abb2b856f33912c909e4051db2bb51f91adc6698e259c0f88"
+        "module/scanner.py": "4243d96d941cf494092e899cdb5d1b830b9d39ee76e8995d0282c7720c4558a4"
       },
       "cards": false,
       "provides": [
@@ -278,13 +278,13 @@
       "version": "1.1.1",
       "description": "系统与部署软件漏洞检测：待安全更新/补丁、部署软件版本比对，检测到漏洞提示解决方案并可一键修复（装补丁/升级）",
       "files": {
-        "README.md": "ef57f6abee08035683ea5178e1037a6c2418b3d4aa0419f20c756720c9d9c91d",
-        "frontend.js": "11af2b1342a39c0810478e8d21f1390629e2da6868f4d06d6ff0c242b12f1e29",
-        "manifest.json": "ef6161b01c4d419e8688d293e215c634e019f1e4df69bc2c1cd9a4a591bc03ce",
-        "module/__init__.py": "72655c5d3b93b7a2e5e99e70982ba718135976ad259b9db2e9d97edab088db4b",
-        "module/api.py": "d3aaeaf8711dc5ce08d4aaea7cff9b6b08ff872bee6a21633ce4d46c6fe83283",
-        "module/manifest.py": "9a97e522528c1b93c715460d45a7a667fd005cdfc0b3e6fe6b5614b9915e246d",
-        "module/scanner.py": "1f30acafe1799a5bf84e985ea2f27572f2a8f59534fe678eece0be63f16319f8"
+        "README.md": "42990fb168fada2a3bbbad558eba6dbc28c0841d80e5eff802cfe158c8eb6806",
+        "frontend.js": "c797b34ebbca6f72202637c15068d8f27240e6236840fa589f1b96be6d20753a",
+        "manifest.json": "2b537f7f0b8d4a72964e68a9208c6b41343a1d1deebe1eb393aa6e028748d670",
+        "module/__init__.py": "adb4db53f39bc0da7b394d4687a0534553e10b1de61505c8398635087ee81b70",
+        "module/api.py": "dff843995a0b83e336eada811b15f511bd75b331d4460a1f89a9b4beba8d87ba",
+        "module/manifest.py": "44bd5d02c158e2bb066820ab85163825da0727f98fd1309280b385ba4faa4fef",
+        "module/scanner.py": "2ef2d655bb47d73b2e87b0edef89af2b2252ba06cf4f53508a8c426e03f21592"
       },
       "cards": false,
       "provides": [
@@ -320,14 +320,14 @@
       "version": "0.1.2",
       "description": "与 DeepSeek Harness 客户端建立授权连接：配对令牌接入、双向消息通道、连接管理",
       "files": {
-        "README.md": "6f64e29be6814e5d810285bb32dadc06ea0de65c317e7e58dd6585b677d6ff60",
-        "frontend.js": "ef1c2c161585f1526a4c251ba05b6e75492005f2071cb31458ab29a62d35ba83",
-        "manifest.json": "a1b833144c20333265e180cafc244b9227d6a3159fc8f60ed3547f169b3793a8",
-        "module/__init__.py": "8d57a6279a5619f1f4d6e2567fb53a11b0650551ecafdc6e4a0d2bd19ec89f02",
-        "module/api.py": "6522eefd564e8fba59bd6ea8189127905beb15ac7389d42ec7c21d23fe3cac1a",
-        "module/client_stub.py": "a04a4eabf2c142ac0b8f0a427eae31142af605656eb6e608e1da8847f43ef845",
-        "module/manifest.py": "3e07eb800db868930fd0db9ea2a90dd1eadc29f96c63335ff5a239840daf1551",
-        "module/store.py": "9f8db634ea959eb99a3f34f83b47e56b6b21a6a3c72d96fea437fed987a6d1eb"
+        "README.md": "e735b184fca2bf7f2f67f7dc0173e002503d8b6ac830465b73eeaa9e3e913394",
+        "frontend.js": "df2c58f07826d46efa15d6d654d9a10b6ef3ad52e6e25271c2d68b968b425556",
+        "manifest.json": "421676330bd4e4a8b880849ec5039e68ac6b3aee0d11010dbd9eb87856d797cf",
+        "module/__init__.py": "33e592ed9eae5ae662922acf5eb585e1e6f97c7e8012fab34df7e6d6d10700cb",
+        "module/api.py": "ebafb4ad54bfbed39f539a6cba3c929714f3f2e041115a5cafaf36148e372355",
+        "module/client_stub.py": "58edf21e8e61c5013637883daa172b0e5f38b9a7d04a298e904686afcdc70feb",
+        "module/manifest.py": "2d43a5eb11f28eb75f5e86c9e97af6cfc9383852a4d8bdfd75cd77d757966b47",
+        "module/store.py": "febecf2f443058204c3efdb06b8e8a473c1f38d60275a0653090cc45c6412763"
       },
       "cards": true,
       "provides": []
@@ -344,10 +344,10 @@
       "files": {
         "README.md": "5278aa83c79cb24bdb55add6121a9b75c5199e5675de0fd8a550bbaaae8957f5",
         "frontend.js": "65c8aed4fcfc5b31b637e5902734ed8fe139bfc18ab546ed49a4bb1c8d9e82ab",
-        "manifest.json": "ec6e0ea57a6c80415e591d626e5cd518f9259610c629c7cceaa277184a5de3ff",
+        "manifest.json": "74bf9f2a58d43511963af4cf7754c6dd7eaa67a5378f03ac87d6b2ca1ac34458",
         "module/__init__.py": "52264794f4d38928325b2242b3b69db7eee5875b84c26fce407fa72aa17478c6",
-        "module/api.py": "fd22eb9daf28eda42e38f0d41b6d74afca59efb732459fd919df4b4cad92f7bc",
-        "module/manifest.py": "3722a37255bc8f8019b39e4384b410da8779862d416d3c7d662f6a1b2cf78668",
+        "module/api.py": "7deced48a9b2b97b7d04a5d82e64da0167219b370ecbe9d8283831dbcf41cd26",
+        "module/manifest.py": "994968c7dcce6f576a48065b72aafe69b0d6543c655f4bada772b57901257d2b",
         "module/webapi.py": "43331f9b35d40dc47b2c3fadaf19f83ecf5a9c6972f706b040dc0574c418a7b0"
       },
       "cards": false,
@@ -403,13 +403,13 @@
       "description": "由反代插件安全暴露的 GitHub 与 Docker Registry 白名单代理",
       "files": {
         "frontend.js": "c3de02c0408119a851981af623f38f56cbfa89fc6affe077cbcadcc5c9077567",
-        "manifest.json": "d615428476e695f872d14b6547e55ac8c88675221764d568fb66d6f94e56f682",
+        "manifest.json": "58a7a0ddad2af896552978c0481e2ab5151d6b63d44a5dfc7c01303d55e29e04",
         "module/__init__.py": "c2cbfcad27f52f96ff930faa8873cb9c1b834dd3713dcab2b2566a8894c8252f",
-        "module/api.py": "c8d7f43d13250f79fdd7d522c9add65d08d86316ae9b23d371c9b90805096a1f",
-        "module/manifest.py": "81fd029db4b89fa4859584fabe63d1f4c099c5224900610bcfb1bf2ab4413554",
+        "module/api.py": "0dc83e51bc8c4528dbd944c4a2d1f3826ea8eab317e918d7cbfb97cdf5cda6d8",
+        "module/manifest.py": "7a0e3324da687c5c26a686872a235c824c9f95d526a70ca3015300b36febafea",
         "module/proxy.py": "43051fc552b8f5c43e7438cea46515a60809195082cb7ae43ec6ecbc2a9b310e",
         "module/server.py": "ad30619e30c2df56ced367c2fdf94d943f66a83d7f681df10e9ca9e602f36dad",
-        "module/service.py": "a8c80940252eb9a5404dfb843e410be6f5fc609afd62fd3135ac3e7d9d3a487f",
+        "module/service.py": "b7c5aac7684b45fe2916db888ea730f3c9f21108d14ba6f3e5f482b302da04f9",
         "module/webapi.py": "d643e3ae874022a561936b9c18399e8590a7aa78a8400b8f8de4e4cb1fa52973"
       },
       "cards": false,
@@ -430,11 +430,11 @@
       "version": "1.1.2",
       "description": "统一管理 SSL provider 申请的证书、续期、删除和更新",
       "files": {
-        "frontend.js": "f679efba1fb8f4a2c42ff0042fb8d3ec90c294a44f3f2d26e24033b916688a69",
-        "manifest.json": "27b00cf0a4db4d0387edd2a2798d1ffed17ddb70766b02bccaa2e82b4b752f85",
+        "frontend.js": "c8bb313f254cdaa3fc67acf2f3e3ee4aedcf08eb7aaeff8f90c32e496b77e8d5",
+        "manifest.json": "a9729a13e808e094f4aece7810fdde4839557e67d4b33c36fd114225d27b7ddb",
         "module/__init__.py": "e1be488e4116b629190eb17136d2e8cb041b841174501cf507902ae9c04e1468",
-        "module/api.py": "1febd3f06d700c138465ce363b9588aaf8d97defed2a491dae1faf9129c10112",
-        "module/manifest.py": "d52a31f15b984e4ad5b6683f8ba09349f1936155c8e33f130d07a6aad9d57a39",
+        "module/api.py": "3db3fe0df382931ac63316f9742733939ee357796a2f39f37ef001e7c0b7b62c",
+        "module/manifest.py": "78eeffc79f4638311e422ce9fa7943f9d5e4cff0d755eec0a38ea3d333fa1da2",
         "module/webapi.py": "0615bf54c606edc600d549671b209c37a3dd73baf485d5c7aa83e3b645c6a18b"
       },
       "cards": false,

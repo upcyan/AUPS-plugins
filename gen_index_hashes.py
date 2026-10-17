@@ -15,16 +15,27 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _git(*args):
+    """在仓库内执行 git，显式声明 safe.directory。
+
+    仓库属主与当前用户不同时，git 会以 dubious ownership 拒绝一切操作；
+    此前该失败被静默吞掉，退化成读取工作区原文（CRLF），算出的哈希与服务器
+    实际下载的 blob（LF）不符，导致市场安装一律报「插件包完整性校验失败」。
+    """
+    return subprocess.run(["git", "-c", "safe.directory=" + REPO, "-C", REPO, *args],
+                          capture_output=True)
+
+
 def blob_bytes(rel):
     """取 git 仓库中已提交的内容（LF），与市场下载的 codeload tarball 完全一致。"""
-    p = subprocess.run(
-        ["git", "-C", REPO, "show", "HEAD:plugins/%s/%s" % (NAME, rel)],
-        capture_output=True)
+    p = _git("show", "HEAD:plugins/%s/%s" % (NAME, rel))
     if p.returncode == 0:
         return p.stdout
-    # 未跟踪/未提交的文件：退化为工作区原文
+    # 未跟踪/未提交的文件没有 blob；用 LF 规范化后的工作区内容近似，
+    # 避免把 CRLF 字节写进索引（.gitattributes 强制 eol=lf）。
     with open(os.path.join(PLUGINS, NAME, rel.replace("/", os.sep)), "rb") as f:
-        return f.read()
+        raw = f.read()
+    return raw.replace(b"\r\n", b"\n")
 
 
 def collect(name):
@@ -116,7 +127,7 @@ def main():
     # 固定市场下载提交：branch 字段写当前 HEAD SHA（codeload 按 SHA 的 tarball
     # 不可变，避免分支压缩包 CDN 缓存导致全量哈希不一致）。脚本在 index 提交
     # 前运行，HEAD 的 plugins/ 树与最终提交一致。
-    head = subprocess.run(["git", "-C", REPO, "rev-parse", "HEAD"], capture_output=True)
+    head = _git("rev-parse", "HEAD")
     if head.returncode == 0:
         sha = head.stdout.decode().strip()
         if data.get("branch") != sha:
