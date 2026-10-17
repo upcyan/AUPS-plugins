@@ -187,6 +187,35 @@ def _has_http_listener(content):
     return False
 
 
+# 孪生块内的 named matcher 必须改名。
+# Caddyfile 的 `@name` matcher 进入同一 server 后是全局命名的，主块与 http:// 孪生块
+# 的 body 一模一样时会报 "matcher is defined more than once"。
+_TWIN_PREFIX = "aups80_"
+
+_MATCHER_RE = re.compile(r"(?<![\w@$])@([A-Za-z0-9_][A-Za-z0-9_.\-]*)")
+
+
+def _rename_matchers(body):
+    """把 body 内所有 named matcher 加前缀，定义与引用一并替换。
+
+    除 `@name` 外还要处理 `path_regexp NAME REGEX` 里的 NAME：该标识符与
+    matcher 名同处一个命名空间，主块与孪生块重名会被 Caddy 判为重复定义。
+    先收集本块声明的名字，再对这些裸标识符做整词替换，避免误伤普通参数。
+    """
+    renamed = {}
+    for m in re.finditer(r"^\s*(@[A-Za-z0-9_][A-Za-z0-9_.\-]*)\s+(\S+)\s*(.*)$",
+                         body, re.MULTILINE):
+        name, directive, rest = m.group(1), m.group(2), m.group(3)
+        if directive in ("path_regexp", "header_regexp", "regexp"):
+            token = rest.split()[0] if rest.split() else ""
+            if token and not token.startswith("@"):
+                renamed.setdefault(token, _TWIN_PREFIX + token)
+    body = _MATCHER_RE.sub(lambda m: "@" + _TWIN_PREFIX + m.group(1), body)
+    for old, new in renamed.items():
+        body = re.sub(r"(?<![\w@$])%s(?![\w.\-])" % re.escape(old), new, body)
+    return body
+
+
 def _needs_http_listener(content):
     """存在裸域名（自动 HTTPS）站点且 auto_https 已被关闭时，必须显式补 http。"""
     return _is_auto_https_disabled(content) and not _has_http_listener(content)
@@ -195,31 +224,35 @@ def _needs_http_listener(content):
 def ensure_http_listener(content):
     """保证 Caddy 在 80 端口上有监听，避免重启后 Cloudflare 回源 521。
 
-    仅在两个条件同时成立时改写：
-      1. 全局块已关闭 auto_https（Caddy 不会再自动监听 80）；
-      2. 存在裸域名站点块，却没有任何显式 http:// 站点块。
-    80 被其他进程占用时不改写，避免生成必失败的配置。
+    托管区每轮重建而不是只在缺失时补一次：主块的内容会被 rproxy.apply() 注入
+    下载路由与 WAF 段，孪生块必须跟着同步，否则 80 端口上跑的是旧配置。
+    重建后文本相同即幂等，不影响「无变化跳过写盘」的同步优化。
     """
     content = content or ""
-    if not _needs_http_listener(content):
+    # 先清掉上一轮托管区，再按当前主块重建。
+    # 仅在托管区确实存在时才改写：_remove_section 经 splitlines 重建会丢末尾换行，
+    # 无托管区时调用会让未变更的配置在文本上“看起来变了”。
+    if _SSL_FLEX_BEGIN in content:
+        content = _remove_section(content, _SSL_FLEX_BEGIN, _SSL_FLEX_END)
+    if not _is_auto_https_disabled(content):
+        return content
+    # 用户已手写 80 监听时不要叠加
+    if _has_http_listener(content):
         return content
     http_port, _https_port, blocked, known = _port_state(content)
     if known and http_port in blocked:
         return content
-    blocks = _site_blocks(content)
     twins = []
-    for blk in blocks:
+    for blk in _site_blocks(content):
         host = blk["host"].strip()
         if not host or host.startswith("http://") or host.startswith("https://"):
             continue
-        # body 已带原站点块缩进，直接沿用；再叠一层会让嵌套块缩进翻倍。
-        # 只去掉首尾空行，不能 strip 首行缩进，否则首行会左移。
-        body = blk["body"].strip("\n")
+        # 只去掉首尾空行，不能 strip 首行缩进，否则首行会左移
+        body = _rename_matchers(blk["body"].strip("\n"))
         twins.append(f"http://{host} {{\n{body}\n}}")
     if not twins:
         return content
     section = f"{_SSL_FLEX_BEGIN}\n" + "\n\n".join(twins) + f"\n{_SSL_FLEX_END}"
-    content = _remove_section(content, _SSL_FLEX_BEGIN, _SSL_FLEX_END)
     return (content.rstrip() + "\n\n" + section + "\n") if content.strip() else section + "\n"
 
 

@@ -73,6 +73,63 @@ class HttpListenerTests(unittest.TestCase):
         with patch.object(self.cf, "_port_state", _port_state_patch):
             self.assertEqual(self.cf.ensure_http_listener(content), content)
 
+    def test_twin_matchers_renamed(self):
+        # 真实故障：孪生块照抄主块 body 会重复定义 @dl_* matcher，
+        # caddy 报 "matcher is defined more than once"。定义与引用都必须改名。
+        content = (
+            "{\n    auto_https disable_redirects\n}\n\n"
+            f"{DOMAIN} {{\n"
+            "    @dl_app_1.0 path /app/v1.0 /app/latest\n"
+            "    redir @dl_app_1.0 /app/app-1.0.apk\n"
+            "    @waf_ip remote_ip 1.2.3.4\n"
+            "    respond @waf_ip 403\n"
+            "    root * /var/www/html/x\n    file_server\n}\n"
+        )
+        with patch.object(self.cf, "_port_state", _port_state_patch):
+            fixed = self.cf.ensure_http_listener(content)
+        twin = fixed.split("AUPS SSL FLEXIBLE (managed, do not remove) <<<")[1]
+        self.assertIn("@aups80_dl_app_1.0 path", twin)
+        self.assertIn("redir @aups80_dl_app_1.0", twin)
+        self.assertIn("@aups80_waf_ip remote_ip", twin)
+        self.assertIn("respond @aups80_waf_ip", twin)
+        # 主块必须保持原名，不能被一起改写
+        main = fixed.split("AUPS SSL FLEXIBLE (managed, do not remove) <<<")[0]
+        self.assertIn("@dl_app_1.0 path", main)
+        # 定义不得重名：全文件中每个 matcher 定义只能出现一次
+        import re as _re
+        defs = _re.findall(r"^\s*(@[\w.\-]+)\s+\S", fixed, _re.MULTILINE)
+        self.assertEqual(len(defs), len(set(defs)), defs)
+
+    def test_path_regexp_identifier_renamed(self):
+        # @dl_file_x path_regexp dl_file_x ... 中的标识符与 matcher 名在 Caddy 中
+        # 同处一个命名空间，孪生块沿用同名会冲突，必须一并改名。
+        content = (
+            "{\n    auto_https disable_redirects\n}\n\n"
+            f"{DOMAIN} {{\n"
+            "    @dl_file_a path_regexp dl_file_a ^/a/.*\\.apk$\n"
+            '    header @dl_file_a Content-Disposition "attachment"\n'
+            "    file_server\n}\n"
+        )
+        with patch.object(self.cf, "_port_state", _port_state_patch):
+            fixed = self.cf.ensure_http_listener(content)
+        twin = fixed.split("AUPS SSL FLEXIBLE (managed, do not remove) <<<")[1]
+        self.assertIn("@aups80_dl_file_a path_regexp aups80_dl_file_a", twin)
+        main = fixed.split("AUPS SSL FLEXIBLE (managed, do not remove) <<<")[0]
+        self.assertIn("@dl_file_a path_regexp dl_file_a", main)
+
+    def test_twin_follows_main_block_changes(self):
+        # rproxy 注入新路由后，孪生块必须同步，否则 80 端口仍是旧配置
+        base = ("{\n    auto_https disable_redirects\n}\n\n"
+                f"{DOMAIN} {{\n    root * /var/www/html/x\n    file_server\n}}\n")
+        with patch.object(self.cf, "_port_state", _port_state_patch):
+            first = self.cf.ensure_http_listener(base)
+            updated = first.replace("    file_server\n",
+                                    "    @new path /new\n    redir @new /x\n    file_server\n")
+            second = self.cf.ensure_http_listener(updated)
+        twin = second.split("AUPS SSL FLEXIBLE (managed, do not remove) <<<")[1]
+        self.assertIn("@aups80_new path /new", twin)
+        self.assertIn("redir @aups80_new /x", twin)
+
     def test_nested_block_indentation_preserved(self):
         # 嵌套块（reverse_proxy { ... }）复制到孪生块后缩进必须与原块一致
         content = (
