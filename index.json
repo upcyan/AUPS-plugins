@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "73d5aed702e262c6bf0cdf5ab4fe831b1fc574f5",
+  "branch": "aa288279ee874be6921377e5c452efcd58996149",
   "plugins": [
     {
       "name": "appupdate",
@@ -38,7 +38,7 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.11.9",
+      "version": "1.11.10",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
         "README.md": "0ee25165d3305aff4e48a85374b6f179d2382c7070d3a17d01fcfd4110d3d1d0",
@@ -50,9 +50,9 @@
         "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "90765739e4350690fb839dec5fbcac71ec79405682a608265f76fbfae979bd25",
         "module/env.py": "259361e16293d759997facff88bcd52690d25e6f6c164c9a20752374ec850ed7",
-        "module/manifest.py": "5eb17f50ad301b146a2c74d37f59f7abe4ff1347b7882a951f15df9483a28ebb",
+        "module/manifest.py": "35243cdb4876e983c6f67364baa7c03f0c6afc824f34c1d795000e7e5617936f",
         "module/sslmode.py": "3b4f3cd0aee9a9f972a982a6bf80f8208b05896d6f01ac2eaacf4c5ab8270bba",
-        "module/rproxy/caddy.py": "69a0935c1227260c392bd21331ffe467125952f59fe691cb9d5d2ffbfca27c44"
+        "module/rproxy/caddy.py": "b86979540d666a7c68131d42a9f9e04430cb02aa6664e4bd13d3bc588bc7e924"
       },
       "cards": false,
       "provides": [
