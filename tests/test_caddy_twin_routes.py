@@ -44,6 +44,17 @@ class TwinRouteTests(unittest.TestCase):
         # 同一逻辑站点只能有一个块拿到路由
         self.assertEqual(sum(1 for v in assign.values() if v), 1)
 
+    def test_duplicate_version_in_data_deduped(self):
+        # 真实故障源：应用目录里两个文件解析出同一版本号，list_versions 返回两条
+        # 同 version 记录，渲染出重复 matcher。渲染层必须按版本去重。
+        dup = {"apps": [{"name": "dateforshift", "domain": DOMAIN,
+                         "versions": [{"version": "0.1.0016", "rel": "apk/a.apk"},
+                                      {"version": "0.1.0016", "rel": "apk/b.apk"}],
+                         "latest": {"version": "0.1.0016", "rel": "apk/a.apk"}}]}
+        out = self.rp._render_routes(dup)
+        defs = re.findall(r"^\s*(@[\w.\-]+)\s+\S", out, re.MULTILINE)
+        self.assertEqual(len(defs), len(set(defs)), defs)
+
     def test_render_yields_unique_matchers(self):
         blocks = self.rp._managed_sites(BOTH)
         assign = self.rp._assign_routes(blocks, DATA)

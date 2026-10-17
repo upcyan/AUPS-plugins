@@ -376,9 +376,17 @@ def _render_routes(data):
     路由语法渲染是本反代领域职责，数据由 appupdate 提供（见 _download_routes）。
     """
     parts = [_APPS_MARK_BEGIN]
+    seen_apps, seen_vers = set(), set()
     for app in data.get("apps", []):
-        host = app["name"]
-        vers = app.get("versions", [])
+        host = (app.get("name") or "").strip()
+        if not host or host in seen_apps:
+            # 数据层重复（注册表/接口重复条目）会让同一 @dl_* matcher 渲染两份，
+            # caddy 直接拒绝整份配置，这里按名称去重
+            continue
+        seen_apps.add(host)
+        vers = [v for v in (app.get("versions") or [])
+                if v.get("version") and v["version"] not in seen_vers
+                and not seen_vers.add(v["version"])]
         latest = app.get("latest") or (vers[0] if vers else None)
         if not latest:
             continue
