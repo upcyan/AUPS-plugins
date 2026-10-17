@@ -244,20 +244,31 @@ def _indent_all(line, indent):
     return indent + line
 
 
+def _q(s):
+    """Caddyfile 参数加引号：含空格/引号的正则不加引号会被拆成多个参数，
+    剩余部分被当作下一个参数解析（真实故障：(?i)(union select|...) 从空格处
+    断开，"(?i)(union" 之后的 "select|..." 成了新参数，括号失衡报
+    unexpected )）。含引号时改用反引号原样包裹。"""
+    s = str(s)
+    if '"' not in s:
+        return f'"{s}"'
+    return f"`{s}`"
+
+
 def _rule_matcher(r):
     """把中性规则转成 Caddy matcher 行。"""
     kind, pat = r["kind"], r["pattern"]
     field = r.get("field")
     if kind == "path_regex":
-        return f"path_regexp {pat}"
+        return f"path_regexp {_q(pat)}"
     if kind == "user_agent":
-        return f"header_regexp User-Agent {pat}"
+        return f"header_regexp User-Agent {_q(pat)}"
     if kind == "header":
-        return f"header_regexp {field} {pat}"
+        return f"header_regexp {_q(field)} {_q(pat)}"
     if kind == "method":
         return f"method {pat}"
     if kind == "query":
-        return f"query {field or 'q'} {pat}"
+        return f"query {field or 'q'} {_q(pat)}"
     return None
 
 

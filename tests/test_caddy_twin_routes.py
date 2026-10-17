@@ -55,6 +55,22 @@ class TwinRouteTests(unittest.TestCase):
         defs = re.findall(r"^\s*(@[\w.\-]+)\s+\S", out, re.MULTILINE)
         self.assertEqual(len(defs), len(set(defs)), defs)
 
+    def test_waf_patterns_with_spaces_are_quoted(self):
+        # 真实故障：WAF 正则含空格（union select 等），不加引号会被 Caddyfile
+        # 词法拆成多个参数，"(?i)(union" 之后的 "select|..." 括号失衡，
+        # caddy 报 error parsing regexp: unexpected )
+        rules = [
+            {"kind": "header", "field": "X-Forwarded-For",
+             "pattern": r"(?i)(union select|\.\./|<\s*script|;)\s*$"},
+            {"kind": "path_regex",
+             "pattern": r"(?i)(;\s*(ls|cat)\b|\$\{|%00)"},
+        ]
+        out = [self.rp._rule_matcher(r) for r in rules]
+        for line in out:
+            self.assertEqual(line.count('"') % 2, 0, "引号必须配平: " + line)
+            self.assertTrue(line.split(None, 1)[1].startswith('"'),
+                            "含空格的正则必须整体加引号: " + line)
+
     def test_waf_regex_braces_do_not_break_parsing(self):
         # 真实故障：WAF 正则含字面量括号（\\$\\{、{0,80}），字符级深度计数被
         # 带偏后两个站点块被吞成一个，重建的孪生块尾部多出孤立 }，
