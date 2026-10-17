@@ -103,6 +103,35 @@ def _find_global_block_lines(lines):
     return i, len(lines) - 1
 
 
+def _port_state(content):
+    """探测 http/https 端口与占用情况。返回 (http_port, https_port, blocked, known)。
+
+    known=False 表示端口探测不可用（如无 /proc 或权限不足），调用方据此保守跳过
+    依赖占用情况的改写，避免凭空引入 reload 失败。
+    """
+    http_port, https_port = 80, 443
+    for m in re.finditer(r"^\s*(https_port|http_port)\s+(\d+)\s*$", content, re.MULTILINE):
+        if m.group(1) == "https_port":
+            https_port = int(m.group(2))
+        else:
+            http_port = int(m.group(2))
+    try:
+        from ...core import ports
+        listening = ports.listening()
+    except BaseException:
+        return http_port, https_port, set(), False
+    blocked = set()
+    for ent in listening:
+        try:
+            p = int(ent.get("port") or "")
+        except (TypeError, ValueError):
+            continue
+        proc = (ent.get("process") or "").lower()
+        if p in (http_port, https_port) and "caddy" not in proc:
+            blocked.add(p)
+    return http_port, https_port, blocked, True
+
+
 def ensure_global_options(content):
     """写入前规范化全局块：检测 http/https 端口是否被非 caddy 进程占用。
 
@@ -112,24 +141,8 @@ def ensure_global_options(content):
     同时保留 443 自动证书。
     """
     content = content or ""
-    http_port, https_port = 80, 443
-    for m in re.finditer(r"^\s*(https_port|http_port)\s+(\d+)\s*$", content, re.MULTILINE):
-        if m.group(1) == "https_port":
-            https_port = int(m.group(2))
-        else:
-            http_port = int(m.group(2))
-    blocked = set()
-    try:
-        from ...core import ports
-        for ent in ports.listening():
-            try:
-                p = int(ent.get("port") or "")
-            except (TypeError, ValueError):
-                continue
-            proc = (ent.get("process") or "").lower()
-            if p in (http_port, https_port) and "caddy" not in proc:
-                blocked.add(p)
-    except BaseException:
+    http_port, https_port, blocked, known = _port_state(content)
+    if not known:
         return content
     if not blocked:
         return content
@@ -144,10 +157,77 @@ def ensure_global_options(content):
     return "\n".join(lines)
 
 
+# ---------- 80 端口存活保障 ----------
+#
+# 事故背景：全局块写入 `auto_https disable_redirects` 后，裸域名站点块不再自动
+# 绑定 80；若缺少显式 http:// 站点块，Caddy 重启后就只剩 443。Cloudflare 回源
+# 走 80，于是全站 521。该状态会被保存进磁盘，重启即复现，靠进程内补丁无法持久。
+# 因此写入前统一保证：只要 80 可用且存在需要 80 的站点，就必须有显式 http:// 监听。
+
+_SSL_FLEX_BEGIN = "# >>> AUPS SSL FLEXIBLE (managed, do not remove) <<<"
+_SSL_FLEX_END = "# <<< AUPS SSL FLEXIBLE >>>"
+
+
+def _is_auto_https_disabled(content):
+    return bool(re.search(r"^\s*auto_https\s+disable_redirects\b", content, re.MULTILINE))
+
+
+def _has_http_listener(content):
+    """是否已存在监听非 443 端口的 http:// 站点块。"""
+    for blk in _site_blocks(content):
+        host = blk["host"].strip()
+        m = re.match(r"^http://([^\s,]+)", host)
+        if not m:
+            continue
+        port = re.search(r":(\d+)$", m.group(1))
+        # 显式端口必须是 80（或未写端口，默认即 80）；:8080 之类不覆盖 80
+        if port and port.group(1) != "80":
+            continue
+        return True
+    return False
+
+
+def _needs_http_listener(content):
+    """存在裸域名（自动 HTTPS）站点且 auto_https 已被关闭时，必须显式补 http。"""
+    return _is_auto_https_disabled(content) and not _has_http_listener(content)
+
+
+def ensure_http_listener(content):
+    """保证 Caddy 在 80 端口上有监听，避免重启后 Cloudflare 回源 521。
+
+    仅在两个条件同时成立时改写：
+      1. 全局块已关闭 auto_https（Caddy 不会再自动监听 80）；
+      2. 存在裸域名站点块，却没有任何显式 http:// 站点块。
+    80 被其他进程占用时不改写，避免生成必失败的配置。
+    """
+    content = content or ""
+    if not _needs_http_listener(content):
+        return content
+    http_port, _https_port, blocked, known = _port_state(content)
+    if known and http_port in blocked:
+        return content
+    blocks = _site_blocks(content)
+    twins = []
+    for blk in blocks:
+        host = blk["host"].strip()
+        if not host or host.startswith("http://") or host.startswith("https://"):
+            continue
+        # body 已带原站点块缩进，直接沿用；再叠一层会让嵌套块缩进翻倍。
+        # 只去掉首尾空行，不能 strip 首行缩进，否则首行会左移。
+        body = blk["body"].strip("\n")
+        twins.append(f"http://{host} {{\n{body}\n}}")
+    if not twins:
+        return content
+    section = f"{_SSL_FLEX_BEGIN}\n" + "\n\n".join(twins) + f"\n{_SSL_FLEX_END}"
+    content = _remove_section(content, _SSL_FLEX_BEGIN, _SSL_FLEX_END)
+    return (content.rstrip() + "\n\n" + section + "\n") if content.strip() else section + "\n"
+
+
 def write(content, reload_=True):
     """保存完整 Caddyfile：校验 → 备份 → 写入 → reload（reload 失败不阻断保存）。"""
     content = (content or "").replace("\r\n", "\n")
     content = ensure_global_options(content)
+    content = ensure_http_listener(content)
     err = _validate(content)
     if err:
         raise AppError(f"Caddyfile 校验失败：\n{err}")

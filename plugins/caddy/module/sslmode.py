@@ -107,8 +107,9 @@ def apply_flexible(email=""):
         if host.startswith("http://") or host.startswith("https://"):
             continue
         # 生成 http:// 孪生块
-        body = blk["body"].strip()
-        twin = f"http://{host} {{\n    {body.replace('\n', '\n    ')}\n}}"
+        # 只去首尾空行，保留原缩进，避免首行左移或嵌套块缩进翻倍
+        body = blk["body"].strip("\n")
+        twin = f"http://{host} {{\n{body}\n}}"
         http_blocks.append(twin)
 
     if not http_blocks:

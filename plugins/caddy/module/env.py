@@ -424,11 +424,40 @@ def logs(lines=100):
     return {"lines": raw.splitlines()[-lines:], "error": error, "deploy": "host"}
 
 
+def _repair_http_listener():
+    """启动/重启/重载前确保磁盘配置含 80 端口监听。
+
+    事故：auto_https disable_redirects + 无 http:// 站点块时，Caddy 重启后只剩
+    443，Cloudflare 回源 80 直接 521，且该状态已落盘、重启即复现。启动路径是
+    唯一必然经过的关口，故在此修正，而不是靠外部 cron 抢修。
+    """
+    try:
+        from . import caddyfile as CF
+        path = caddy_config_file()
+        if not os.path.isfile(path):
+            return
+        with open(path, encoding="utf-8") as f:
+            current = f.read()
+        fixed = CF.ensure_http_listener(current)
+        if fixed == current:
+            return
+        shutil.copy2(path, path + ".bak")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(fixed)
+        print("[caddy] 已在启动前补回 80 端口 http:// 站点块")
+    except BaseException as e:
+        # 修复失败不应阻断启动本身；异常仍可见于日志
+        print(f"[caddy] 启动前 80 端口修复失败: {e}")
+
+
 def instance(action):
     """实例控制：stop / restart / reload Caddy 服务（兼容容器与实机部署）。"""
     print(f"[caddy] instance(action={action!r})")
     if action not in ("stop", "restart", "reload", "start"):
         raise AppError("action 需为 stop/restart/reload/start")
+    # reload 同样按磁盘配置重载：配置里缺 80 时 reload 也救不回来，必须一并修。
+    if action in ("start", "restart", "reload"):
+        _repair_http_listener()
     if deploy_method() == "container":
         rt = container_runtime()
         if not rt:
