@@ -519,18 +519,48 @@ def _assign_routes(blocks, data):
     if not blocks:
         return {}
     assign = {i: [] for i in range(len(blocks))}
+    # 裸域名块与它的 http:// 孪生块是同一逻辑站点：两者 _site_addresses 归一化后
+    # 地址相同，若都注入同一份路由，会生成两组同名 matcher，caddy 校验报
+    # "matcher is defined more than once"。故同一地址只取其一个代表块写入路由。
+    seen = set()
     for app in apps:
         domain = (app.get("domain") or "").strip()
         if not domain:
-            for i in range(len(blocks)):
+            # 未声明域名：注入所有逻辑站点（每个地址一次）
+            for addr, i in _logical_sites(blocks).items():
                 assign[i].append(app)
             continue
         addresses = _site_addresses(domain)
         hit = [i for i, blk in enumerate(blocks)
                if _site_addresses(blk["host"]) & addresses]
-        for i in (hit or [0]):
+        if not hit:
+            hit = [0]
+        for addr, i in _logical_sites(blocks, hit).items():
             assign[i].append(app)
     return assign
+
+
+def _logical_sites(blocks, indices=None):
+    """把站点块合并为「地址 -> 代表块下标」，裸域名与 http:// 孪生块视为同一个。
+
+    HTTPS 块优先作为代表（裸域名块即代表；仅有 http:// 块时用它），
+    使路由注入落在主块上，孪生块由 caddyfile 层按主块重建。
+    """
+    picked = {}
+    for i in (range(len(blocks)) if indices is None else indices):
+        host = blocks[i]["host"].strip()
+        addrs = _site_addresses(host)
+        is_http = host.startswith("http://")
+        for addr in addrs:
+            cur = picked.get(addr)
+            if cur is None:
+                picked[addr] = i
+                continue
+            cur_http = blocks[cur]["host"].strip().startswith("http://")
+            # 已有 http 块时，遇到非 http 块则替换为代表
+            if cur_http and not is_http:
+                picked[addr] = i
+    return picked
 
 
 def show():
@@ -582,12 +612,25 @@ def apply(reload=True):
     # 先按稳定顺序算好各块的路由分配，再自下而上写回，避免前面的替换使后续块
     # 的行索引失效。
     assign = _assign_routes(targets, data)
-    rendered = {id(t): _render_routes({"apps": assign[i]})
-                for i, t in enumerate(targets)}
+    # 孪生块自身不分配路由，但要复用其主块的片段（matcher 加前缀），
+    # 否则 80 端口上的短链没有 redir 规则会 404。
+    twin_source = {}
+    for addr, i in _logical_sites(targets).items():
+        for j, t in enumerate(targets):
+            if j != i and _site_addresses(t["host"]) & {addr} \
+                    and t["host"].strip().startswith("http://"):
+                twin_source[j] = i
+    rendered = {}
+    for i, t in enumerate(targets):
+        apps = assign[i] or assign.get(twin_source.get(i, -1), [])
+        rendered[id(t)] = _render_routes({"apps": apps})
     for target in sorted(targets, key=lambda b: b["start"], reverse=True):
         body = "\n".join(lines[target["start"] + 1: target["end"]])
-        new_body = _replace_section(body, _APPS_MARK_BEGIN, _APPS_MARK_END,
-                                    rendered[id(target)])
+        snippet = rendered[id(target)]
+        # 孪生块复制了主块的路由片段，同名 matcher 会与主块冲突，需加前缀
+        if target["host"].strip().startswith("http://"):
+            snippet = caddyfile._rename_matchers(snippet)
+        new_body = _replace_section(body, _APPS_MARK_BEGIN, _APPS_MARK_END, snippet)
         # WAF 段置于站点块顶部，确保先于 redir/file_server 生效
         new_body = _replace_section(new_body, _WAF_BEGIN, _WAF_END, waf_snippet,
                                     insert_top=True)
