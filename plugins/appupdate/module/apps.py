@@ -602,6 +602,21 @@ def list_versions(name):
     return sorted(versions, key=lambda v: _version_key(v["version"]), reverse=True)
 
 
+def download_file_path(name, rel):
+    """下载按钮用：只做路径校验并返回绝对路径，不算哈希。
+
+    与 file_checksums 同一套约束：realPath 限定在应用目录内、拒绝越界；
+    不存在时明确报错。下载是流式转发，校验码另走 checksum 端点。
+    """
+    base = os.path.realpath(app_dir(name))
+    path = os.path.realpath(os.path.join(base, rel))
+    if path != base and not path.startswith(base + os.sep):
+        raise AppError("非法文件路径")
+    if not os.path.isfile(path):
+        raise AppError("文件不存在: " + rel)
+    return path
+
+
 def file_checksums(name, rel):
     """按相对路径计算应用目录内文件的 MD5/SHA1/SHA256（惰性计算，不缓存）。"""
     base = os.path.realpath(app_dir(name))

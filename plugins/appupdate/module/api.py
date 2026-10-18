@@ -4,6 +4,8 @@
 否则 POST /apps/caddy 会被 GET /apps/{name} 吃掉 → 405 Method Not Allowed。
 """
 
+import os
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from ...web.websec import require_auth
@@ -195,6 +197,34 @@ def app_file_checksum(name: str, rel: str = "", auth=Depends(require_auth)):
     if not rel:
         raise AppError("缺少 rel 参数")
     return A.file_checksums(name, rel)
+
+
+@router.get("/apps/{name}/download")
+def app_file_download(name: str, rel: str = "", auth=Depends(require_auth)):
+    """下发应用目录内的安装包（版本页下载按钮）。
+
+    复用 file_checksums 的路径校验（app_dir realPath 约束 + rel 规范化），
+    流式下发不整包进内存；Content-Disposition 强制保存。注意本端点挂在
+    /api 下走面板鉴权（require_auth），浏览器直接点击会 401——前端用
+    fetch+blob 带 cookie 凭据取流后本地保存。
+    """
+    from fastapi.responses import StreamingResponse
+    from urllib.parse import quote as _q
+    if not rel:
+        raise AppError("缺少 rel 参数")
+    path = A.download_file_path(name, rel)      # 路径校验，不算哈希
+    size = os.path.getsize(path)
+    filename = os.path.basename(path)
+    def _stream():
+        with open(path, "rb") as f:
+            while True:
+                chunk = f.read(1024 * 1024)
+                if not chunk:
+                    break
+                yield chunk
+    return StreamingResponse(_stream(), media_type="application/octet-stream",
+        headers={"Content-Length": str(size),
+                 "Content-Disposition": f"attachment; filename*=UTF-8''{_q(filename)}"})
 
 
 @router.post("/apps/{name}/versions/{version}/unlock")

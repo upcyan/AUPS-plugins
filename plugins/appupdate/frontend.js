@@ -620,7 +620,8 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
           <td class="mut" style="font-size:11px">${esc(v.rel)}</td>
           <td class="mut" style="font-size:11px" title="文件落到本服务器的时刻">${esc(fmtTime(v.ctime))}</td>
           <td class="mut" style="font-size:11px" title="文件内容最后修改时刻（CI 保留时间戳时为构建时间）">${esc(fmtTime(v.mtime))}</td>
-          <td><button class="ghost" onclick="${P}verChecksum('${esc(name)}','${encodeURIComponent(v.rel)}')">校验码</button></td>
+          <td><button class="ghost" onclick="${P}verChecksum('${esc(name)}','${encodeURIComponent(v.rel)}')">校验码</button>
+              <button class="ghost" onclick="${P}verDownload('${esc(name)}','${encodeURIComponent(v.rel)}')">下载</button></td>
           <td>${isLocked
             ? `<button class="ghost" onclick="${P}unlockVer('${esc(name)}','${esc(v.version)}')">解锁</button>
                <span class="ok" style="font-size:11px">已锁定</span>`
@@ -635,6 +636,24 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
         <table><thead><tr><th>版本</th><th>大小</th><th>文件</th><th>上传时间</th><th>更新时间</th><th>校验码</th><th>锁定</th><th>更新日志</th><th></th></tr></thead>
         <tbody>${rows || '<tr><td colspan="9" class="mut">暂无版本</td></tr>'}</tbody></table>`;
     } catch(e) { box.innerHTML = errCard(e); }
+  }
+
+  async function verDownload(name, relEncoded) {
+    // 面板 API 走 require_auth（cookie 凭据），直接 <a href> 会 401；
+    // fetch 取 blob 后触发本地保存。
+    try {
+      const resp = await fetch('/api/apps/' + encodeURIComponent(name) + '/download?rel=' + relEncoded, {credentials: 'same-origin'});
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const blob = await resp.blob();
+      const cd = resp.headers.get('Content-Disposition') || '';
+      const m = /filename\*=UTF-8''([^;]+)/.exec(cd);
+      let fn = decodeURIComponent(m ? m[1] : (relEncoded.split('/').pop() || 'app.apk'));
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fn;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+    } catch (e) { alert('下载失败：' + (e.message || e)); }
   }
 
   async function verChecksum(name, relEncoded) {
@@ -741,7 +760,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     toggleSslMode, toggleSslType, checkDomain, updateDefaultWorkdir,
     usersTab, userCreate, userDelete, userDirAuth, userDirGrant, userDirRevoke,
     userSsh, sshAdd, sshRemove,
-    storageTab, loadVersions, lockVer, unlockVer, apkDelete, verChecksum, copyText,
+    storageTab, loadVersions, lockVer, unlockVer, apkDelete, verChecksum, verDownload, copyText,
     setQuota, setTotalQuota, enforceQuota,
   };
 })();
