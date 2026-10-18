@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "60df90cfe22af2b48a6b09181389ed79d3d36900",
+  "branch": "b33f194f40a3c79598fc927314c19740c6ad6c09",
   "plugins": [
     {
       "name": "appupdate",
@@ -10,7 +10,7 @@
         "安全",
         "网络"
       ],
-      "version": "2.16.4",
+      "version": "2.16.5",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -19,14 +19,14 @@
       ],
       "files": {
         "README.md": "60bf79d8016d1d4b199d2e7437f023c737f572dcd295513c072ca52cc47e9e5f",
-        "frontend.js": "9593361ab15f9dcce5b43779c8f574ddd7e45921473a2f2d87bd5b1c0f22cfb6",
+        "frontend.js": "116eadafa27b10a92196547e7b9a6969543e6063bde356d75366ff9fe9c12a1a",
         "manifest.json": "1df8937047e42cc5c76f600789e3abe56c00132e3618827bbb91e241e0a0eaf0",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
         "module/api.py": "2ca89c3030757e78d35421ab61aca6c87a5ce81df4c9e9585328250d1dd76af8",
         "module/apps.py": "60d9c9e94692567c3187f2b46819b7443aba56b5c0d17b6aaf6eda3f74820444",
         "module/cli.py": "ba6d66efc97da6825f750d7e442e9f50cb8c28471c2173e6b6f5285327e0695c",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "8f61e28c46bb90ca4efd914be1dbc73dcc95a14c3c9b2e67f2fb54a30b6d8d7c",
+        "module/manifest.py": "bda9c4a238fb7e5c18bd04b8ecf1e3592726f94809007a447e6b21b41835e9dc",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "0959e83a0fe917acde58316397b27bb123751c6de0a2e0e6b6e046a791670678",
         "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
