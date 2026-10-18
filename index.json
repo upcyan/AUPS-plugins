@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "aa288279ee874be6921377e5c452efcd58996149",
+  "branch": "df0c68e02b73d98139d687d8e1de5c36199da87b",
   "plugins": [
     {
       "name": "appupdate",
@@ -10,7 +10,7 @@
         "安全",
         "网络"
       ],
-      "version": "2.14.0",
+      "version": "2.15.0",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -19,14 +19,14 @@
       ],
       "files": {
         "README.md": "60bf79d8016d1d4b199d2e7437f023c737f572dcd295513c072ca52cc47e9e5f",
-        "frontend.js": "a7e17eaa2235fe91a29c9182acfa16eb7e30831bade8a65e7ad07ec3a1e17ffa",
+        "frontend.js": "a162b5d943bc77efd5724abfda19d1f397961a1889cb9ce9c92c1b7c0fc6c96a",
         "manifest.json": "1df8937047e42cc5c76f600789e3abe56c00132e3618827bbb91e241e0a0eaf0",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "13c55a9e68a5da9c38e52d8b5ecca2607e476b987912bc80a1ebf58d2fa3a63f",
-        "module/apps.py": "ce37a4231466a1898da0aa49f127a7df79b33c8c2b23dc50b2f5becc117bfa52",
+        "module/api.py": "08329e3a6800056b181c11b4e0bb9d090e34314ce1da8567e096034b8682e0d9",
+        "module/apps.py": "528defc8386d8dc8d429c126710fc666175ec4143a208122a778483ce8e3302e",
         "module/cli.py": "ba6d66efc97da6825f750d7e442e9f50cb8c28471c2173e6b6f5285327e0695c",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "e8202788aade480ccca53152d9b04fa56109fc0d3b4223b2a7547a679d699356",
+        "module/manifest.py": "116f5cb8c9df145ee36ff5618d197a89b485a0365534a4a3961738b54447a2e5",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "0959e83a0fe917acde58316397b27bb123751c6de0a2e0e6b6e046a791670678",
         "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
@@ -38,7 +38,7 @@
       "name": "caddy",
       "title": "Caddy 依赖",
       "attr": "依赖",
-      "version": "1.11.10",
+      "version": "1.12.0",
       "description": "Caddy 反代：部署切换、站点、TLS、WebSocket、上游池、健康检查、日志和配置回滚",
       "files": {
         "README.md": "0ee25165d3305aff4e48a85374b6f179d2382c7070d3a17d01fcfd4110d3d1d0",
@@ -50,9 +50,9 @@
         "module/certificates.py": "f71e680070164aac284e37648e193333294d566404fd957061a614f122676654",
         "module/cli.py": "90765739e4350690fb839dec5fbcac71ec79405682a608265f76fbfae979bd25",
         "module/env.py": "259361e16293d759997facff88bcd52690d25e6f6c164c9a20752374ec850ed7",
-        "module/manifest.py": "35243cdb4876e983c6f67364baa7c03f0c6afc824f34c1d795000e7e5617936f",
+        "module/manifest.py": "459556d48fe4767fac72b61cfdbc132710fc01f696ff1aaae40730c8334412f5",
         "module/sslmode.py": "3b4f3cd0aee9a9f972a982a6bf80f8208b05896d6f01ac2eaacf4c5ab8270bba",
-        "module/rproxy/caddy.py": "b86979540d666a7c68131d42a9f9e04430cb02aa6664e4bd13d3bc588bc7e924"
+        "module/rproxy/caddy.py": "b23b1329ff69bb0a4ffd383574520223a0bc1caf815c8099d9d52b357640eaa2"
       },
       "cards": false,
       "provides": [
@@ -77,7 +77,7 @@
       "name": "nginx",
       "title": "Nginx 依赖",
       "attr": "依赖",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "description": "Nginx 反代：站点、证书、WebSocket、上游池、配置校验回滚与日志",
       "install_params": [
         {
@@ -93,9 +93,9 @@
         "frontend.js": "24377947abd9d376050125ea2a0b80739052e22925c7f1d9bfb1ae0048dad952",
         "manifest.json": "f638794dc60347f70852773f0d1811188c781598f69e680326a5538876dd2a13",
         "module/__init__.py": "4dad3b5e3fd946cbd24fb74eff88dab5c3574b2707419a88676cccdedf4f7c55",
-        "module/api.py": "cee78de4c133d3d29da975d2af637888748f7b7f83b411d463b8675479650e71",
+        "module/api.py": "a437a03c9dc70821fd44ae3ee797f0c1943f2db3f9817eaeec2de2d69ab3983f",
         "module/cli.py": "a1889b0da989611aee38d7426b1544fd435f3ef246f3fdc5d15403d473ae94e3",
-        "module/manifest.py": "c16d9b25d031475c9e9845979e509be8afc8b8351a9fffa253572eb12f8fb2b8",
+        "module/manifest.py": "670bbcc1c383d4685c377ad668c3b406842c9bfb6f9b7447a1e0c518427926f8",
         "module/webapi.py": "ec6b0aeb441c3c86f23b0a184a6c76f154c27d654395bee7717937ab5f56453c"
       },
       "cards": false,
