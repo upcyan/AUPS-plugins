@@ -651,7 +651,10 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     try {
       const resp = await fetch(base + '/api/apps/' + encodeURIComponent(name) + '/download?rel=' + relEncoded,
         {headers: {'X-Auth-Token': tok}});
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      if (!resp.ok) {
+        const detail = await resp.text().catch(() => '');
+        throw new Error('HTTP ' + resp.status + (detail ? '：' + detail.slice(0, 120) : ''));
+      }
       const blob = await resp.blob();
       const cd = resp.headers.get('Content-Disposition') || '';
       const m = /filename\*=UTF-8''([^;]+)/.exec(cd);
