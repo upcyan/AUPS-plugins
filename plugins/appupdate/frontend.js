@@ -638,33 +638,23 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
     } catch(e) { box.innerHTML = errCard(e); }
   }
 
-  async function verDownload(name, relEncoded) {
-    // 必须走面板全局 api() 的两个理由：
-    // 1. 鉴权：自动附 X-Auth-Token 头（裸 fetch 带不对凭据会被 require_auth 拒绝）
-    // 2. 入口前缀：面板可配置 /<entry>/ 安全入口（如 /cyan/），API_BASE 由
-    //    app.js 按 location.pathname 推导；裸写 /api/... 在开了入口守卫的
-    //    部署下会被守卫拦截（真实故障：403 Forbidden）。
-    // api() 返回解析后的 JSON，二进制流需自行 fetch，故仅用它推导前缀与头。
+  function verDownload(name, relEncoded) {
+    // 浏览器原生下载：require_auth 支持 ?token= 查询参数，直链免 blob 中转。
+    // 此前 fetch+blob 在手机上大文件传输中断即抛 "Failed to fetch"（内存与
+    // 移动网络稳定性），原生下载由浏览器处理断点与进度。
+    // 注意 token 出现在 URL 中会进访问日志，属面板既有约定（require_auth
+    // 原生支持 query token），敏感面与 CLI token 文件同级。
     const base = (typeof API_BASE !== 'undefined' && API_BASE) ||
                  ((location.pathname.match(/^\/([^/]+)\//) || [])[1] ? '/' + location.pathname.match(/^\/([^/]+)\//)[1] : '');
     const tok = (typeof token !== 'undefined' && token) || localStorage.getItem('aup_token') || '';
-    try {
-      const resp = await fetch(base + '/api/apps/' + encodeURIComponent(name) + '/download?rel=' + relEncoded,
-        {headers: {'X-Auth-Token': tok}});
-      if (!resp.ok) {
-        const detail = await resp.text().catch(() => '');
-        throw new Error('HTTP ' + resp.status + (detail ? '：' + detail.slice(0, 120) : ''));
-      }
-      const blob = await resp.blob();
-      const cd = resp.headers.get('Content-Disposition') || '';
-      const m = /filename\*=UTF-8''([^;]+)/.exec(cd);
-      let fn = decodeURIComponent(m ? m[1] : (relEncoded.split('/').pop() || 'app.apk'));
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = fn;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
-    } catch (e) { alert('下载失败：' + (e.message || e)); }
+    if (!tok) { alert('登录已过期，请刷新页面重新登录'); return; }
+    // rel 中的 / 在查询串里合法，encodeURIComponent 会编码成 %2F，
+    // 可能触发 Cloudflare WAF 的路径穿越误报（真实故障），故还原斜杠。
+    const relQ = relEncoded.replace(/%2F/gi, '/');
+    const a = document.createElement('a');
+    a.href = base + '/api/apps/' + encodeURIComponent(name) + '/download?rel=' + relQ + '&token=' + encodeURIComponent(tok);
+    a.download = '';
+    document.body.appendChild(a); a.click(); a.remove();
   }
 
   async function verChecksum(name, relEncoded) {

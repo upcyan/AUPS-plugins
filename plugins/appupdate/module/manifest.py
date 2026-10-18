@@ -8,7 +8,7 @@ v2.14.0：同步与 CI 通知按 apkUrl 指定的本地 APK 补齐 apkMd5/apkSha
 MANIFEST = {
     "name": "appupdate",
     "title": "应用更新管理",
-    "version": "2.16.4",
+    "version": "2.16.5",
     "description": "多应用管理：部署配置（域名/SSL/端口/用户）、版本管理（上传/更新时间、MD5/SHA1/SHA256 校验码）、CI 上传、存储配额、下载统计、下载路由自动同步、反代切换迁移、CI 推送通知与新项目引导注册、版本更新日志",
     "type": "external",
     "attr": "功能",
