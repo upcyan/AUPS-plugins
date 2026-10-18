@@ -1,7 +1,7 @@
 {
   "name": "AUPS Official Plugins",
   "repo": "https://github.com/upcyan/AUPS-plugins",
-  "branch": "df0c68e02b73d98139d687d8e1de5c36199da87b",
+  "branch": "b4c93ad72e303514add0f9760643e9042a08001f",
   "plugins": [
     {
       "name": "appupdate",
@@ -10,7 +10,7 @@
         "安全",
         "网络"
       ],
-      "version": "2.15.0",
+      "version": "2.15.1",
       "description": "APK 更新：应用注册/版本、存储与配额、下载统计、CI 上传用户与 SSH 公钥",
       "depends": [
         {
@@ -19,14 +19,14 @@
       ],
       "files": {
         "README.md": "60bf79d8016d1d4b199d2e7437f023c737f572dcd295513c072ca52cc47e9e5f",
-        "frontend.js": "a162b5d943bc77efd5724abfda19d1f397961a1889cb9ce9c92c1b7c0fc6c96a",
+        "frontend.js": "90951c0b88d45193e670c052b819f4f94549d5690463df65a274fb242058421c",
         "manifest.json": "1df8937047e42cc5c76f600789e3abe56c00132e3618827bbb91e241e0a0eaf0",
         "module/__init__.py": "f349ba9bb4fd4990ed407794d63e336b3bd5a1304bd80fa03d58e895ec972e1a",
-        "module/api.py": "08329e3a6800056b181c11b4e0bb9d090e34314ce1da8567e096034b8682e0d9",
-        "module/apps.py": "528defc8386d8dc8d429c126710fc666175ec4143a208122a778483ce8e3302e",
+        "module/api.py": "e6f6040e7d4a2b4e33f22f5b821975396b0251aeb3f078b728b42b29bea8a9f8",
+        "module/apps.py": "a316272eb0995a18fe8845e56c25ede296a9b13286e779d7e187af99550fc752",
         "module/cli.py": "ba6d66efc97da6825f750d7e442e9f50cb8c28471c2173e6b6f5285327e0695c",
         "module/downloads.py": "3c390f9bfd395029624382b0078917e78831ff0f3dd2ab1b3da2f988ac186e06",
-        "module/manifest.py": "116f5cb8c9df145ee36ff5618d197a89b485a0365534a4a3961738b54447a2e5",
+        "module/manifest.py": "7e96a94aa0aa600a7e4200f1eb4d5303dc4c8781430afaa88987a604f7ce4a04",
         "module/sshkeys.py": "1389ab52e281e5c6808251fded8b5150976488a1b109cfe1094dcd74abfebd5f",
         "module/storage.py": "0959e83a0fe917acde58316397b27bb123751c6de0a2e0e6b6e046a791670678",
         "module/users.py": "196cf8b88a82c9100ca744a34eb3164bd19697d76c6686cb44aa853ae0cecbd4"
