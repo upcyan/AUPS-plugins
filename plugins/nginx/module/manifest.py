@@ -12,7 +12,7 @@ v1.4.0：下载路由与 caddy 后端对齐——短链 302 到带扩展名的�
 MANIFEST = {
     "name": "nginx",
     "title": "Nginx 依赖",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "description": "Nginx 反代：站点管理、托管下载路由、实例控制、证书（通过 certbot/acme 申请）",
     "type": "external",
     "attr": "依赖",

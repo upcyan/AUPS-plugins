@@ -159,7 +159,11 @@ def apps_versions(name: str, auth=Depends(require_auth)):
     for v in vs:
         v["has_changelog"] = v["version"] in logs
     latest = A.latest_version(name)
+    counts = {}
+    for v in vs:
+        counts[v["channel"]] = counts.get(v["channel"], 0) + 1
     return {"name": name, "versions": vs, "latest": latest,
+            "channels": counts,
             "integrity": A.update_integrity_status(name)}
 
 

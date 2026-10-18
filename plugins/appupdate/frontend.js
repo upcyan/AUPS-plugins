@@ -606,11 +606,15 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
         ${integrity.apkMd5 ? `<div class="mut" style="font-size:11px">实际 MD5：${esc(integrity.apkMd5)}</div>` : ''}
         ${integrity.apkSha256 ? `<div class="mut" style="font-size:11px">实际 SHA-256：${esc(integrity.apkSha256)}</div>` : ''}
       </div>`;
+      const chLabels = { release: '正式版', pr: '预览版', beta: '公测版', canary: '金丝雀版' };
+      const chColor = { release: 'ok', pr: 'mut', beta: '', canary: 'err' };
       const rows = versions.map(v => {
         const isLocked = locked.has(v.version);
         const logMark = v.has_changelog ? ' <span class="ok" style="font-size:11px">📝</span>' : '';
+        const ch = v.channel || 'release';
+        const chBadge = ` <span class="${chColor[ch] || 'mut'}" style="font-size:11px">[${chLabels[ch] || ch}]</span>`;
         return `<tr>
-          <td>${esc(v.version)}${logMark}</td>
+          <td>${esc(v.version)}${logMark}${chBadge}</td>
           <td class="mut">${fmtSize(v.size_bytes)}</td>
           <td class="mut" style="font-size:11px">${esc(v.rel)}</td>
           <td class="mut" style="font-size:11px" title="文件落到本服务器的时刻">${esc(fmtTime(v.ctime))}</td>

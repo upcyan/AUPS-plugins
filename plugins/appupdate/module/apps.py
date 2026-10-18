@@ -22,6 +22,34 @@ from ...util import run
 _APK_RE = re.compile(r".+?[_-](v?\d+(?:\.\d+)*)\.apk$", re.IGNORECASE)
 _VER_RE = re.compile(r"(?:^|[_-])v?(\d+(?:\.\d+)+)", re.IGNORECASE)
 
+# 发布渠道：文件名（应用名与版本号之间的 token）或相对路径目录命中即归入。
+# release 是缺省渠道，不需要标记；顺序即展示顺序。
+CHANNELS = ("release", "pr", "beta", "canary")
+_CHANNEL_LABELS = {"release": "正式版", "pr": "预览版",
+                   "beta": "公测版", "canary": "金丝雀版"}
+# 渠道 token 后跟分隔符、数字（beta2/beta3 这类构建号）或结束均视为命中
+_CHANNEL_RES = {ch: re.compile(r"(?:^|[_-])" + re.escape(ch) + r"(?:[-_.0-9]|$)", re.IGNORECASE)
+                for ch in CHANNELS if ch != "release"}
+
+
+def channel_of(rel, app_name=""):
+    """按文件名/父目录识别发布渠道。返回渠道 id（release/pr/beta/canary）。
+
+    文件名形如 <app>_pr_1.2.0.apk、<app>-beta-1.2.0.apk，或位于 pr/ beta/ 等
+    渠道子目录下。识别顺序按 CHANNELS 排除 release；同时命中多个渠道时按
+    canary > beta > pr 取更激进的（canary 文件名里常带 beta 字样）。
+    """
+    base = os.path.basename(rel)
+    stem = base.rsplit(".", 1)[0].lower()
+    dirs = "/".join(os.path.dirname(rel).replace(os.sep, "/").split("/")).lower()
+    for ch in ("canary", "beta", "pr"):
+        if _CHANNEL_RES[ch].search(stem):
+            return ch
+        for seg in dirs.split("/"):
+            if seg and seg == ch:
+                return ch
+    return "release"
+
 
 def _registry():
     path = config.APPS_FILE
@@ -118,14 +146,22 @@ def public_download_routes():
         "apps": [{"name": app["name"],
                   "domain": ((app.get("deploy") or {}).get("domain") or "").strip(),
                   "versions": list_versions(app["name"]),
-                  "latest": latest_by_date(app["name"])}
+                  "latest": latest_by_date(app["name"]),
+                  # 渠道 latest：{渠道id: {version, rel, mtime}}；渠道无文件时缺省
+                  "latest_by_channel": {ch: latest_by_date(app["name"], ch)
+                                        for ch in CHANNELS if ch != "release"}
+                  | {"release": latest_by_date(app["name"], "release")}}
                  for app in list_apps()]
     }
     return contracts.write_data("appupdate", "download_routes", payload)
 
 
-def latest_by_date(name):
-    """按文件修改时间取应用目录下最新的可分发文件（latest 短链目标）。"""
+def latest_by_date(name, channel="release"):
+    """按文件修改时间取指定渠道最新的可分发文件（渠道 latest 短链目标）。
+
+    release 是缺省渠道；渠道 latest 指向「该渠道内 mtime 最新的文件」，与
+    渠道内最高版本号可能不同（canary 常以日期为版本），以发布时间优先。
+    """
     base = os.path.realpath(app_dir(name))
     best = None  # (mtime, rel)
     if os.path.isdir(base):
@@ -134,15 +170,19 @@ def latest_by_date(name):
                 if not fn.lower().endswith((".apk", ".jar", ".tar.gz", ".zip")):
                     continue
                 path = os.path.join(root, fn)
+                rel = os.path.relpath(path, base).replace(os.sep, "/")
+                if channel_of(rel, name) != channel:
+                    continue
                 try:
                     mtime = os.path.getmtime(path)
                 except OSError:
                     continue
                 if best is None or mtime > best[0]:
-                    best = (mtime, os.path.relpath(path, base).replace(os.sep, "/"))
+                    best = (mtime, rel)
     if not best:
         return None
-    return {"version": parse_version(best[1]) or "", "rel": best[1], "mtime": int(best[0])}
+    return {"version": parse_version(best[1]) or "", "rel": best[1],
+            "mtime": int(best[0]), "channel": channel}
 
 
 def sync_proxy_routes(reload=True, include_sites=True):
@@ -547,10 +587,12 @@ def list_versions(name):
                     st = os.stat(path)
                 except OSError:
                     continue
+                rel = os.path.relpath(path, base).replace(os.sep, "/")
                 versions.append({
                     "version": vstr,
                     "file": path,
-                    "rel": os.path.relpath(path, base).replace(os.sep, "/"),
+                    "rel": rel,
+                    "channel": channel_of(rel, name),
                     "size_bytes": st.st_size,
                     # 上传时间取 ctime（文件落到本机的时刻，scp/rsync 落盘即更新），
                     # 更新时间取 mtime（内容最后修改，rsync -a 保留的是构建机时间）。

@@ -448,6 +448,12 @@ def _gen_routes_conf():
         rel = latest.get("rel")
         if rel:
             out.append(f"    location = /{host}/latest {{ return 302 /{host}/{rel}; }}")
+            # 渠道短链（与 caddy 后端同语义）：/app/latest-<渠道>
+            for ch, cinfo in (app.get("latest_by_channel") or {}).items():
+                if ch == "release" or not cinfo or not cinfo.get("rel"):
+                    continue
+                out.append(f"    location = /{host}/latest-{ch} "
+                           f"{{ return 302 /{host}/{cinfo['rel']}; }}")
         # 直链强制下载：短链 302 后浏览器跟随到此处，凭该响应头弹出下载
         exts = "|".join(re.escape(e) for e in _DL_EXTS)
         out.append(f"    location ~ ^/{re.escape(host)}/.*\\.({exts})$ {{")

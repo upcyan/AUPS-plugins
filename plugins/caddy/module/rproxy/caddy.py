@@ -452,6 +452,13 @@ def _render_routes(data):
             parts.append(f"    redir @dl_{host}_{v['version']} {dl}")
         parts.append(f"    @dl_latest_{host} path /{host}/latest")
         parts.append(f"    redir @dl_latest_{host} /{host}/{latest['rel']}")
+        # 渠道短链：/app/latest-pr /app/latest-beta /app/latest-canary；
+        # 渠道内无文件时跳过（不渲染失效短链）。release 渠道复用 /latest。
+        for ch, info in (app.get("latest_by_channel") or {}).items():
+            if ch == "release" or not info or not info.get("rel"):
+                continue
+            parts.append(f"    @dl_latest_{ch}_{host} path /{host}/latest-{ch}")
+            parts.append(f"    redir @dl_latest_{ch}_{host} /{host}/{info['rel']}")
         # 直链强制下载：短链 302 后浏览器跟随到此处，凭该响应头弹出下载。
         # 用 path_regexp 而非 path 通配符——Caddy 的 path 匹配中 * 不跨 /，
         # 而真实文件常位于子目录（如 /app/apk/x.apk），path /app/*.apk 匹配不到。
