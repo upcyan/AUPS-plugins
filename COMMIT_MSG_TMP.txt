@@ -1,6 +1,0 @@
-fix(appupdate): chLabels 在使用之后才声明，版本页白屏
-
-渠道徽章功能把 chLabels 声明放在了 integrity 渲染块（使用处）之后的
-versions rows 处，const 暂时性死区导致 loadVersions 抛
-"Cannot access 'chLabels' before initialization"，版本页打不开。
-声明移到使用之前；验证从 node --check 语法级升级为模拟真实声明顺序执行。
