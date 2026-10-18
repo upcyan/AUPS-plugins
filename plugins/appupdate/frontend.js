@@ -639,11 +639,17 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   }
 
   async function verDownload(name, relEncoded) {
-    // 面板鉴权用 localStorage 的会话 token（X-Auth-Token 头），不用 cookie；
-    // 不带头会被 require_auth 拒绝。fetch 取 blob 后触发本地保存。
+    // 必须走面板全局 api() 的两个理由：
+    // 1. 鉴权：自动附 X-Auth-Token 头（裸 fetch 带不对凭据会被 require_auth 拒绝）
+    // 2. 入口前缀：面板可配置 /<entry>/ 安全入口（如 /cyan/），API_BASE 由
+    //    app.js 按 location.pathname 推导；裸写 /api/... 在开了入口守卫的
+    //    部署下会被守卫拦截（真实故障：403 Forbidden）。
+    // api() 返回解析后的 JSON，二进制流需自行 fetch，故仅用它推导前缀与头。
+    const base = (typeof API_BASE !== 'undefined' && API_BASE) ||
+                 ((location.pathname.match(/^\/([^/]+)\//) || [])[1] ? '/' + location.pathname.match(/^\/([^/]+)\//)[1] : '');
     const tok = (typeof token !== 'undefined' && token) || localStorage.getItem('aup_token') || '';
     try {
-      const resp = await fetch('/api/apps/' + encodeURIComponent(name) + '/download?rel=' + relEncoded,
+      const resp = await fetch(base + '/api/apps/' + encodeURIComponent(name) + '/download?rel=' + relEncoded,
         {headers: {'X-Auth-Token': tok}});
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const blob = await resp.blob();
