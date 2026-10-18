@@ -600,8 +600,9 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       };
       const integrityClass = integrity.status === 'verified' ? 'ok' :
         (integrity.status === 'mismatch' || integrity.status === 'error' ? 'err' : 'mut');
+      const pubCh = integrity.channel ? ` · 已发布渠道：<b>${esc(chLabels[integrity.channel] || integrity.channel)}</b>` : '';
       const integrityHtml = `<div class="${integrityClass}" style="margin-bottom:10px;word-break:break-all">
-        update.json：${esc(integrityLabels[integrity.status] || integrity.status)}
+        update.json：${esc(integrityLabels[integrity.status] || integrity.status)}${pubCh}
         ${integrity.file ? `<div class="mut" style="font-size:11px">校验目标：${esc(integrity.file)}（按 apkUrl，不按 latest）</div>` : ''}
         ${integrity.apkMd5 ? `<div class="mut" style="font-size:11px">实际 MD5：${esc(integrity.apkMd5)}</div>` : ''}
         ${integrity.apkSha256 ? `<div class="mut" style="font-size:11px">实际 SHA-256：${esc(integrity.apkSha256)}</div>` : ''}

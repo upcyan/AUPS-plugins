@@ -156,15 +156,22 @@ def apps_get(name: str, auth=Depends(require_auth)):
 def apps_versions(name: str, auth=Depends(require_auth)):
     vs = A.list_versions(name)
     logs = A.list_changelogs(name)
+    # 版本号与渠道一一对应（CI 约定）：update.json 已发布的渠道是权威值，
+    # 文件名识别（扫描）结果只在其缺位时兜底。
+    integ = A.update_integrity_status(name)
+    published = {integ["version"]: integ["channel"]} \
+        if integ.get("status") in ("verified", "missing", "mismatch") and integ.get("version") \
+        else {}
     for v in vs:
         v["has_changelog"] = v["version"] in logs
+        v["channel"] = published.get(v["version"], v["channel"])
     latest = A.latest_version(name)
     counts = {}
     for v in vs:
         counts[v["channel"]] = counts.get(v["channel"], 0) + 1
     return {"name": name, "versions": vs, "latest": latest,
-            "channels": counts,
-            "integrity": A.update_integrity_status(name)}
+            "channels": counts, "published_channel": integ.get("channel"),
+            "integrity": integ}
 
 
 @router.get("/apps/{name}/changelog/{version}")

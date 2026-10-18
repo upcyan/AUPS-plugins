@@ -705,6 +705,7 @@ def update_integrity(name, write=False):
         "missing" if not data.get("apkMd5") or not data.get("apkSha256") else "mismatch")
     result = {"status": status, "updated": False, "file": rel,
               "version": data.get("versionName", ""), "apkUrl": data["apkUrl"],
+              "channel": channel_of(rel, name),
               "md5_matches": matches["apkMd5"], "sha256_matches": matches["apkSha256"],
               **actual}
     if not write or all(matches.values()):
