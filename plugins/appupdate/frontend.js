@@ -600,6 +600,7 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
       };
       const integrityClass = integrity.status === 'verified' ? 'ok' :
         (integrity.status === 'mismatch' || integrity.status === 'error' ? 'err' : 'mut');
+      const chLabels = { release: '正式版', pr: '预览版', beta: '公测版', canary: '金丝雀版' };
       const pubCh = integrity.channel ? ` · 已发布渠道：<b>${esc(chLabels[integrity.channel] || integrity.channel)}</b>` : '';
       const integrityHtml = `<div class="${integrityClass}" style="margin-bottom:10px;word-break:break-all">
         update.json：${esc(integrityLabels[integrity.status] || integrity.status)}${pubCh}
@@ -607,7 +608,6 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
         ${integrity.apkMd5 ? `<div class="mut" style="font-size:11px">实际 MD5：${esc(integrity.apkMd5)}</div>` : ''}
         ${integrity.apkSha256 ? `<div class="mut" style="font-size:11px">实际 SHA-256：${esc(integrity.apkSha256)}</div>` : ''}
       </div>`;
-      const chLabels = { release: '正式版', pr: '预览版', beta: '公测版', canary: '金丝雀版' };
       const chColor = { release: 'ok', pr: 'mut', beta: '', canary: 'err' };
       const rows = versions.map(v => {
         const isLocked = locked.has(v.version);
