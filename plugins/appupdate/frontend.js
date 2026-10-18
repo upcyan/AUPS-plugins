@@ -639,10 +639,12 @@ window.AUPS_PLUGINS['appupdate'] = (function () {
   }
 
   async function verDownload(name, relEncoded) {
-    // 面板 API 走 require_auth（cookie 凭据），直接 <a href> 会 401；
-    // fetch 取 blob 后触发本地保存。
+    // 面板鉴权用 localStorage 的会话 token（X-Auth-Token 头），不用 cookie；
+    // 不带头会被 require_auth 拒绝。fetch 取 blob 后触发本地保存。
+    const tok = (typeof token !== 'undefined' && token) || localStorage.getItem('aup_token') || '';
     try {
-      const resp = await fetch('/api/apps/' + encodeURIComponent(name) + '/download?rel=' + relEncoded, {credentials: 'same-origin'});
+      const resp = await fetch('/api/apps/' + encodeURIComponent(name) + '/download?rel=' + relEncoded,
+        {headers: {'X-Auth-Token': tok}});
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const blob = await resp.blob();
       const cd = resp.headers.get('Content-Disposition') || '';
