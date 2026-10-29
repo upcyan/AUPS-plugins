@@ -279,6 +279,43 @@ def _positive_int(value, name, minimum, maximum, allow_none=False, default=None)
     return value
 
 
+def _strip_comment(line):
+    """剥离 shell 语义的 # 注释：仅引号外的 # 才生效，整行注释返回空串。
+
+    与 shlex 一致地处理单双引号与反斜杠转义；引号内的 #（正则、路径、
+    参数值）原样保留。引号未闭合时保守起见不剥离（该行会在 shlex 解析
+    处报错，不会静默改语义）。
+    """
+    out = []
+    in_str = None
+    i, n = 0, len(line)
+    while i < n:
+        ch = line[i]
+        if in_str:
+            out.append(ch)
+            if ch == "\\" and i + 1 < n:
+                if i + 1 < n:
+                    out.append(line[i + 1])
+                i += 2
+                continue
+            if ch == in_str:
+                in_str = None
+            i += 1
+            continue
+        if ch in "\"'":
+            in_str = ch
+            out.append(ch)
+            i += 1
+            continue
+        if ch == "#":
+            # # 位于行首或前面是空白 → shell 注释起点
+            if i == 0 or line[i - 1] in " \t":
+                return "".join(out).rstrip()
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
 def execute(text, roots, cwd=None, max_steps=MAX_STEPS, timeout=10,
             max_output=MAX_OUTPUT, allowed_bins=None):
     """执行单条命令或多行只读脚本（整批先校验后执行）。"""
@@ -288,7 +325,15 @@ def execute(text, roots, cwd=None, max_steps=MAX_STEPS, timeout=10,
                             allow_none=True, default=10)
     max_output = _positive_int(max_output, "max_output", 1, MAX_OUTPUT,
                                allow_none=True, default=MAX_OUTPUT)
-    lines = [l.strip() for l in (text or "").splitlines() if l.strip()]
+    # 支持 # 注释：整行注释直接跳过；行尾注释剥离后参与校验。
+    # 剥离必须发生在 shlex 解析之前的引号感知层面，否则正则里的 # 或
+    # 参数中的 # 会被误删。Caddyfile WAF 正则常含 #（如 \#\{ 检测），
+    # 引号外的 # 才是 shell 语义的注释起点。
+    lines = []
+    for raw in (text or "").splitlines():
+        code = _strip_comment(raw)
+        if code.strip():
+            lines.append(code.strip())
     if not lines:
         raise AppError("命令为空")
     if len(lines) > limit:
